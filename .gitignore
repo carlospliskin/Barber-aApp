@@ -1,0 +1,44 @@
+# macOS
+.DS_Store
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+*.g.dart
+*.freezed.dart
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android
+**/android/local.properties
+**/android/.gradle/
+**/android/key.properties
+*.jks
+*.keystore
+
+# iOS
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/ios/Runner.xcworkspace/xcuserdata/
+
+# Secrets / entorno
+.env
+.env.*
+!.env.example
+
+# Firebase (decidir si se versionan; contienen config del proyecto)
+# google-services.json
+# GoogleService-Info.plist
+# lib/firebase_options.dart
+.firebase/
+firebase-debug.log
