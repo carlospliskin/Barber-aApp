@@ -1,44 +1,25 @@
 # macOS
 .DS_Store
 
-# Flutter / Dart
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
+# Gradle / Kotlin
+.gradle/
+.kotlin/
 build/
-coverage/
-*.g.dart
-*.freezed.dart
+local.properties
+captures/
 
-# IDE
+# Android Studio
 .idea/
 *.iml
-.vscode/
+.cxx/
+.externalNativeBuild/
 
-# Android
-**/android/local.properties
-**/android/.gradle/
-**/android/key.properties
+# Firmas y secretos
 *.jks
 *.keystore
-
-# iOS
-**/ios/Pods/
-**/ios/.symlinks/
-**/ios/Flutter/ephemeral/
-**/ios/Runner.xcworkspace/xcuserdata/
-
-# Secrets / entorno
+keystore.properties
 .env
 .env.*
-!.env.example
 
-# Firebase (decidir si se versionan; contienen config del proyecto)
-# google-services.json
-# GoogleService-Info.plist
-# lib/firebase_options.dart
-.firebase/
-firebase-debug.log
+# Firebase (cuando se integre: decidir si se versiona)
+google-services.json
