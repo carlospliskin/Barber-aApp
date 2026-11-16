@@ -10,6 +10,7 @@ import com.barberia.feature.auth.domain.repository.AuthResult
 import com.barberia.feature.auth.domain.repository.ClientRegistration
 import com.barberia.feature.auth.domain.repository.OwnerRegistration
 import com.barberia.feature.auth.domain.repository.SessionRepository
+import com.barberia.feature.auth.domain.repository.UserDataEraser
 import kotlinx.coroutines.flow.MutableStateFlow
 
 fun user(role: StaffRole? = null, name: String = "Ana Pérez") = AuthUser(
@@ -55,6 +56,24 @@ class FakeAuthRepository(var result: AuthResult<Unit> = AppResult.Success(Unit))
     override suspend fun reloadUser(): AuthResult<Boolean> {
         calls += "reloadUser"
         return AppResult.Success(verified)
+    }
+
+    var reauthResult: AuthResult<Unit> = AppResult.Success(Unit)
+    override suspend fun reauthenticate(password: String): AuthResult<Unit> {
+        calls += "reauthenticate"
+        return reauthResult
+    }
+    override suspend fun deleteAccount(): AuthResult<Unit> {
+        calls += "deleteAccount"
+        return result
+    }
+}
+
+class FakeUserDataEraser(var result: AuthResult<Unit> = AppResult.Success(Unit)) : UserDataEraser {
+    val erased = mutableListOf<Pair<String, String?>>()
+    override suspend fun erase(uid: String, ownedTenantId: String?): AuthResult<Unit> {
+        erased += uid to ownedTenantId
+        return result
     }
 }
 

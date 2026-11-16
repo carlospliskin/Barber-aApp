@@ -5,4 +5,5 @@
     <string name="home_catalog">Catálogo</string>
     <string name="home_clients">Clientes</string>
     <string name="home_sign_out">Cerrar sesión</string>
+    <string name="home_delete_account">Eliminar mi cuenta</string>
 </resources>

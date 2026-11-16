@@ -13,6 +13,9 @@ import com.barberia.feature.auth.domain.usecase.SelectModeUseCase
 import com.barberia.feature.auth.domain.usecase.SendPasswordResetUseCase
 import com.barberia.feature.auth.domain.usecase.SignInUseCase
 import com.barberia.feature.auth.domain.usecase.SignOutUseCase
+import com.barberia.feature.auth.domain.usecase.DeleteAccountUseCase
+import com.barberia.feature.auth.domain.repository.UserDataEraser
+import com.barberia.feature.booking.domain.usecase.EraseUserDataUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -39,4 +42,8 @@ val authDomainModule = module {
     factoryOf(::RetrySessionUseCase)
     factoryOf(::ResendVerificationEmailUseCase)
     factoryOf(::CheckEmailVerifiedUseCase)
+    // A7: eliminar cuenta (el borrado de datos lo hace booking)
+    factoryOf(::DeleteAccountUseCase)
+    factoryOf(::EraseUserDataUseCase)
+    factory<UserDataEraser> { BookingUserDataEraser(get()) }
 }

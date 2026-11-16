@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -32,10 +33,11 @@ fun HomeRoute(
     onBook: () -> Unit,
     onOpenAgenda: () -> Unit,
     onOpenClients: () -> Unit,
+    onDeleteAccount: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     if (mode == AppMode.CLIENT) {
-        ClientHomeRoute(onBook = onBook, onSignOut = { viewModel.onIntent(HomeIntent.SignOut) })
+        ClientHomeRoute(onBook = onBook, onSignOut = { viewModel.onIntent(HomeIntent.SignOut) }, onDeleteAccount = onDeleteAccount)
         return
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -71,5 +73,6 @@ fun HomeRoute(
             Spacer(Modifier.height(12.dp))
         }
         BarberButton(text = stringResource(R.string.home_sign_out), onClick = { viewModel.onIntent(HomeIntent.SignOut) })
+        TextButton(onClick = onDeleteAccount) { Text(stringResource(R.string.home_delete_account), color = MaterialTheme.colorScheme.error) }
     }
 }

@@ -47,7 +47,10 @@ data class Appointment(
     val clientPhone: String? = null,
 ) {
     val slots: Set<Int> get() = slotKeys(startMinute, endMinute - startMinute)
-    val isWalkIn: Boolean get() = clientUid == null
+    val isWalkIn: Boolean get() = clientUid == null && !isFromDeletedAccount
+
+    /** A7: el cliente borró su cuenta (una cita sin cuenta siempre lleva nombre). */
+    val isFromDeletedAccount: Boolean get() = clientUid == null && clientName.isBlank()
 }
 
 /** Datos públicos de la barbería que necesita el cliente (R6). */

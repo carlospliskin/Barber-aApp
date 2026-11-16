@@ -34,10 +34,10 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun ClientHomeRoute(onBook: () -> Unit, onSignOut: () -> Unit, viewModel: ClientHomeViewModel = koinViewModel()) {
+fun ClientHomeRoute(onBook: () -> Unit, onSignOut: () -> Unit, onDeleteAccount: () -> Unit = {}, viewModel: ClientHomeViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     AskNotificationPermissionOnce()
-    ClientHomeScreen(state, viewModel::onIntent, onBook, onSignOut)
+    ClientHomeScreen(state, viewModel::onIntent, onBook, onSignOut, onDeleteAccount)
 }
 
 @Composable
@@ -46,6 +46,7 @@ fun ClientHomeScreen(
     onIntent: (ClientHomeIntent) -> Unit,
     onBook: () -> Unit,
     onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit = {},
 ) {
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(24.dp),
@@ -77,6 +78,7 @@ fun ClientHomeScreen(
         }
         RedeemInviteCard()
         TextButton(onClick = onSignOut) { Text(stringResource(R.string.booking_sign_out)) }
+        TextButton(onClick = onDeleteAccount) { Text(stringResource(R.string.booking_delete_account), color = MaterialTheme.colorScheme.error) }
     }
 }
 

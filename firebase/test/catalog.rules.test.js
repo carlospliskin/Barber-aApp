@@ -74,9 +74,10 @@ describe("tenants/{t}/catalog/main", () => {
     await assertFails(getDoc(doc(anon(), "tenants/ana/catalog/main")));
   });
 
-  test("no se puede listar ni borrar", async () => {
+  test("no se puede listar; solo el dueño lo borra (A7: cerrar la barbería)", async () => {
     await seed({ ...catalog(1), updatedAt: new Date() });
     await assertFails(getDocs(collection(client(), "tenants/ana/catalog")));
-    await assertFails(deleteDoc(doc(owner(), "tenants/ana/catalog/main")));
+    await assertFails(deleteDoc(doc(client(), "tenants/ana/catalog/main")));
+    await assertSucceeds(deleteDoc(doc(owner(), "tenants/ana/catalog/main")));
   });
 });

@@ -228,5 +228,5 @@ internal suspend fun <T> unwrapSlotTaken(block: suspend () -> T): T = try {
 private fun Map<String, Any?>.toFirestore(): Map<String, Any?> =
     mapValues { (_, v) -> if (v is Instant) Timestamp(v.epochSecond, v.nano) else v }
 
-private fun Map<String, Any?>.fromFirestore(): Map<String, Any?> =
+internal fun Map<String, Any?>.fromFirestore(): Map<String, Any?> =
     mapValues { (_, v) -> if (v is Timestamp) Instant.ofEpochSecond(v.seconds, v.nanoseconds.toLong()) else v }

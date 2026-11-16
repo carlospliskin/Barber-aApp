@@ -38,7 +38,7 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 7 | Clientes, penalizaciones y lealtad | ✅ |
 | 8 | Recordatorios locales, Crashlytics, App Check, versión release | ✅ (App Check se activa con el proyecto real) |
 | 8.5 | Huecos de negocio: el personal agenda clientes sin app (N1) y días libres (N2) | ✅ |
-| 9 | Eliminar cuenta (requisito de Google Play) y publicación | ⏭️ siguiente |
+| 9 | Eliminar cuenta (requisito de Google Play) y publicación | 🟡 eliminar cuenta ✅; publicación espera el proyecto real (L1, L2, PLAY-1) |
 
 ## Modelo de datos (pensado para gastar poco)
 
@@ -195,6 +195,15 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] G1. **Pérdida de datos**: el formulario de horario solo editaba el primer turno y al guardar borraba el turno partido.
 - [x] G2. Si fallaba la escucha del catálogo se mostraba "sin conexión" en vez del motivo real (p. ej. sin permiso).
 - [x] G3. No existía una vista general de la app: `scripts/app_map.py` genera `docs/APP_MAP.md` + JSON y el CI falla si se desactualiza.
+
+### Encontrados en la fase 9 (eliminar cuenta, A7)
+- [x] A7. Eliminar cuenta y datos desde la app, sin Cloud Functions (ver DEUDA_TECNICA «Resueltos»).
+- [x] A7-a. La casilla de confirmación solo respondía al cuadrito.
+- [x] A7-e. Una cita anonimizada se veía como "Sin app" con nombre vacío → "Cliente que eliminó su cuenta" (`isFromDeletedAccount`).
+- [ ] A7-b. Barberos de una barbería borrada quedan con un rol que apunta a nada (P1).
+- [ ] A7-c. Clientes de una barbería borrada la conservan en el teléfono con recordatorios (P2).
+- [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
+- [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app).
 
 ### Limitaciones por usar solo Spark (decisiones conscientes)
 - Sin Cloud Functions no hay **push del servidor** → recordatorios con notificaciones **locales** (WorkManager) y avisos en vivo con listeners mientras la app está abierta.

@@ -86,4 +86,6 @@
         <item quantity="other">Cliente penalizado 14 días por 3 faltas. Se cancelaron %1$d citas futuras.</item>
     </plurals>
     <string name="agenda_penalty_pending">No se pudieron cancelar %1$d citas futuras (¿sin conexión?). Cancélalas desde la agenda de su día.</string>
+    <string name="booking_delete_account">Eliminar mi cuenta</string>
+    <string name="agenda_deleted_account">Cliente que eliminó su cuenta</string>
 </resources>

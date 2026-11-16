@@ -68,6 +68,10 @@ class FirebaseAccountRepositoryTest {
             uid.value = null
             account = null
         }
+        override suspend fun reauthenticate(password: String) {
+            calls += "reauth"
+            error?.let { throw it }
+        }
         override fun signOut() {
             calls += "signOut"
             uid.value = null
@@ -97,6 +101,10 @@ class FirebaseAccountRepositoryTest {
         override suspend fun createClient(uid: String, profile: ProfileRecord) {
             writeError?.let { throw it }
             profiles[uid] = profile
+        }
+        override suspend fun delete(uid: String) {
+            writeError?.let { throw it }
+            profiles.remove(uid)
         }
     }
 
@@ -267,5 +275,33 @@ class FirebaseAccountRepositoryTest {
 
         modes.mode.value = "otro-uid:OWNER" // modo que dejó otra cuenta
         assertEquals(null, repo.selectedMode.first())
+    }
+
+    // ── A7 eliminar cuenta ────────────────────────────────────────────────────
+    @Test fun `A7 contrasenia incorrecta al confirmar da InvalidCredentials`() = runTest {
+        auth.error = GatewayError.InvalidCredentials(null)
+        assertEquals(AppResult.Failure(AuthFailure.InvalidCredentials), repo().reauthenticate("mala"))
+    }
+
+    @Test fun `A7 borra el perfil y luego la cuenta, y la sesion queda cerrada`() = runTest {
+        profiles.profiles["u1"] = ProfileRecord("Ana", "ana@mail.com", null, null, null)
+        val repo = repo()
+        repo.signIn("ana@mail.com", "x")
+
+        assertEquals(AppResult.Success(Unit), repo.deleteAccount())
+
+        assertTrue("u1" !in profiles.profiles)
+        assertEquals("delete", auth.calls.last())
+        assertEquals(SessionState.SignedOut, repo.session.first { it != SessionState.Loading })
+    }
+
+    @Test fun `A7 si no se pudo borrar el perfil no se borra la cuenta (se reintenta)`() = runTest {
+        profiles.profiles["u1"] = ProfileRecord("Ana", "ana@mail.com", null, null, null)
+        val repo = repo()
+        repo.signIn("ana@mail.com", "x")
+        profiles.writeError = GatewayError.Network(null)
+
+        assertEquals(AppResult.Failure(AuthFailure.NoConnection), repo.deleteAccount())
+        assertTrue("delete" !in auth.calls)
     }
 }

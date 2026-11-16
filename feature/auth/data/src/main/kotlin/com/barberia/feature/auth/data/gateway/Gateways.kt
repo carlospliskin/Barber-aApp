@@ -25,6 +25,9 @@ internal interface AuthGateway {
     suspend fun reload(): Boolean
     suspend fun sendPasswordReset(email: String)
     suspend fun deleteCurrentUser()
+
+    /** A7: vuelve a iniciar sesión con la contraseña (Firebase lo pide para borrar la cuenta). */
+    suspend fun reauthenticate(password: String)
     fun signOut()
 }
 
@@ -50,6 +53,9 @@ internal interface ProfileGateway {
     /** Escribe perfil + barbería en un solo batch: o se guardan los dos o ninguno. */
     suspend fun createOwner(uid: String, profile: ProfileRecord, tenant: TenantRecord)
     suspend fun createClient(uid: String, profile: ProfileRecord)
+
+    /** A7: borra `users/{uid}`. */
+    suspend fun delete(uid: String)
 }
 
 /** Preferencia local del modo elegido (no se guarda en Firestore: no gasta escrituras). */

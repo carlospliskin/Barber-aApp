@@ -49,6 +49,11 @@ internal class FirestoreProfileGateway(private val db: FirebaseFirestore) : Prof
         Unit
     }
 
+    override suspend fun delete(uid: String) = firebaseCall {
+        db.collection(USERS).document(uid).delete().await()
+        Unit
+    }
+
     private fun ProfileRecord.toMap(): Map<String, Any?> = mapOf(
         "displayName" to displayName,
         "email" to email,

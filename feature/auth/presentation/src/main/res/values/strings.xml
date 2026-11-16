@@ -46,4 +46,15 @@
     <string name="verify_not_yet">Todavía no aparece verificado. Abre el enlace del correo y vuelve a intentar.</string>
     <string name="verify_check">Ya lo verifiqué</string>
     <string name="verify_resend">Reenviar correo</string>
+    <!-- A7: eliminar cuenta -->
+    <string name="delete_account_entry">Eliminar mi cuenta</string>
+    <string name="delete_account_title">Eliminar cuenta</string>
+    <string name="delete_account_what">Se borrarán tu cuenta (%1$s), tu perfil y tus fichas de cliente con visitas, premios y faltas.</string>
+    <string name="delete_account_appointments">Tus citas futuras se cancelan. Las pasadas, y las que ya no se pueden cancelar, quedan en la barbería sin tu nombre.</string>
+    <string name="delete_account_owner">Eres dueño: también se borra tu barbería con su catálogo, citas, clientes e invitaciones. Tus barberos y clientes dejarán de verla.</string>
+    <string name="delete_account_understood">Entiendo que no se puede deshacer</string>
+    <string name="delete_account_password">Confirma tu contraseña</string>
+    <string name="delete_account_confirm">Eliminar definitivamente</string>
+    <string name="delete_account_wait">Borrando… no cierres la app.</string>
+    <string name="delete_account_cancel">Cancelar</string>
 </resources>

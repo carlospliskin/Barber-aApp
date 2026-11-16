@@ -102,8 +102,9 @@ private fun AgendaCard(
 ) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(16.dp)) {
+            val who = if (a.isFromDeletedAccount) stringResource(R.string.agenda_deleted_account) else a.clientName
             Text(
-                "${TimeRange.label(a.startMinute)}–${TimeRange.label(a.endMinute)} · ${a.clientName}",
+                "${TimeRange.label(a.startMinute)}–${TimeRange.label(a.endMinute)} · $who",
                 style = MaterialTheme.typography.titleSmall,
             )
             Text("${a.serviceName} · ${a.barberName} · ${a.price.label}", color = MaterialTheme.colorScheme.onSurfaceVariant)

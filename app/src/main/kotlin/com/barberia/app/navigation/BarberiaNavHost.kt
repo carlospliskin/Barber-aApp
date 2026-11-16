@@ -12,6 +12,7 @@ import androidx.navigation.toRoute
 import com.barberia.app.home.HomeRoute
 import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.auth.domain.model.SessionDestination
+import com.barberia.feature.auth.presentation.account.DeleteAccountRoute
 import com.barberia.feature.auth.presentation.login.LoginRoute
 import com.barberia.feature.auth.presentation.mode.ModeSelectorRoute
 import com.barberia.feature.auth.presentation.register.RegisterRoute
@@ -37,6 +38,7 @@ import org.koin.androidx.compose.koinViewModel
 @Serializable data object AgendaDest
 @Serializable data object WalkInDest
 @Serializable data object ClientsDest
+@Serializable data object DeleteAccountDest
 
 /**
  * La sesión manda: cuando cambia el destino (login, registro, elegir modo, cerrar sesión, sesión
@@ -72,8 +74,10 @@ fun BarberiaNavHost(
                 onBook = { navController.navigate(BookingDest) },
                 onOpenAgenda = { navController.navigate(AgendaDest) },
                 onOpenClients = { navController.navigate(ClientsDest) },
+                onDeleteAccount = { navController.navigate(DeleteAccountDest) },
             )
         }
+        composable<DeleteAccountDest> { DeleteAccountRoute(onBack = { navController.popBackStack() }) }
         composable<ClientsDest> { ClientsRoute(onBack = { navController.popBackStack() }) }
         composable<AgendaDest> {
             AgendaRoute(onBack = { navController.popBackStack() }, onAddWalkIn = { navController.navigate(WalkInDest) })

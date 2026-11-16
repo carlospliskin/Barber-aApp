@@ -22,6 +22,20 @@ interface AuthRepository {
 
     /** A14/A15: recarga el usuario y renueva el token (para que las reglas vean `email_verified`). */
     suspend fun reloadUser(): AuthResult<Boolean>
+
+    /** A7: Firebase pide un inicio de sesión reciente para borrar la cuenta; además confirma que es el dueño. */
+    suspend fun reauthenticate(password: String): AuthResult<Unit>
+
+    /** A7: borra el perfil `users/{uid}` y la cuenta de Firebase Auth (la sesión se cierra sola). */
+    suspend fun deleteAccount(): AuthResult<Unit>
+}
+
+/**
+ * A7: borra lo que el usuario dejó en las barberías (citas, fichas) y, si es dueño, su barbería.
+ * Lo implementa otra feature; `app` lo conecta. Debe poder reintentarse si se corta a la mitad.
+ */
+fun interface UserDataEraser {
+    suspend fun erase(uid: String, ownedTenantId: String?): AuthResult<Unit>
 }
 
 /** Estado de sesión observable (sobrevive a la muerte del proceso) y modo elegido guardado localmente. */

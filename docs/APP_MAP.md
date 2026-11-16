@@ -8,7 +8,7 @@
 
 | Módulos | Pantallas | Casos de uso | Repositorios | Rutas en Firestore | Tests Kotlin | Tests de reglas |
 |---|---|---|---|---|---|---|
-| 14 | 11 | 43 | 4 | 8 | 268 | 113 |
+| 14 | 12 | 45 | 5 | 9 | 295 | 122 |
 
 ## 1. Módulos y dependencias
 
@@ -69,19 +69,19 @@ graph LR
 
 | Módulo | Capa | Archivos Kotlin | Tests | Depende de |
 |---|---|---|---|---|
-| [`:app`](../app) | App (Android) | 6 | 1 | `:core:common`, `:core:designsystem`, `:core:firebase`, `:core:mvi`, `:feature:auth:data`, `:feature:auth:domain`, `:feature:auth:presentation`, `:feature:booking:data`, `:feature:booking:domain`, `:feature:booking:presentation`, `:feature:catalog:data`, `:feature:catalog:domain`, `:feature:catalog:presentation` |
+| [`:app`](../app) | App (Android) | 7 | 3 | `:core:common`, `:core:designsystem`, `:core:firebase`, `:core:mvi`, `:feature:auth:data`, `:feature:auth:domain`, `:feature:auth:presentation`, `:feature:booking:data`, `:feature:booking:domain`, `:feature:booking:presentation`, `:feature:catalog:data`, `:feature:catalog:domain`, `:feature:catalog:presentation` |
 | [`:core:common`](../core/common) | Kotlin puro | 2 | 2 | — |
 | [`:core:mvi`](../core/mvi) | Android + Compose | 2 | 2 | — |
 | [`:core:firebase`](../core/firebase) | Android | 2 | 0 | — |
 | [`:core:designsystem`](../core/designsystem) | Android + Compose | 5 | 0 | — |
-| [`:feature:auth:domain`](../feature/auth/domain) | Kotlin puro | 6 | 29 | `:core:common` |
-| [`:feature:auth:data`](../feature/auth/data) | Android | 6 | 16 | `:core:firebase`, `:feature:auth:domain` |
-| [`:feature:auth:presentation`](../feature/auth/presentation) | Android + Compose | 13 | 21 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain` |
+| [`:feature:auth:domain`](../feature/auth/domain) | Kotlin puro | 6 | 35 | `:core:common` |
+| [`:feature:auth:data`](../feature/auth/data) | Android | 6 | 19 | `:core:firebase`, `:feature:auth:domain` |
+| [`:feature:auth:presentation`](../feature/auth/presentation) | Android + Compose | 14 | 26 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain` |
 | [`:feature:catalog:domain`](../feature/catalog/domain) | Kotlin puro | 6 | 42 | `:core:common` |
 | [`:feature:catalog:data`](../feature/catalog/data) | Android | 8 | 14 | `:core:firebase`, `:feature:catalog:domain` |
 | [`:feature:catalog:presentation`](../feature/catalog/presentation) | Android + Compose | 6 | 23 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:catalog:domain` |
-| [`:feature:booking:domain`](../feature/booking/domain) | Kotlin puro | 11 | 60 | `:core:common`, `:feature:catalog:domain` |
-| [`:feature:booking:data`](../feature/booking/data) | Android | 8 | 26 | `:core:firebase`, `:feature:booking:domain` |
+| [`:feature:booking:domain`](../feature/booking/domain) | Kotlin puro | 13 | 66 | `:core:common`, `:feature:catalog:domain` |
+| [`:feature:booking:data`](../feature/booking/data) | Android | 11 | 31 | `:core:firebase`, `:feature:booking:domain` |
 | [`:feature:booking:presentation`](../feature/booking/presentation) | Android + Compose | 14 | 32 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:booking:domain`, `:feature:catalog:domain` |
 
 ## 2. Navegación
@@ -99,6 +99,7 @@ graph TD
   RegisterDest["RegisterDest<br/><small>RegisterRoute</small>"]
   ModeSelectionDest["ModeSelectionDest<br/><small>ModeSelectorRoute</small>"]
   HomeDest["HomeDest<br/><small>HomeRoute</small>"]
+  DeleteAccountDest["DeleteAccountDest<br/><small>DeleteAccountRoute</small>"]
   ClientsDest["ClientsDest<br/><small>ClientsRoute</small>"]
   AgendaDest["AgendaDest<br/><small>AgendaRoute</small>"]
   WalkInDest["WalkInDest<br/><small>WalkInRoute</small>"]
@@ -116,6 +117,7 @@ graph TD
   HomeDest --> BookingDest
   HomeDest --> AgendaDest
   HomeDest --> ClientsDest
+  HomeDest --> DeleteAccountDest
   AgendaDest --> WalkInDest
 ```
 
@@ -129,6 +131,7 @@ graph TD
 | `RegisterDest` | [`RegisterRoute`](../feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/register/RegisterScreen.kt) | [`RegisterViewModel`](../feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/register/RegisterViewModel.kt) | Back, BusinessNameChanged, EmailChanged, NameChanged, PasswordChanged, PhoneChanged, Submit, TypeChanged | RegisterClientUseCase, RegisterOwnerUseCase |
 | `ModeSelectionDest` | [`ModeSelectorRoute`](../feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/mode/ModeSelector.kt) | [`ModeSelectorViewModel`](../feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/mode/ModeSelector.kt) | Select | ObserveCurrentUserUseCase, SelectModeUseCase |
 | `HomeDest` | [`HomeRoute`](../app/src/main/kotlin/com/barberia/app/home/HomeScreen.kt) | [`HomeViewModel`](../app/src/main/kotlin/com/barberia/app/home/HomeViewModel.kt)<br/>+ `ClientHomeRoute` (ClientHomeViewModel), `ShareCodeCard` (ShareCodeViewModel), `VerifyEmailCard` (VerifyEmailViewModel), `LoyaltyCard` (LoyaltyViewModel), `RedeemInviteCard` (RedeemInviteViewModel) | Cancel, Check, CodeChanged, DismissFailure, Join, Leave, Redeem, Resend, SignOut | CancelAppointmentUseCase, CancelReminderUseCase, CheckEmailVerifiedUseCase, EnsureShareCodeUseCase, JoinBarbershopUseCase, LeaveBarbershopUseCase, ObserveCurrentUserUseCase, ObserveJoinedBarbershopUseCase, ObserveMyAppointmentsUseCase, ObserveMyLoyaltyUseCase, RedeemBarberInviteUseCase, ResendVerificationEmailUseCase, RetrySessionUseCase, SignOutUseCase, SyncRemindersUseCase |
+| `DeleteAccountDest` | [`DeleteAccountRoute`](../feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/account/DeleteAccount.kt) | [`DeleteAccountViewModel`](../feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/account/DeleteAccount.kt) | Confirm, PasswordChanged, UnderstoodToggled | DeleteAccountUseCase, ObserveCurrentUserUseCase |
 | `ClientsDest` | [`ClientsRoute`](../feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/clients/Clients.kt) | [`ClientsViewModel`](../feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/clients/Clients.kt) | DismissFailure, Forgive, Redeem | ForgivePenaltyUseCase, ObserveClientsUseCase, ObserveCurrentUserUseCase, RedeemRewardUseCase |
 | `AgendaDest` | [`AgendaRoute`](../feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/agenda/AgendaScreen.kt) | [`AgendaViewModel`](../feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/agenda/AgendaViewModel.kt) | Cancel, Complete, DismissFailure, FilterBarber, NextDay, NoShow, PreviousDay, Today | CancelByStaffUseCase, GetBarbershopUseCase, MarkCompletedUseCase, MarkNoShowUseCase, ObserveAgendaUseCase, ObserveCatalogUseCase, ObserveCurrentUserUseCase |
 | `WalkInDest` | [`WalkInRoute`](../feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/walkin/WalkIn.kt) | [`WalkInViewModel`](../feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/walkin/WalkIn.kt) | Confirm, NameChanged, PhoneChanged, SelectBarber, SelectDate, SelectService, SelectSlot | BookWalkInUseCase, GetAvailableSlotsUseCase, GetBarbershopUseCase, ObserveCatalogUseCase, ObserveCurrentUserUseCase |
@@ -146,6 +149,7 @@ para escribir una prueba de interfaz.
 - **RegisterDest**: abrir app → `LoginDest` (la sesión resuelve **Login**) → `RegisterDest` (tocar el botón que navega)
 - **ModeSelectionDest**: abrir app → `ModeSelectionDest` (la sesión resuelve **ModeSelection**)
 - **HomeDest**: abrir app → `HomeDest` (la sesión resuelve **OwnerHome**)
+- **DeleteAccountDest**: abrir app → `HomeDest` (la sesión resuelve **OwnerHome**) → `DeleteAccountDest` (tocar el botón que navega)
 - **ClientsDest**: abrir app → `HomeDest` (la sesión resuelve **OwnerHome**) → `ClientsDest` (tocar el botón que navega)
 - **AgendaDest**: abrir app → `HomeDest` (la sesión resuelve **OwnerHome**) → `AgendaDest` (tocar el botón que navega)
 - **WalkInDest**: abrir app → `HomeDest` (la sesión resuelve **OwnerHome**) → `AgendaDest` (tocar el botón que navega) → `WalkInDest` (tocar el botón que navega)
@@ -153,6 +157,8 @@ para escribir una prueba de interfaz.
 - **CatalogDest**: abrir app → `HomeDest` (la sesión resuelve **OwnerHome**) → `CatalogDest` (tocar el botón que navega)
 
 ## 5. Casos de uso → repositorios
+
+⚠️ **1 caso de uso sin pantalla** (lógica lista que nadie usa todavía): `EraseUserDataUseCase`
 
 | Caso de uso | Usa | Lo usan las pantallas | Archivo |
 |---|---|---|---|
@@ -166,7 +172,9 @@ para escribir una prueba de interfaz.
 | `CancelReminderUseCase` | — | `HomeDest` | [ReminderUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/ReminderUseCases.kt) |
 | `CheckEmailVerifiedUseCase` | AuthRepository | `HomeDest` | [AuthUseCases.kt](../feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt) |
 | `CreateBarberInviteUseCase` | CatalogRepository, InviteRepository | `CatalogDest` | [InviteUseCases.kt](../feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/InviteUseCases.kt) |
+| `DeleteAccountUseCase` | AuthRepository, SessionRepository | `DeleteAccountDest` | [AuthUseCases.kt](../feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt) |
 | `EnsureShareCodeUseCase` | BookingRepository | `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
+| `EraseUserDataUseCase` | AccountDataRepository, BookingRepository | ⚠️ ninguna | [AccountDataUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AccountDataUseCases.kt) |
 | `ForgivePenaltyUseCase` | BookingRepository | `ClientsDest` | [LoyaltyUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/LoyaltyUseCases.kt) |
 | `GetAvailableSlotsUseCase` | BookingRepository, CatalogRepository | `BookingDest`, `WalkInDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
 | `GetBarbershopUseCase` | BookingRepository | `AgendaDest`, `WalkInDest` | [AgendaUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt) |
@@ -177,7 +185,7 @@ para escribir una prueba de interfaz.
 | `ObserveAgendaUseCase` | BookingRepository | `AgendaDest` | [AgendaUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt) |
 | `ObserveCatalogUseCase` | CatalogRepository | `AgendaDest`, `BookingDest`, `CatalogDest`, `WalkInDest` | [CatalogUseCases.kt](../feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt) |
 | `ObserveClientsUseCase` | BookingRepository | `ClientsDest` | [LoyaltyUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/LoyaltyUseCases.kt) |
-| `ObserveCurrentUserUseCase` | SessionRepository | `AgendaDest`, `BookingDest`, `CatalogDest`, `ClientsDest`, `HomeDest`, `ModeSelectionDest`, `WalkInDest` | [AuthUseCases.kt](../feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt) |
+| `ObserveCurrentUserUseCase` | SessionRepository | `AgendaDest`, `BookingDest`, `CatalogDest`, `ClientsDest`, `DeleteAccountDest`, `HomeDest`, `ModeSelectionDest`, `WalkInDest` | [AuthUseCases.kt](../feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt) |
 | `ObserveJoinedBarbershopUseCase` | BookingRepository | `BookingDest`, `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
 | `ObserveMyAppointmentsUseCase` | BookingRepository | `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
 | `ObserveMyLoyaltyUseCase` | BookingRepository | `HomeDest` | [LoyaltyUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/LoyaltyUseCases.kt) |
@@ -203,6 +211,7 @@ para escribir una prueba de interfaz.
 | Implementación | Implementa | Archivo |
 |---|---|---|
 | `FirebaseAccountRepository` | AuthRepository, SessionRepository | [FirebaseAccountRepository.kt](../feature/auth/data/src/main/kotlin/com/barberia/feature/auth/data/repository/FirebaseAccountRepository.kt) |
+| `FirestoreAccountDataRepository` | AccountDataRepository | [FirestoreAccountDataRepository.kt](../feature/booking/data/src/main/kotlin/com/barberia/feature/booking/data/repository/FirestoreAccountDataRepository.kt) |
 | `FirestoreBookingRepository` | BookingRepository | [FirestoreBookingRepository.kt](../feature/booking/data/src/main/kotlin/com/barberia/feature/booking/data/repository/FirestoreBookingRepository.kt) |
 | `FirestoreCatalogRepository` | CatalogRepository | [FirestoreCatalogRepository.kt](../feature/catalog/data/src/main/kotlin/com/barberia/feature/catalog/data/repository/FirestoreCatalogRepository.kt) |
 | `FirestoreInviteRepository` | InviteRepository | [FirestoreInviteRepository.kt](../feature/catalog/data/src/main/kotlin/com/barberia/feature/catalog/data/repository/FirestoreInviteRepository.kt) |
@@ -213,14 +222,15 @@ para escribir una prueba de interfaz.
 
 | Ruta | Operaciones |
 |---|---|
-| `/users/{uid}` | read, create, update, delete ✗ |
-| `/tenants/{tenantId}` | get, list ✗, create, update, delete ✗ |
-| `/tenants/{tenantId}/catalog/{docId}` | get, list ✗, create, update, delete ✗ |
-| `/tenants/{tenantId}/appointments/{apptId}` | get, list, create, update, delete ✗ |
-| `/tenants/{tenantId}/days/{dayId}` | get, list ✗, create, update, delete ✗ |
-| `/shareCodes/{code}` | get, list ✗, create, update ✗, delete ✗ |
-| `/tenants/{tenantId}/clients/{clientUid}` | get, list, create, update, delete ✗ |
-| `/staffInvites/{code}` | get, list ✗, create, update, delete ✗ |
+| `/users/{uid}` | read, create, update, delete |
+| `/tenants/{tenantId}` | get, list ✗, create, update, delete |
+| `/tenants/{tenantId}/catalog/{docId}` | get, list ✗, create, update, delete |
+| `/tenants/{tenantId}/appointments/{apptId}` | get, list, create, update, delete |
+| `/tenants/{tenantId}/days/{dayId}` | get, list ✗, create, update, delete |
+| `/shareCodes/{code}` | get, list ✗, create, update ✗, delete |
+| `/tenants/{tenantId}/clients/{clientUid}` | get, list, create, update, delete |
+| `/staffInvites/{code}` | get, list, create, update, delete |
+| `/{path=**}/appointments/{apptId}` | list |
 
 ## 7. ¿Dónde le muevo?
 

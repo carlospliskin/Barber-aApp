@@ -82,9 +82,10 @@ describe("users/{uid}", () => {
     await assertFails(updateDoc(doc(ana(), "users/ana"), { staffRole: "OWNER", staffTenantId: "ana" }));
   });
 
-  test("no se borra desde la app (fase 9: eliminar cuenta)", async () => {
+  test("A7: cada quien borra solo su perfil", async () => {
     await seed("users/ana", clientProfile());
-    await assertFails(deleteDoc(doc(ana(), "users/ana")));
+    await assertFails(deleteDoc(doc(beto(), "users/ana")));
+    await assertSucceeds(deleteDoc(doc(ana(), "users/ana")));
   });
 });
 

@@ -4,6 +4,7 @@ import com.barberia.feature.auth.data.gateway.AccountInfo
 import com.barberia.core.firebase.GatewayError
 import com.barberia.core.firebase.firebaseCall
 import com.barberia.feature.auth.data.gateway.AuthGateway
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -50,6 +51,14 @@ internal class FirebaseAuthGateway(private val auth: FirebaseAuth) : AuthGateway
 
     override suspend fun deleteCurrentUser() {
         firebaseCall { auth.currentUser?.delete()?.await() }
+    }
+
+    override suspend fun reauthenticate(password: String) {
+        firebaseCall {
+            val user = auth.currentUser ?: throw GatewayError.InvalidCredentials()
+            val email = user.email ?: throw GatewayError.InvalidCredentials()
+            user.reauthenticate(EmailAuthProvider.getCredential(email, password)).await()
+        }
     }
 
     override fun signOut() = auth.signOut()

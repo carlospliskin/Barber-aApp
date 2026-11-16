@@ -119,6 +119,17 @@ internal class FirebaseAccountRepository(
         return AppResult.Success(verified)
     }
 
+    override suspend fun reauthenticate(password: String): AuthResult<Unit> = attempt { auth.reauthenticate(password) }
+
+    /** A7: primero el perfil (necesita la sesión para pasar las reglas), al final la cuenta. */
+    override suspend fun deleteAccount(): AuthResult<Unit> {
+        val uid = currentUser()?.uid ?: auth.currentAccount()?.uid ?: return AppResult.Failure(AuthFailure.NotSignedIn)
+        return attempt {
+            profiles.delete(uid)
+            auth.deleteCurrentUser()
+        }
+    }
+
     // ── Internos ──────────────────────────────────────────────────────────────
 
     private suspend fun loadSession(uid: String): SessionState {

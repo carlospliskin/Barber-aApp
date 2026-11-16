@@ -90,7 +90,7 @@ service cloud.firestore {
           && isOptionalText(request.resource.data.phone, 20))
         || redeemsInvite()
       );
-      allow delete: if false; // Fase 9: eliminar cuenta
+      allow delete: if isSelf(uid); // A7: eliminar cuenta
     }
 
     // ── tenants/{ownerUid} ───────────────────────────────────────────────────
@@ -114,7 +114,7 @@ service cloud.firestore {
         // R7: solo un código que apunte a esta barbería
         && (!('shareCode' in request.resource.data.diff(resource.data).affectedKeys())
             || getAfter(/databases/$(database)/documents/shareCodes/$(request.resource.data.shareCode)).data.tenantId == tenantId);
-      allow delete: if false;
+      allow delete: if isSelf(tenantId); // A7: el dueño cierra su barbería
     }
 
     // ── tenants/{ownerUid}/catalog/main ──────────────────────────────────────
@@ -138,7 +138,7 @@ service cloud.firestore {
       allow update: if isSelf(tenantId) && emailVerified()
         && validCatalog(request.resource.data)
         && request.resource.data.version == resource.data.version + 1;
-      allow delete: if false;
+      allow delete: if isSelf(tenantId); // A7
     }
 
     // ── Reservas ─────────────────────────────────────────────────────────────
@@ -234,7 +234,18 @@ service cloud.firestore {
         || (isStaffOfTenant(tenantId) && clientPenalized(resource.data));
       allow create: if signedIn() && validNew(request.resource.data);
       // Cancelar: el cliente hasta 2 h antes (B7); el dueño cuando sea. Se liberan los bloques en el mismo batch.
-      allow update: if resource.data.status == 'BOOKED'
+      // A7: el cliente que borra su cuenta quita su nombre y su uid. Una cita que aún puede cancelar
+      // se cancela antes (si no, dejaría el horario ocupado).
+      function anonymizes() {
+        return isMine()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['clientUid', 'clientName', 'updatedAt'])
+          && request.resource.data.clientUid == null
+          && request.resource.data.clientName == ''
+          && (resource.data.status != 'BOOKED'
+              || request.time >= resource.data.startsAt - duration.value(2, 'h'));
+      }
+
+      allow update: if anonymizes() || (resource.data.status == 'BOOKED'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
         && (
           // Cancelar (libera bloques en el mismo batch). Cliente hasta 2 h antes; personal cuando sea (A5).
@@ -254,8 +265,8 @@ service cloud.firestore {
             && (resource.data.clientUid == null
                 || getAfter(/databases/$(database)/documents/tenants/$(tenantId)/clients/$(resource.data.clientUid))
                      .data.lastAppointmentId == apptId))
-        );
-      allow delete: if false;
+        ));
+      allow delete: if isSelf(tenantId); // A7
     }
 
     match /tenants/{tenantId}/days/{dayId} {
@@ -291,7 +302,7 @@ service cloud.firestore {
           && request.resource.data.booked.diff(resource.data.booked).removedKeys() == apptAfter().slotKeys.toSet()
           && bookingFor(apptAfter(), 'CANCELLED'))
       );
-      allow delete: if false;
+      allow delete: if isSelf(tenantId); // A7
     }
 
     // ── shareCodes/{code} (B0) ───────────────────────────────────────────────
@@ -304,7 +315,8 @@ service cloud.firestore {
         && request.resource.data.tenantId == request.auth.uid
         && request.resource.data.createdAt == request.time
         && code.size() == 6;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if signedIn() && resource.data.tenantId == request.auth.uid; // A7
     }
 
     // ── tenants/{t}/clients/{uid} (fase 7) ───────────────────────────────────
@@ -396,13 +408,15 @@ service cloud.firestore {
         || forgives(request.resource.data)
         || (exists(apptPath(request.resource.data)) && marksAppointment(request.resource.data))
       );
-      allow delete: if false;
+      // A7: el cliente borra su ficha al eliminar su cuenta; el dueño, al cerrar la barbería.
+      allow delete: if (signedIn() && request.auth.uid == clientUid) || isSelf(tenantId);
     }
 
     // ── staffInvites/{code} (A1) ─────────────────────────────────────────────
     match /staffInvites/{code} {
       allow get: if signedIn();
-      allow list: if false;
+      // A7: el dueño lista las suyas para borrarlas (la consulta filtra por tenantId).
+      allow list: if signedIn() && resource.data.tenantId == request.auth.uid;
       allow create: if signedIn() && emailVerified()
         && isSelf(request.resource.data.tenantId)
         && request.resource.data.keys().hasOnly(['tenantId', 'barberId', 'barberName', 'createdAt', 'expiresAt', 'usedBy'])
@@ -419,7 +433,13 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
         && request.resource.data.usedBy == request.auth.uid
         && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.staffInviteCode == code;
-      allow delete: if false;
+      allow delete: if signedIn() && resource.data.tenantId == request.auth.uid; // A7
+    }
+
+    // ── A7: citas propias en todas las barberías (consulta de grupo) ─────────
+    // Solo para encontrarlas al eliminar la cuenta; la consulta debe filtrar por clientUid.
+    match /{path=**}/appointments/{apptId} {
+      allow list: if signedIn() && resource.data.clientUid == request.auth.uid;
     }
 
     // Todo lo que no esté declarado arriba queda cerrado.

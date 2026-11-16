@@ -19,8 +19,8 @@
         ":feature:catalog:domain",
         ":feature:catalog:presentation"
       ],
-      "kotlinFiles": 6,
-      "unitTests": 1
+      "kotlinFiles": 7,
+      "unitTests": 3
     },
     {
       "path": ":core:common",
@@ -62,7 +62,7 @@
         ":core:common"
       ],
       "kotlinFiles": 6,
-      "unitTests": 29
+      "unitTests": 35
     },
     {
       "path": ":feature:auth:data",
@@ -73,7 +73,7 @@
         ":feature:auth:domain"
       ],
       "kotlinFiles": 6,
-      "unitTests": 16
+      "unitTests": 19
     },
     {
       "path": ":feature:auth:presentation",
@@ -84,8 +84,8 @@
         ":core:mvi",
         ":feature:auth:domain"
       ],
-      "kotlinFiles": 13,
-      "unitTests": 21
+      "kotlinFiles": 14,
+      "unitTests": 26
     },
     {
       "path": ":feature:catalog:domain",
@@ -129,8 +129,8 @@
         ":core:common",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 11,
-      "unitTests": 60
+      "kotlinFiles": 13,
+      "unitTests": 66
     },
     {
       "path": ":feature:booking:data",
@@ -140,8 +140,8 @@
         ":core:firebase",
         ":feature:booking:domain"
       ],
-      "kotlinFiles": 8,
-      "unitTests": 26
+      "kotlinFiles": 11,
+      "unitTests": 31
     },
     {
       "path": ":feature:booking:presentation",
@@ -184,6 +184,10 @@
       {
         "route": "HomeDest",
         "screen": "HomeRoute"
+      },
+      {
+        "route": "DeleteAccountDest",
+        "screen": "DeleteAccountRoute"
       },
       {
         "route": "ClientsDest",
@@ -236,6 +240,16 @@
         "from": "HomeDest",
         "to": "ClientsDest",
         "trigger": "botón en pantalla"
+      },
+      {
+        "from": "HomeDest",
+        "to": "DeleteAccountDest",
+        "trigger": "botón en pantalla"
+      },
+      {
+        "from": "DeleteAccountDest",
+        "to": "(atrás)",
+        "trigger": "volver"
       },
       {
         "from": "ClientsDest",
@@ -346,6 +360,19 @@
         {
           "to": "HomeDest",
           "how": "la sesión resuelve **OwnerHome**"
+        }
+      ]
+    },
+    {
+      "route": "DeleteAccountDest",
+      "steps": [
+        {
+          "to": "HomeDest",
+          "how": "la sesión resuelve **OwnerHome**"
+        },
+        {
+          "to": "DeleteAccountDest",
+          "how": "tocar el botón que navega"
         }
       ]
     },
@@ -569,6 +596,23 @@
       ]
     },
     {
+      "route": "DeleteAccountDest",
+      "screen": "DeleteAccountRoute",
+      "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/account/DeleteAccount.kt",
+      "viewModel": "DeleteAccountViewModel",
+      "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/account/DeleteAccount.kt",
+      "embedded": [],
+      "intents": [
+        "Confirm",
+        "PasswordChanged",
+        "UnderstoodToggled"
+      ],
+      "useCases": [
+        "DeleteAccountUseCase",
+        "ObserveCurrentUserUseCase"
+      ]
+    },
+    {
       "route": "ClientsDest",
       "screen": "ClientsRoute",
       "file": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/clients/Clients.kt",
@@ -787,9 +831,25 @@
       ]
     },
     {
+      "name": "DeleteAccountUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository",
+        "SessionRepository"
+      ]
+    },
+    {
       "name": "EnsureShareCodeUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
       "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
+      "name": "EraseUserDataUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AccountDataUseCases.kt",
+      "uses": [
+        "AccountDataRepository",
         "BookingRepository"
       ]
     },
@@ -1035,6 +1095,13 @@
       "file": "feature/auth/data/src/main/kotlin/com/barberia/feature/auth/data/repository/FirebaseAccountRepository.kt"
     },
     {
+      "implementation": "FirestoreAccountDataRepository",
+      "implements": [
+        "AccountDataRepository"
+      ],
+      "file": "feature/booking/data/src/main/kotlin/com/barberia/feature/booking/data/repository/FirestoreAccountDataRepository.kt"
+    },
+    {
       "implementation": "FirestoreBookingRepository",
       "implements": [
         "BookingRepository"
@@ -1063,7 +1130,7 @@
         "read",
         "create",
         "update",
-        "delete ✗"
+        "delete"
       ]
     },
     {
@@ -1073,7 +1140,7 @@
         "list ✗",
         "create",
         "update",
-        "delete ✗"
+        "delete"
       ]
     },
     {
@@ -1083,7 +1150,7 @@
         "list ✗",
         "create",
         "update",
-        "delete ✗"
+        "delete"
       ]
     },
     {
@@ -1093,7 +1160,7 @@
         "list",
         "create",
         "update",
-        "delete ✗"
+        "delete"
       ]
     },
     {
@@ -1103,7 +1170,7 @@
         "list ✗",
         "create",
         "update",
-        "delete ✗"
+        "delete"
       ]
     },
     {
@@ -1113,7 +1180,7 @@
         "list ✗",
         "create",
         "update ✗",
-        "delete ✗"
+        "delete"
       ]
     },
     {
@@ -1123,19 +1190,25 @@
         "list",
         "create",
         "update",
-        "delete ✗"
+        "delete"
       ]
     },
     {
       "path": "/staffInvites/{code}",
       "ops": [
         "get",
-        "list ✗",
+        "list",
         "create",
         "update",
-        "delete ✗"
+        "delete"
+      ]
+    },
+    {
+      "path": "/{path=**}/appointments/{apptId}",
+      "ops": [
+        "list"
       ]
     }
   ],
-  "rulesTests": 113
+  "rulesTests": 122
 }

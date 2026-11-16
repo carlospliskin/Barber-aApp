@@ -12,6 +12,9 @@ import com.barberia.feature.auth.domain.repository.AuthResult
 import com.barberia.feature.auth.domain.repository.ClientRegistration
 import com.barberia.feature.auth.domain.repository.OwnerRegistration
 import com.barberia.feature.auth.domain.repository.SessionRepository
+import com.barberia.feature.auth.domain.repository.UserDataEraser
+import com.barberia.feature.auth.domain.model.FieldError
+import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.validation.AuthValidator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -87,6 +90,26 @@ class ResendVerificationEmailUseCase(private val auth: AuthRepository) {
 class CheckEmailVerifiedUseCase(private val auth: AuthRepository) {
     /** `true` si el usuario ya abrió el enlace del correo. */
     suspend operator fun invoke(): AuthResult<Boolean> = auth.reloadUser()
+}
+
+/**
+ * A7: eliminar cuenta. Orden: confirmar contraseña → borrar datos → borrar cuenta.
+ * Si algo falla antes del último paso la cuenta sigue y se puede reintentar (los datos se borran por partes).
+ */
+class DeleteAccountUseCase(
+    private val auth: AuthRepository,
+    private val session: SessionRepository,
+    private val eraser: UserDataEraser,
+) {
+    suspend operator fun invoke(password: String): AuthResult<Unit> {
+        val user = session.currentUser() ?: return AppResult.Failure(AuthFailure.NotSignedIn)
+        if (password.isBlank()) return invalid(setOf(FieldError.PASSWORD_EMPTY))
+        auth.reauthenticate(password).let { if (it is AppResult.Failure) return it }
+        val owned = user.staffTenantId.takeIf { user.staffRole == StaffRole.OWNER }
+        eraser.erase(user.uid, owned).let { if (it is AppResult.Failure) return it }
+        session.saveMode(null)
+        return auth.deleteAccount()
+    }
 }
 
 class ObserveSessionDestinationUseCase(private val session: SessionRepository) {
