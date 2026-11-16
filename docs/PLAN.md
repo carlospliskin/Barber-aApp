@@ -22,6 +22,8 @@
 
 Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/`. Nunca contra el proyecto real: así no se gasta cuota.
 
+> Backlog completo de pendientes y deuda técnica, con prioridad y esfuerzo: [DEUDA_TECNICA.md](DEUDA_TECNICA.md).
+
 ## Fases
 
 | Fase | Entrega | Estado |
