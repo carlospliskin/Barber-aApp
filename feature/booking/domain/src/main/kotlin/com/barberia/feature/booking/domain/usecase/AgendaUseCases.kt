@@ -40,10 +40,14 @@ class MarkNoShowUseCase(private val bookings: BookingRepository, private val clo
     }
 }
 
-class CancelByStaffUseCase(private val bookings: BookingRepository) {
-    /** A5: el personal cancela en cualquier momento; se liberan los bloques. */
+class CancelByStaffUseCase(private val bookings: BookingRepository, private val clock: Clock) {
+    /**
+     * A5: el personal cancela y se liberan los bloques.
+     * W4: solo antes de la hora de inicio; después se marca atendida o no-show (si no, se esconden no-shows).
+     */
     suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> {
         if (appointment.status != AppointmentStatus.BOOKED) return AppResult.Failure(BookingFailure.AlreadyClosed)
+        if (!clock.instant().isBefore(appointment.startsAt)) return AppResult.Failure(BookingFailure.CancelTooLate)
         return bookings.cancel(appointment)
     }
 }

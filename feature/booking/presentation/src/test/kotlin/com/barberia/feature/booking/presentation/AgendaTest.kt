@@ -78,7 +78,7 @@ class AgendaTest {
         ObserveAgendaUseCase(bookings),
         MarkCompletedUseCase(bookings, clock),
         MarkNoShowUseCase(bookings, clock),
-        CancelByStaffUseCase(bookings),
+        CancelByStaffUseCase(bookings, clock),
         clock,
     )
 
@@ -132,7 +132,7 @@ class AgendaTest {
 
     @Test fun `A9 aceptar invitacion refresca la sesion para que aparezca el modo barbero`() {
         val session = FakeSessionRepository(SessionState.SignedIn(user()))
-        val vm = RedeemInviteViewModel(ObserveCurrentUserUseCase(session), RedeemBarberInviteUseCase(invites, clock), RetrySessionUseCase(session))
+        val vm = RedeemInviteViewModel(ObserveCurrentUserUseCase(session), RedeemBarberInviteUseCase(invites, FakeCatalogRepository(Catalog(emptyList(), listOf(Barber("b1", "Luis")), 1)), clock), RetrySessionUseCase(session))
         vm.onIntent(RedeemInviteIntent.CodeChanged("mvk234"))
         vm.onIntent(RedeemInviteIntent.Redeem)
         assertEquals("Luis", vm.state.value.joinedAs)
@@ -141,7 +141,7 @@ class AgendaTest {
 
     @Test fun `A8 invitacion invalida se muestra`() {
         val session = FakeSessionRepository(SessionState.SignedIn(user()))
-        val vm = RedeemInviteViewModel(ObserveCurrentUserUseCase(session), RedeemBarberInviteUseCase(invites, clock), RetrySessionUseCase(session))
+        val vm = RedeemInviteViewModel(ObserveCurrentUserUseCase(session), RedeemBarberInviteUseCase(invites, FakeCatalogRepository(Catalog(emptyList(), listOf(Barber("b1", "Luis")), 1)), clock), RetrySessionUseCase(session))
         vm.onIntent(RedeemInviteIntent.CodeChanged("ZZZ999"))
         vm.onIntent(RedeemInviteIntent.Redeem)
         assertEquals(CatalogFailure.InviteInvalid, vm.state.value.failure)

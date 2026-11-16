@@ -50,6 +50,9 @@ data class AgendaState(
     val now: Instant = Instant.EPOCH,
 ) : UiState {
     fun canComplete(a: Appointment) = a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt)
+    /** W4: cancelar solo antes de la hora. */
+    fun canCancel(a: Appointment) = a.status == AppointmentStatus.BOOKED && now.isBefore(a.startsAt)
+
     fun canNoShow(a: Appointment) =
         a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt.plus(MarkNoShowUseCase.NO_SHOW_GRACE))
 }

@@ -95,7 +95,7 @@
         ":core:common"
       ],
       "kotlinFiles": 6,
-      "unitTests": 29
+      "unitTests": 30
     },
     {
       "path": ":feature:catalog:data",
@@ -130,7 +130,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 6,
-      "unitTests": 32
+      "unitTests": 33
     },
     {
       "path": ":feature:booking:data",
@@ -730,6 +730,7 @@
       "name": "RedeemBarberInviteUseCase",
       "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/InviteUseCases.kt",
       "uses": [
+        "CatalogRepository",
         "InviteRepository"
       ]
     },
@@ -926,5 +927,5 @@
       ]
     }
   ],
-  "rulesTests": 75
+  "rulesTests": 76
 }

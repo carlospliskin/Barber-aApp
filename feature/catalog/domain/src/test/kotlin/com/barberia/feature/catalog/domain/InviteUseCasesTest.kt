@@ -49,12 +49,21 @@ class InviteUseCasesTest {
 
     @Test fun `A1 aceptar invitacion valida`() = runTest {
         invites.stored["MVK234"] = valid
-        assertEquals(AppResult.Success(valid), RedeemBarberInviteUseCase(invites, clock)(" mvk-234 ", uid = "tono", alreadyStaff = false))
+        assertEquals(AppResult.Success(valid), RedeemBarberInviteUseCase(invites, catalog, clock)(" mvk-234 ", uid = "tono", alreadyStaff = false))
         assertEquals("tono" to "MVK234", invites.redeemed)
     }
 
+    @Test fun `W2 si el duenio desactivo al barbero la invitacion ya no sirve`() = runTest {
+        invites.stored["MVK234"] = valid.copy(barberId = "b2") // b2 está inactivo
+        assertEquals(
+            AppResult.Failure(CatalogFailure.InviteInvalid),
+            RedeemBarberInviteUseCase(invites, catalog, clock)("MVK234", "tono", alreadyStaff = false),
+        )
+        assertEquals(null, invites.redeemed)
+    }
+
     @Test fun `A8 invitacion usada, vencida, inexistente o persona ya de personal`() = runTest {
-        val redeem = RedeemBarberInviteUseCase(invites, clock)
+        val redeem = RedeemBarberInviteUseCase(invites, catalog, clock)
         assertEquals(AppResult.Failure(CatalogFailure.InviteInvalid), redeem("NADA22", "tono", false))
         invites.stored["MVK234"] = valid.copy(usedBy = "otro")
         assertEquals(AppResult.Failure(CatalogFailure.InviteInvalid), redeem("MVK234", "tono", false))

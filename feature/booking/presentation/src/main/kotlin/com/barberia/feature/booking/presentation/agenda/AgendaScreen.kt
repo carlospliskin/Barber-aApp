@@ -75,7 +75,7 @@ fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: (
             Text(stringResource(R.string.agenda_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         state.appointments.forEach {
-            AgendaCard(it, state.busyId == it.id, state.canComplete(it), state.canNoShow(it), onIntent)
+            AgendaCard(it, state.busyId == it.id, state.canComplete(it), state.canNoShow(it), state.canCancel(it), onIntent)
         }
     }
 }
@@ -86,6 +86,7 @@ private fun AgendaCard(
     busy: Boolean,
     canComplete: Boolean,
     canNoShow: Boolean,
+    canCancel: Boolean,
     onIntent: (AgendaIntent) -> Unit,
 ) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -108,8 +109,10 @@ private fun AgendaCard(
                             Text(stringResource(R.string.agenda_no_show))
                         }
                     }
-                    TextButton(onClick = { onIntent(AgendaIntent.Cancel(a.id)) }, enabled = !busy) {
-                        Text(stringResource(R.string.booking_cancel), color = MaterialTheme.colorScheme.error)
+                    if (canCancel) {
+                        TextButton(onClick = { onIntent(AgendaIntent.Cancel(a.id)) }, enabled = !busy) {
+                            Text(stringResource(R.string.booking_cancel), color = MaterialTheme.colorScheme.error)
+                        }
                     }
                 }
                 AppointmentStatus.COMPLETED -> Text(stringResource(R.string.agenda_status_completed), color = MaterialTheme.colorScheme.primary)

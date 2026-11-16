@@ -54,13 +54,21 @@ class AgendaUseCasesTest {
         val done = appt("a1", status = AppointmentStatus.COMPLETED)
         val late = clockAt("2026-11-16T18:00:00Z")
         assertEquals(AppResult.Failure(BookingFailure.AlreadyClosed), MarkNoShowUseCase(repo, late)(done))
-        assertEquals(AppResult.Failure(BookingFailure.AlreadyClosed), CancelByStaffUseCase(repo)(done))
+        assertEquals(AppResult.Failure(BookingFailure.AlreadyClosed), CancelByStaffUseCase(repo, late)(done))
     }
 
-    @Test fun `A5 el personal cancela cuando sea y libera los bloques`() = runTest {
+    @Test fun `W4 despues de la hora el personal no cancela (se usa atendida o no llego)`() = runTest {
+        val a = appt("a1")
+        assertEquals(
+            AppResult.Failure(BookingFailure.CancelTooLate),
+            CancelByStaffUseCase(repo, clockAt("2026-11-16T16:00:00Z"))(a),
+        )
+    }
+
+    @Test fun `A5 el personal cancela antes de la hora y libera los bloques`() = runTest {
         val a = appt("a1")
         repo.book(a)
-        assertEquals(AppResult.Success(Unit), CancelByStaffUseCase(repo)(a))
+        assertEquals(AppResult.Success(Unit), CancelByStaffUseCase(repo, clockAt("2026-11-16T15:59:00Z"))(a))
         assertEquals(emptyMap<Int, String>(), repo.day("b1", monday))
     }
 

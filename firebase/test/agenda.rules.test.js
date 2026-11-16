@@ -171,3 +171,14 @@ describe("A1 / A8 invitaciones de barbero", () => {
     await assertFails(updateDoc(doc(db("tono"), "users/tono"), { staffTenantId: "ana", staffRole: "BARBER", staffBarberId: "b3", staffInviteCode: "NOEXISTE" }));
   });
 });
+
+describe("W4 el personal no esconde un no-show cancelando", () => {
+  test("después de la hora de inicio el personal ya no puede cancelar", async () => {
+    await world(); // a1 empezó hace 30 min
+    const d = db("ana");
+    const b = writeBatch(d);
+    b.update(doc(d, "tenants/ana/appointments/a1"), { status: "CANCELLED", updatedAt: serverTimestamp() });
+    b.update(doc(d, "tenants/ana/days/b1_2026-11-16"), { "booked.600": deleteField(), "booked.605": deleteField(), lastOp: "a1", updatedAt: serverTimestamp() });
+    await assertFails(b.commit());
+  });
+});

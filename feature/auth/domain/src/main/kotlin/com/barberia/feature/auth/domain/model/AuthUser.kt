@@ -18,10 +18,11 @@ data class AuthUser(
     /** A10: barbero del catálogo al que está ligada esta cuenta (solo rol BARBER). */
     val staffBarberId: String? = null,
 ) {
-    /** Todo el personal también puede reservar como cliente (A6). El dueño también corta (barbero). */
+    /** Todo el personal también puede reservar como cliente (A6). */
     val availableModes: List<AppMode>
         get() = when (staffRole) {
-            StaffRole.OWNER -> listOf(AppMode.OWNER, AppMode.BARBER, AppMode.CLIENT)
+            // W1: el dueño solo trabaja como barbero si está ligado a un barbero del catálogo
+            StaffRole.OWNER -> listOfNotNull(AppMode.OWNER, AppMode.BARBER.takeIf { staffBarberId != null }, AppMode.CLIENT)
             StaffRole.BARBER -> listOf(AppMode.BARBER, AppMode.CLIENT)
             null -> listOf(AppMode.CLIENT)
         }

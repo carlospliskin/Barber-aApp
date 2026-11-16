@@ -91,8 +91,8 @@ class AuthUseCasesTest {
     // ── Elegir modo (A4) ──────────────────────────────────────────────────────
     @Test fun `elegir un modo permitido lo guarda`() = runTest {
         val session = FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER)))
-        assertEquals(AppResult.Success(Unit), SelectModeUseCase(session)(AppMode.BARBER))
-        assertEquals(AppMode.BARBER, session.modeFlow.value)
+        assertEquals(AppResult.Success(Unit), SelectModeUseCase(session)(AppMode.CLIENT))
+        assertEquals(AppMode.CLIENT, session.modeFlow.value)
     }
 
     @Test fun `no se puede elegir un modo que el usuario no tiene`() = runTest {

@@ -31,7 +31,7 @@ class SessionDestinationTest {
     @Test fun `staff con modo valido va directo al home de ese modo (A4 sobrevive reinicio)`() {
         val owner = SessionState.SignedIn(user(StaffRole.OWNER))
         assertEquals(SessionDestination.OwnerHome, resolveDestination(owner, AppMode.OWNER))
-        assertEquals(SessionDestination.BarberHome, resolveDestination(owner, AppMode.BARBER))
+        assertEquals(SessionDestination.ModeSelection, resolveDestination(owner, AppMode.BARBER)) // W1: no ligado
         assertEquals(SessionDestination.ClientHome, resolveDestination(owner, AppMode.CLIENT))
     }
 
@@ -42,7 +42,12 @@ class SessionDestinationTest {
         )
 
     @Test fun `modos disponibles por rol (A6 todo staff tambien es cliente)`() {
-        assertEquals(listOf(AppMode.OWNER, AppMode.BARBER, AppMode.CLIENT), user(StaffRole.OWNER).availableModes)
+        // W1: el dueño solo tiene modo Barbero si está ligado a un barbero del catálogo
+        assertEquals(listOf(AppMode.OWNER, AppMode.CLIENT), user(StaffRole.OWNER).availableModes)
+        assertEquals(
+            listOf(AppMode.OWNER, AppMode.BARBER, AppMode.CLIENT),
+            user(StaffRole.OWNER).copy(staffBarberId = "b1").availableModes,
+        )
         assertEquals(listOf(AppMode.BARBER, AppMode.CLIENT), user(StaffRole.BARBER).availableModes)
         assertEquals(listOf(AppMode.CLIENT), user().availableModes)
     }

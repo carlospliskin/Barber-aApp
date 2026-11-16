@@ -49,7 +49,11 @@ class CreateBarberInviteUseCase(
     }
 }
 
-class RedeemBarberInviteUseCase(private val invites: InviteRepository, private val clock: Clock) {
+class RedeemBarberInviteUseCase(
+    private val invites: InviteRepository,
+    private val catalog: CatalogRepository,
+    private val clock: Clock,
+) {
     /** A1/A8: un cliente sin rol acepta una invitación vigente y sin usar. */
     suspend operator fun invoke(rawCode: String, uid: String, alreadyStaff: Boolean): CatalogResult<StaffInvite> {
         if (alreadyStaff) return AppResult.Failure(CatalogFailure.AlreadyStaff)
@@ -60,6 +64,13 @@ class RedeemBarberInviteUseCase(private val invites: InviteRepository, private v
         }
         if (invite.usedBy != null) return AppResult.Failure(CatalogFailure.InviteInvalid)
         if (!clock.instant().isBefore(invite.expiresAt)) return AppResult.Failure(CatalogFailure.InviteExpired)
+        // W2: el barbero debe seguir activo en el catálogo
+        val stillActive = try {
+            catalog.observe(invite.tenantId).first().barbers.any { it.id == invite.barberId && it.active }
+        } catch (e: CatalogException) {
+            return AppResult.Failure(e.failure)
+        }
+        if (!stillActive) return AppResult.Failure(CatalogFailure.InviteInvalid)
         return when (val r = invites.redeem(invite, uid)) {
             is AppResult.Success -> AppResult.Success(invite)
             is AppResult.Failure -> r

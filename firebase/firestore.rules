@@ -190,7 +190,8 @@ service cloud.firestore {
         && (
           // Cancelar (libera bloques en el mismo batch). Cliente hasta 2 h antes; personal cuando sea (A5).
           (request.resource.data.status == 'CANCELLED'
-            && (isStaffFor(resource.data)
+            // W4: el personal solo antes de la hora (después: atendida o no-show, para no esconder no-shows)
+            && ((isStaffFor(resource.data) && request.time < resource.data.startsAt)
                 || (isMine() && request.time < resource.data.startsAt - duration.value(2, 'h')))
             && dayAfter(resource.data).lastOp == apptId)
           ||
