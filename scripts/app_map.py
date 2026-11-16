@@ -139,7 +139,7 @@ def walkthroughs(nav: dict) -> list[dict]:
 # ── Pantallas, ViewModels, casos de uso ──────────────────────────────────────
 
 def all_kotlin() -> list[Path]:
-    return [p for p in ROOT.glob("**/src/main/**/*.kt") if "/build/" not in p.as_posix() and "build-logic" not in p.as_posix()]
+    return sorted(p for p in ROOT.glob("**/src/main/**/*.kt") if "/build/" not in p.as_posix() and "build-logic" not in p.as_posix())
 
 
 def find_class_file(name: str, files: list[Path]) -> Path | None:
@@ -160,9 +160,12 @@ def constructor_types(text: str, class_name: str) -> list[str]:
 
 
 def intents_of(vm_file: Path, vm_name: str) -> list[str]:
-    folder_texts = "\n".join(read(f) for f in vm_file.parent.glob("*.kt"))
+    # sorted: el orden de glob cambia entre macOS y Linux (el CI). Varios ViewModel pueden compartir carpeta:
+    # primero se busca exactamente <Base>Intent y solo si no existe, cualquier *Intent.
+    folder_texts = "\n".join(read(f) for f in sorted(vm_file.parent.glob("*.kt")))
     base = vm_name.removesuffix("ViewModel")
-    m = re.search(rf"sealed interface ({base}Intent|\w*Intent)\s*:\s*UiIntent", folder_texts)
+    m = re.search(rf"sealed interface ({base}Intent)\s*:\s*UiIntent", folder_texts) \
+        or re.search(r"sealed interface (\w*Intent)\s*:\s*UiIntent", folder_texts)
     if not m:
         return []
     body = block_after(folder_texts, m.end())
@@ -265,7 +268,7 @@ def firestore_paths() -> list[dict]:
 
 
 def rules_tests() -> int:
-    return sum(len(re.findall(r'\btest\("', read(f))) for f in (ROOT / "firebase/test").glob("*.test.js"))
+    return sum(len(re.findall(r'\btest\("', read(f))) for f in sorted((ROOT / "firebase/test").glob("*.test.js")))
 
 
 # ── Salida ───────────────────────────────────────────────────────────────────

@@ -609,7 +609,9 @@
       "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/account/DeleteAccount.kt",
       "embedded": [],
       "intents": [
-        "Leave"
+        "Confirm",
+        "PasswordChanged",
+        "UnderstoodToggled"
       ],
       "useCases": [
         "DeleteAccountUseCase",
