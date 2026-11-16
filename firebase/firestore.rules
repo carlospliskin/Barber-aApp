@@ -1,0 +1,77 @@
+rules_version = '2';
+
+// Reglas pensadas para el plan Spark:
+// - tenants/{id} usa el uid del dueño como id → "¿es el dueño?" se responde sin leer documentos.
+// - Cada get()/exists()/getAfter() en una regla cuenta como una lectura; solo se usan donde no hay otra opción.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isText(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    function isOptionalText(value, max) {
+      return value == null || (value is string && value.size() <= max);
+    }
+
+    // ── users/{uid} ──────────────────────────────────────────────────────────
+    match /users/{uid} {
+      function validProfile(data) {
+        return data.keys().hasOnly(['displayName', 'email', 'phone', 'staffTenantId', 'staffRole', 'createdAt'])
+          && isText(data.displayName, 1, 80)
+          && data.email == request.auth.token.email
+          && isOptionalText(data.phone, 20)
+          && data.createdAt == request.time;
+      }
+
+      // Cliente: sin rol. Dueño: su propia barbería, creada en el mismo batch (A9).
+      // Nadie puede darse el rol de barbero: eso lo hará el dueño (fase 4).
+      function validRole(data) {
+        return (data.staffRole == null && data.staffTenantId == null)
+          || (data.staffRole == 'OWNER'
+              && data.staffTenantId == uid
+              && getAfter(/databases/$(database)/documents/tenants/$(uid)).data.ownerUid == uid);
+      }
+
+      allow read: if isSelf(uid);
+      allow create: if isSelf(uid) && validProfile(request.resource.data) && validRole(request.resource.data);
+      allow update: if isSelf(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'phone'])
+        && isText(request.resource.data.displayName, 1, 80)
+        && isOptionalText(request.resource.data.phone, 20);
+      allow delete: if false; // Fase 9: eliminar cuenta
+    }
+
+    // ── tenants/{ownerUid} ───────────────────────────────────────────────────
+    match /tenants/{tenantId} {
+      function validTenant(data) {
+        return data.keys().hasOnly(['name', 'ownerUid', 'timezone', 'createdAt'])
+          && isText(data.name, 1, 80)
+          && data.ownerUid == tenantId
+          && isText(data.timezone, 3, 64);
+      }
+
+      allow read: if signedIn();
+      allow create: if isSelf(tenantId)
+        && validTenant(request.resource.data)
+        && request.resource.data.createdAt == request.time;
+      allow update: if isSelf(tenantId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'timezone'])
+        && validTenant(request.resource.data);
+      allow delete: if false;
+    }
+
+    // Todo lo que no esté declarado arriba queda cerrado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
