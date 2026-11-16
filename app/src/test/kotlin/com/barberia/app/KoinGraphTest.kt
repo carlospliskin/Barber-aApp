@@ -44,6 +44,7 @@ class KoinGraphTest {
                 // Los provee core:firebase con las fábricas del SDK (no se revisan aquí).
                 FirebaseAuth::class,
                 FirebaseFirestore::class,
+                com.barberia.core.firebase.CachePurge::class,
             ),)
     }
 }

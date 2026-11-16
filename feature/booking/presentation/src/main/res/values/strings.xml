@@ -89,4 +89,10 @@
     <string name="booking_delete_account">Eliminar mi cuenta</string>
     <string name="agenda_deleted_account">Cliente que eliminó su cuenta</string>
     <string name="booking_error_no_access">Ya no tienes acceso a esta barbería.</string>
+    <string name="booking_error_shop_gone">Tu barbería ya no está en la app. Pide el código de otra.</string>
+    <!-- F7-2 -->
+    <string name="agenda_undo">Deshacer</string>
+    <string name="booking_error_undo_expired">Pasaron los 15 minutos para deshacer.</string>
+    <string name="booking_error_reward_used">No se puede deshacer: ya canjeó un premio contando esa visita.</string>
+    <string name="booking_cancel_closed">Ya no se puede cancelar (faltan menos de 2 horas). Si no puedes ir, avisa a la barbería.</string>
 </resources>

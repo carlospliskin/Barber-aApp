@@ -36,6 +36,13 @@ data class ClientRecord(
         return copy(noShows = total, penaltyUntil = penalty)
     }
 
+    /** F7-2: se deshace una visita. */
+    fun undoCompleted(): ClientRecord = copy(completed = completed - 1)
+
+    /** F7-2: se deshace una falta; si fue la que penalizó (3, 6, 9…), se quita la penalización. */
+    fun undoNoShow(p: LoyaltyPolicy): ClientRecord =
+        copy(noShows = noShows - 1, penaltyUntil = if (noShows % p.noShowsForPenalty == 0) null else penaltyUntil)
+
     companion object {
         fun new(uid: String, name: String) = ClientRecord(uid, name, 0, 0, 0, null)
     }

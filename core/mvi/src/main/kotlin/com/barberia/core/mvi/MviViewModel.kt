@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 /** Estado inmutable que la pantalla dibuja. */
@@ -44,7 +45,8 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(initialStat
 
     init {
         viewModelScope.launch {
-            for (intent in intents) handleIntent(intent)
+            // Una falla en un intent no debe cerrar la app ni dejar la pantalla sin responder.
+            for (intent in intents) guarded { handleIntent(intent) }
         }
     }
 
@@ -61,6 +63,28 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(initialStat
 
     /** Trabajo largo (p. ej. observar la sesión) fuera de la cola de intents. */
     protected fun launchInScope(block: suspend () -> Unit) {
-        viewModelScope.launch { block() }
+        viewModelScope.launch { guarded(block) }
     }
+
+    /**
+     * Error que nadie manejó (un `catch` faltante en un Flow, un bug). Sin esto, `viewModelScope`
+     * cerraría la app. Por defecto se reporta a [MviErrors]; la pantalla puede mostrar algo propio.
+     */
+    protected open fun onUnexpectedError(error: Throwable) = MviErrors.report(error)
+
+    private suspend fun guarded(block: suspend () -> Unit) {
+        try {
+            block()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            onUnexpectedError(e)
+        }
+    }
+}
+
+/** Donde terminan los errores inesperados de los ViewModel. `app` lo conecta a Crashlytics (no fatal). */
+object MviErrors {
+    @Volatile var reporter: (Throwable) -> Unit = {}
+    fun report(error: Throwable) = reporter(error)
 }

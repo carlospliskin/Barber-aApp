@@ -77,6 +77,7 @@ class BookingDataTest {
         val codes = mutableMapOf("ABC234" to "t")
         override fun observeUpcoming(tenantId: String, clientUid: String, fromDate: String): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
             lastFrom = fromDate
+            dayError?.let { e -> return kotlinx.coroutines.flow.flow { throw e } }
             return live
         }
         override suspend fun shareCode(code: String): String? = codes[code]
@@ -197,6 +198,18 @@ class BookingDataTest {
         gw.dayError = GatewayError.Network()
         val e2 = runCatching { repo.observeDay("t", cita.date, "b1").first() }.exceptionOrNull()
         assertEquals(BookingFailure.NoConnection, (e2 as com.barberia.feature.booking.domain.model.BookingException).failure)
+    }
+
+    @Test fun `A16-e Mis citas tambien traduce el error`() = runTest {
+        gw.dayError = GatewayError.PermissionDenied()
+        val e = runCatching { repo.observeUpcoming("t", "cli", cita.date).first() }.exceptionOrNull()
+        assertEquals(BookingFailure.NoAccess, (e as com.barberia.feature.booking.domain.model.BookingException).failure)
+    }
+
+    @Test fun `F7-2 la hora en que se marco viene de updatedAt`() {
+        val at = Instant.parse("2026-11-20T16:35:00Z")
+        val m = AppointmentMapper.toMap(cita.copy(status = AppointmentStatus.COMPLETED)) + ("updatedAt" to at)
+        assertEquals(at, AppointmentMapper.fromMap("a1", "t", m)!!.markedAt)
     }
 
     @Test fun `A4 P7 cambiar estado escribe la ficha con lo que exigen las reglas`() = runTest {

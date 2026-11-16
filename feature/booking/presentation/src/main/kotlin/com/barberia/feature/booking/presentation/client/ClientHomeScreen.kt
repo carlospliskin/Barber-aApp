@@ -73,7 +73,7 @@ fun ClientHomeScreen(
             if (state.appointments.isEmpty()) {
                 Text(stringResource(R.string.booking_no_appointments), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            state.appointments.forEach { AppointmentCard(it, state.cancellingId == it.id, onIntent) }
+            state.appointments.forEach { AppointmentCard(it, state.cancellingId == it.id, state.canCancel(it), onIntent) }
             TextButton(onClick = { onIntent(ClientHomeIntent.Leave) }) { Text(stringResource(R.string.booking_change_shop)) }
         }
         RedeemInviteCard()
@@ -83,7 +83,7 @@ fun ClientHomeScreen(
 }
 
 @Composable
-private fun AppointmentCard(a: Appointment, cancelling: Boolean, onIntent: (ClientHomeIntent) -> Unit) {
+private fun AppointmentCard(a: Appointment, cancelling: Boolean, canCancel: Boolean, onIntent: (ClientHomeIntent) -> Unit) {
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -97,10 +97,12 @@ private fun AppointmentCard(a: Appointment, cancelling: Boolean, onIntent: (Clie
                 stringResource(R.string.booking_with, a.barberName, a.price.label),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (a.status == com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED) {
+            if (canCancel) {
                 TextButton(onClick = { onIntent(ClientHomeIntent.Cancel(a.id)) }, enabled = !cancelling) {
                     Text(stringResource(R.string.booking_cancel), color = MaterialTheme.colorScheme.error)
                 }
+            } else if (a.status == com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED) {
+                Text(stringResource(R.string.booking_cancel_closed), color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 Text(stringResource(R.string.booking_cancelled), color = MaterialTheme.colorScheme.error)
             }

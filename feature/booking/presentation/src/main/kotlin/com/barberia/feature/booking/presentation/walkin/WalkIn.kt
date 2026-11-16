@@ -1,5 +1,6 @@
 package com.barberia.feature.booking.presentation.walkin
 
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -126,7 +127,7 @@ class WalkInViewModel(
                         )
                     }
                     observeCatalog(tenantId)
-                        .catch { setState { copy(failure = BookingFailure.NoConnection) } }
+                        .catch { e -> setState { copy(failure = e.asBookingFailure()) } }
                         .first()
                         .let { c -> setState { copy(services = c.bookableServices, barbers = c.bookableBarbers) } }
                 }

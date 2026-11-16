@@ -264,7 +264,27 @@ service cloud.firestore {
               || request.time >= resource.data.startsAt - duration.value(2, 'h'));
       }
 
-      allow update: if anonymizes() || (resource.data.status == 'BOOKED'
+      // F7-2: el dueño deshace "atendida" o "no llegó" dentro de 15 min (la ficha se corrige en el mismo batch).
+      function undoesMark() {
+        return resource.data.status in ['COMPLETED', 'NO_SHOW']
+          && request.resource.data.status == 'BOOKED'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+          && isSelf(tenantId)
+          && request.time < resource.data.get('updatedAt', timestamp.value(0)) + duration.value(15, 'm')
+          && clientTouchedNow(resource.data);
+      }
+
+      // P7/F7-2: la ficha del cliente se escribió en ESTE batch y por esta cita (no basta que ya apuntara a ella:
+      // la primera reserva crea la ficha con esta cita). N1: una cita sin cuenta no tiene ficha.
+      function clientTouchedNow(data) {
+        let client = getAfter(/databases/$(database)/documents/tenants/$(tenantId)/clients/$(data.clientUid)).data;
+        return data.clientUid == null
+          || (client.lastAppointmentId == apptId && client.updatedAt == request.time);
+      }
+
+      // F7-2: la hora del cambio la pone el servidor (el plazo de deshacer depende de ella).
+      allow update: if request.resource.data.get('updatedAt', null) == request.time
+        && (anonymizes() || undoesMark() || (resource.data.status == 'BOOKED'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
         && (
           // Cancelar (libera bloques en el mismo batch). Cliente hasta 2 h antes; personal cuando sea (A5).
@@ -281,10 +301,8 @@ service cloud.firestore {
             && request.time >= resource.data.startsAt
             // P7: la ficha del cliente se actualiza en el mismo batch (no se esquivan contadores).
             // N1: una cita sin cuenta no tiene ficha.
-            && (resource.data.clientUid == null
-                || getAfter(/databases/$(database)/documents/tenants/$(tenantId)/clients/$(resource.data.clientUid))
-                     .data.lastAppointmentId == apptId))
-        ));
+            && clientTouchedNow(resource.data))
+        )));
       allow delete: if isSelf(tenantId); // A7
     }
 
@@ -412,6 +430,29 @@ service cloud.firestore {
           );
       }
 
+      // F7-2: deshacer (solo el dueño): la cita vuelve a BOOKED en el mismo batch y se resta lo que sumó.
+      function undoesMark(d) {
+        let before = get(apptPath(d)).data;
+        let after = getAfter(apptPath(d)).data;
+        return resource != null && isSelf(tenantId)
+          && before.clientUid == clientUid
+          && after.status == 'BOOKED'
+          && d.rewardsUsed == prev('rewardsUsed')
+          && (
+            (before.status == 'COMPLETED'
+              && d.completed == prev('completed') - 1
+              && d.noShows == prev('noShows')
+              && d.penaltyUntil == prevPenalty()
+              && d.rewardsUsed * 10 <= d.completed) // no si ya canjeó un premio con esa visita
+            ||
+            (before.status == 'NO_SHOW'
+              && d.completed == prev('completed')
+              && d.noShows == prev('noShows') - 1
+              // si esa falta fue la que penalizó (3, 6, 9…), se quita la penalización
+              && (d.penaltyUntil == prevPenalty() || (prev('noShows') % 3 == 0 && d.penaltyUntil == null)))
+          );
+      }
+
       // P4: canjear un premio (cada 10 visitas). F7-8: solo el dueño.
       function redeemsReward(d) {
         return resource != null && isSelf(tenantId)
@@ -444,6 +485,7 @@ service cloud.firestore {
         redeemsReward(request.resource.data)
         || forgives(request.resource.data)
         || (exists(apptPath(request.resource.data)) && marksAppointment(request.resource.data))
+        || (exists(apptPath(request.resource.data)) && undoesMark(request.resource.data))
       );
       // A7: el cliente borra su ficha al eliminar su cuenta; el dueño, al cerrar la barbería.
       allow delete: if (signedIn() && request.auth.uid == clientUid) || isSelf(tenantId);

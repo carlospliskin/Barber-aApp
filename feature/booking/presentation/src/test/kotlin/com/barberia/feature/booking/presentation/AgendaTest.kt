@@ -79,6 +79,7 @@ class AgendaTest {
         MarkCompletedUseCase(bookings, clock),
         MarkNoShowUseCase(bookings, clock),
         CancelByStaffUseCase(bookings, clock),
+        com.barberia.feature.booking.domain.usecase.UndoMarkUseCase(bookings, com.barberia.feature.booking.domain.model.LoyaltyPolicy(), clock),
         clock,
     )
 
@@ -96,6 +97,43 @@ class AgendaTest {
         val vm = vm(StaffRole.BARBER, barberId = "b1")
         assertEquals(BookingFailure.NoAccess, vm.state.value.failure)
         assertEquals(emptyList<String>(), vm.state.value.appointments.map { it.id })
+        assertTrue(vm.state.value.noAccess)
+        vm.onIntent(AgendaIntent.DismissFailure)
+        assertTrue(vm.state.value.noAccess) // quitar el aviso no vuelve a mostrar "+ Agendar cliente"
+    }
+
+    @Test fun `con acceso se puede agendar sin cuenta`() {
+        assertEquals(false, vm(StaffRole.BARBER, barberId = "b1").state.value.noAccess)
+    }
+
+    @Test fun `F7-2 el duenio deshace una atendida por error`() {
+        bookings.serverNow = Instant.parse("2026-11-16T16:55:00Z") // se marcó hace 5 min
+        val vm = vm(StaffRole.OWNER)
+        vm.onIntent(AgendaIntent.Complete("a1"))
+        val marked = vm.state.value.appointments.first { it.id == "a1" }
+        assertEquals(AppointmentStatus.COMPLETED, marked.status)
+        assertTrue(vm.state.value.canUndo(marked))
+
+        vm.onIntent(AgendaIntent.Undo("a1"))
+        assertEquals(AppointmentStatus.BOOKED, vm.state.value.appointments.first { it.id == "a1" }.status)
+        assertEquals(0, bookings.clients.getValue("cli").completed)
+    }
+
+    @Test fun `F7-2 deshacer el no-show que penalizo quita el aviso de penalizacion`() {
+        bookings.serverNow = Instant.parse("2026-11-16T16:55:00Z")
+        bookings.clients["cli"] = com.barberia.feature.booking.domain.model.ClientRecord("cli", "Ana", 0, noShows = 2, rewardsUsed = 0, penaltyUntil = null)
+        val vm = vm(StaffRole.OWNER)
+        vm.onIntent(AgendaIntent.NoShow("a1"))
+        assertTrue(vm.state.value.penaltyNotice?.penalized == true)
+        vm.onIntent(AgendaIntent.Undo("a1"))
+        assertNull(vm.state.value.penaltyNotice)
+    }
+
+    @Test fun `F7-2 el barbero no ve deshacer`() {
+        bookings.serverNow = Instant.parse("2026-11-16T16:55:00Z")
+        val vm = vm(StaffRole.BARBER, barberId = "b1")
+        vm.onIntent(AgendaIntent.Complete("a1"))
+        assertEquals(false, vm.state.value.canUndo(vm.state.value.appointments.first { it.id == "a1" }))
     }
 
     @Test fun `A2 el barbero solo ve lo suyo y no puede filtrar`() {

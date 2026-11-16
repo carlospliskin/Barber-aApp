@@ -135,3 +135,40 @@ fun summarize(appointments: List<Appointment>): DaySummary {
         expected = Money((completed + pending).sumOf { it.price.cents }),
     )
 }
+
+/**
+ * F7-2: deshacer "atendida" o "no llegó" marcado por error. Solo el dueño (lo exigen las reglas y la
+ * pantalla solo se lo ofrece a él) y dentro de 15 min. La cita vuelve a BOOKED y la ficha se corrige
+ * en la misma transacción. Las citas que una penalización canceló (F7-3) no se restauran.
+ */
+class UndoMarkUseCase(
+    private val bookings: BookingRepository,
+    private val policy: LoyaltyPolicy,
+    private val clock: Clock,
+) {
+    suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> {
+        val status = appointment.status
+        if (status != AppointmentStatus.COMPLETED && status != AppointmentStatus.NO_SHOW) {
+            return AppResult.Failure(BookingFailure.AlreadyClosed)
+        }
+        if (!appointment.canUndo(clock.instant())) return AppResult.Failure(BookingFailure.UndoExpired)
+        val uid = appointment.clientUid
+        if (uid != null && status == AppointmentStatus.COMPLETED) {
+            val c = (bookings.client(appointment.tenantId, uid) as? AppResult.Success)?.value
+            if (c != null && c.rewardsUsed * policy.visitsPerReward > c.completed - 1) {
+                return AppResult.Failure(BookingFailure.RewardAlreadyUsed)
+            }
+        }
+        val update = uid?.let {
+            { c: ClientRecord? ->
+                val current = c ?: ClientRecord.new(it, appointment.clientName)
+                if (status == AppointmentStatus.COMPLETED) current.undoCompleted() else current.undoNoShow(policy)
+            }
+        }
+        return when (val r = bookings.setStatus(appointment, AppointmentStatus.BOOKED, update)) {
+            // Reloj del teléfono adelantado: el servidor ya cerró el plazo.
+            is AppResult.Failure -> if (r.error == BookingFailure.TooEarly) AppResult.Failure(BookingFailure.UndoExpired) else r
+            is AppResult.Success -> r
+        }
+    }
+}

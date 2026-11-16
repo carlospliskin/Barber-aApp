@@ -46,6 +46,7 @@ internal object AppointmentMapper {
             status = AppointmentStatus.valueOf(m["status"] as String),
             startsAt = m["startsAt"] as Instant,
             clientPhone = m["clientPhone"] as? String,
+            markedAt = m["updatedAt"] as? Instant, // F7-2 (la pone el servidor)
         )
     }.getOrNull()
 

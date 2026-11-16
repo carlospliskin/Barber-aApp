@@ -205,7 +205,14 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] A16-a. La agenda mostraba citas de la caché tras perder el acceso.
 - [x] A16-b. Borrar el modo antes de terminar cancelaba la operación (soltar rol, eliminar cuenta).
 - [x] A16-c. "Sin conexión" en vez de "sin acceso" en la agenda.
-- [ ] A16-d/e/f. Botón de agendar sin acceso, mensajes genéricos en otras pantallas, caché en disco (P3).
+- [x] A16-d/e/f. Botón de agendar sin acceso, mensajes reales de error, caché borrada al salir.
+- [x] A7-c. La barbería guardada ya no existe → se olvida y se avisa.
+- [x] F7-2. Deshacer atendida/no-show (dueño, 15 min), con reglas.
+- [x] R9. `updatedAt` de las citas lo pone el servidor.
+- [x] R10. Marcar exige escribir la ficha en el mismo batch.
+- [x] E1/E2. Errores no manejados ya no cierran la app; "Mis citas" muestra el motivo.
+- [x] U12. Cancelar solo se ofrece al cliente con más de 2 h.
+- [ ] F7-2-b/c. Citas canceladas por la penalización no vuelven; "Deshacer" visible pasado el plazo (P3).
 - [ ] A7-c. Clientes de una barbería borrada la conservan en el teléfono con recordatorios (P2).
 - [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
 - [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app).

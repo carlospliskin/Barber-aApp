@@ -9,6 +9,7 @@ import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingFailure
+import com.barberia.feature.booking.domain.model.BookingPolicy
 import com.barberia.feature.booking.domain.usecase.CancelAppointmentUseCase
 import com.barberia.feature.booking.domain.usecase.CancelReminderUseCase
 import com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase
@@ -21,6 +22,8 @@ import java.time.Clock
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.catch
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -34,7 +37,14 @@ data class ClientHomeState(
     val appointments: List<Appointment> = emptyList(),
     val cancellingId: String? = null,
     val failure: BookingFailure? = null,
-) : UiState
+    /** Hora con la que se decide qué se ofrece (se actualiza al llegar las citas). */
+    val now: java.time.Instant = java.time.Instant.EPOCH,
+    val cancelWindow: java.time.Duration = java.time.Duration.ofHours(2),
+) : UiState {
+    /** B7: el cliente cancela hasta 2 h antes; después ya no se le ofrece (antes daba error al tocar). */
+    fun canCancel(a: Appointment) =
+        a.status == com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED && now.isBefore(a.startsAt.minus(cancelWindow))
+}
 
 sealed interface ClientHomeIntent : UiIntent {
     data class CodeChanged(val value: String) : ClientHomeIntent
@@ -57,7 +67,10 @@ class ClientHomeViewModel(
     private val clock: Clock,
     private val syncReminders: SyncRemindersUseCase,
     private val cancelReminder: CancelReminderUseCase,
-) : MviViewModel<ClientHomeState, ClientHomeIntent, ClientHomeEffect>(ClientHomeState()) {
+    policy: BookingPolicy,
+) : MviViewModel<ClientHomeState, ClientHomeIntent, ClientHomeEffect>(
+    ClientHomeState(now = clock.instant(), cancelWindow = java.time.Duration.ofHours(policy.cancelHoursBefore)),
+) {
 
     init {
         launchInScope {
@@ -79,8 +92,9 @@ class ClientHomeViewModel(
                     }
                     if (uid == null || shop == null) flowOf(emptyList()) else observeMine(shop.id, uid, shop.zone)
                 }
+                .catch { e -> setState { copy(failure = e.asBookingFailure(), appointments = emptyList()) } }
                 .collect { list ->
-                    setState { copy(appointments = list) }
+                    setState { copy(appointments = list, now = clock.instant()) }
                     syncReminders(list) // R3: también en un teléfono nuevo o tras reinstalar
                 }
         }

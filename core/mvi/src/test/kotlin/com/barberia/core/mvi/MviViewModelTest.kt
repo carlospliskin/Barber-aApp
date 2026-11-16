@@ -21,6 +21,7 @@ class MviViewModelTest {
         data class Slow(val id: String, val gate: CompletableDeferred<Unit>) : I
         data class Fast(val id: String) : I
         data object Ping : I
+        data object Boom : I
     }
     data object Pong : UiEffect
 
@@ -33,8 +34,16 @@ class MviViewModelTest {
                 }
                 is I.Fast -> setState { copy(log = log + intent.id) }
                 I.Ping -> sendEffect(Pong)
+                I.Boom -> error("falla inesperada")
             }
         }
+
+        val unexpected = mutableListOf<Throwable>()
+        override fun onUnexpectedError(error: Throwable) {
+            unexpected += error
+        }
+
+        fun listenAndFail() = launchInScope { error("se cayó el listener") }
     }
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
@@ -59,5 +68,20 @@ class MviViewModelTest {
             assertEquals(Pong, awaitItem())
             expectNoEvents()
         }
+    }
+
+    // ── Errores inesperados: no tumban la app ni la pantalla ─────────────────
+    @Test fun `una falla en un intent no cierra la app y los siguientes intents siguen funcionando`() = runTest {
+        val vm = TestViewModel()
+        vm.onIntent(I.Boom)
+        vm.onIntent(I.Fast("despues"))
+        assertEquals(listOf("despues"), vm.state.value.log)
+        assertEquals("falla inesperada", vm.unexpected.single().message)
+    }
+
+    @Test fun `una falla en un trabajo largo llega a onUnexpectedError`() = runTest {
+        val vm = TestViewModel()
+        vm.listenAndFail()
+        assertEquals("se cayó el listener", vm.unexpected.single().message)
     }
 }

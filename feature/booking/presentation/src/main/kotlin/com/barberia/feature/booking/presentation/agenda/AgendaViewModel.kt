@@ -10,9 +10,10 @@ import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
-import com.barberia.feature.booking.domain.model.BookingException
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
+import com.barberia.feature.booking.domain.usecase.UndoMarkUseCase
 import com.barberia.feature.booking.domain.usecase.DaySummary
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
@@ -48,6 +49,8 @@ data class AgendaState(
     val summary: DaySummary = summarize(emptyList()),
     val busyId: String? = null,
     val failure: BookingFailure? = null,
+    /** A16-d: sin acceso a la barbería (no se ofrece agendar). Aparte de [failure], que se puede cerrar. */
+    val noAccess: Boolean = false,
     /** F7-3: resultado del último no-show que penalizó (para avisar cuántas citas se cancelaron). */
     val penaltyNotice: NoShowOutcome? = null,
     /** Momento en que se calculó la vista; decide qué acciones se ofrecen (U7). */
@@ -59,6 +62,9 @@ data class AgendaState(
     fun canComplete(a: Appointment) = a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt)
     /** W4: cancelar solo antes de la hora. */
     fun canCancel(a: Appointment) = a.status == AppointmentStatus.BOOKED && now.isBefore(a.startsAt)
+
+    /** F7-2: solo el dueño (el que filtra) y dentro de 15 min. */
+    fun canUndo(a: Appointment) = canFilter && a.canUndo(now)
 
     fun canNoShow(a: Appointment) =
         a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt.plus(MarkNoShowUseCase.NO_SHOW_GRACE))
@@ -72,6 +78,7 @@ sealed interface AgendaIntent : UiIntent {
     data class Complete(val id: String) : AgendaIntent
     data class NoShow(val id: String) : AgendaIntent
     data class Cancel(val id: String) : AgendaIntent
+    data class Undo(val id: String) : AgendaIntent
     data object DismissFailure : AgendaIntent
 }
 
@@ -88,6 +95,7 @@ class AgendaViewModel(
     private val complete: MarkCompletedUseCase,
     private val noShow: MarkNoShowUseCase,
     private val cancel: CancelByStaffUseCase,
+    private val undo: UndoMarkUseCase,
     private val clock: Clock,
 ) : MviViewModel<AgendaState, AgendaIntent, AgendaEffect>(AgendaState()) {
 
@@ -118,8 +126,10 @@ class AgendaViewModel(
             query.flatMapLatest { q -> if (q == null) emptyFlow() else observeAgenda(q.tenantId, q.date, q.barberId) }
                 // A16: si se pierde el acceso no se dejan a la vista las citas que quedaron en caché.
                 .catch { e ->
-                    val f = (e as? BookingException)?.failure ?: BookingFailure.NoConnection
-                    setState { copy(failure = f, appointments = emptyList(), summary = summarize(emptyList())) }
+                    val f = e.asBookingFailure()
+                    setState {
+                        copy(failure = f, noAccess = f == BookingFailure.NoAccess, appointments = emptyList(), summary = summarize(emptyList()))
+                    }
                 }
                 .collect { list -> setState { copy(appointments = list, summary = summarize(list), now = clock.instant()) } }
         }
@@ -145,6 +155,12 @@ class AgendaViewModel(
                 }
             }
             is AgendaIntent.Cancel -> act(intent.id) { cancel(it) }
+            is AgendaIntent.Undo -> if (currentState.canFilter) act(intent.id) { a ->
+                undo(a).also { r ->
+                    // si se deshizo el no-show que penalizó, el aviso de penalización ya no es cierto
+                    if (r is AppResult.Success && a.status == AppointmentStatus.NO_SHOW) setState { copy(penaltyNotice = null) }
+                }
+            }
             AgendaIntent.DismissFailure -> setState { copy(failure = null, penaltyNotice = null) }
         }
     }

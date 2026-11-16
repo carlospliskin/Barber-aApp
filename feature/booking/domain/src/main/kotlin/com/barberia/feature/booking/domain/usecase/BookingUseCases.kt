@@ -249,7 +249,15 @@ class ObserveJoinedBarbershopUseCase(
 ) {
     /** Barbería guardada (Success(null) si todavía no elige una). */
     operator fun invoke(uid: String): Flow<BookingResult<Barbershop?>> = store.tenantId(uid).map { id ->
-        if (id == null) AppResult.Success(null) else bookings.barbershop(id)
+        if (id == null) return@map AppResult.Success(null)
+        val r = bookings.barbershop(id)
+        // A7-c: se borró. Se olvida (no se gasta una lectura cada vez) y se avisa una vez.
+        if (r is AppResult.Success && r.value == null) {
+            store.save(uid, null)
+            AppResult.Failure(BookingFailure.ShopGone)
+        } else {
+            r
+        }
     }
 }
 

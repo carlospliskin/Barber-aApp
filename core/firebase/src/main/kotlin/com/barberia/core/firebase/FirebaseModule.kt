@@ -49,8 +49,11 @@ fun firebaseModule(config: FirebaseConfig) = module {
             firestoreSettings = firestoreSettings {
                 setLocalCacheSettings(persistentCacheSettings { setSizeBytes(CACHE_BYTES) })
             }
+            // A16-f: antes de la primera consulta (la cola de Firestore la ejecuta en orden).
+            if (get<CachePurge>().consume()) clearPersistence()
         }
     }
+    single { CachePurge(SharedPrefsPurgeFlag(androidContext())) }
 }
 
 private const val CACHE_BYTES = 50L * 1024 * 1024

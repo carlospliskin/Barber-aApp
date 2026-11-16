@@ -73,12 +73,12 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             docs.mapNotNull { (id, data) -> AppointmentMapper.fromMap(id, tenantId, data) }
                 .filter { it.status == AppointmentStatus.BOOKED } // U4 (la consulta ya filtra; doble seguro)
                 .sortedWith(compareBy({ it.date }, { it.startMinute }))
-        }
+        }.asBookingFlow()
 
     override fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>> =
         gateway.observeDay(tenantId, date.toString(), barberId).map { docs ->
             docs.mapNotNull { (id, data) -> AppointmentMapper.fromMap(id, tenantId, data) }
-        }.catch { e -> throw BookingException(e.toBookingFailure()) }
+        }.asBookingFlow()
 
     override suspend fun setStatus(
         appointment: Appointment,
@@ -99,10 +99,10 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
     }
 
     override fun observeClient(tenantId: String, uid: String): Flow<ClientRecord?> =
-        gateway.observeClient(tenantId, uid).map { ClientMapper.fromMap(uid, it) }
+        gateway.observeClient(tenantId, uid).map { ClientMapper.fromMap(uid, it) }.asBookingFlow()
 
     override fun observeClients(tenantId: String): Flow<List<ClientRecord>> =
-        gateway.observeClients(tenantId).map { docs -> docs.mapNotNull { (uid, m) -> ClientMapper.fromMap(uid, m) } }
+        gateway.observeClients(tenantId).map { docs -> docs.mapNotNull { (uid, m) -> ClientMapper.fromMap(uid, m) } }.asBookingFlow()
 
     override suspend fun updateClient(
         tenantId: String,
@@ -165,4 +165,9 @@ internal fun Throwable.toBookingFailure(): BookingFailure = when (this) {
     is GatewayError.Network -> BookingFailure.NoConnection
     is GatewayError -> BookingFailure.Unknown(cause?.message)
     else -> BookingFailure.Unknown(message)
+}
+
+/** A16-e: los Flow del repositorio fallan con la falla del dominio, no con errores de Firebase. */
+private fun <T> Flow<T>.asBookingFlow(): Flow<T> = catch { e ->
+    throw if (e is BookingException) e else BookingException(e.toBookingFailure())
 }

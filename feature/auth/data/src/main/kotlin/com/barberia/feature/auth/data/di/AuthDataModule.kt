@@ -20,8 +20,8 @@ val ApplicationScope = named("application_scope")
 
 /** Requiere `FirebaseAuth` y `FirebaseFirestore` (módulo core:firebase). */
 val authDataModule = module {
-    single<AuthGateway> { FirebaseAuthGateway(get()) }
-    single<ProfileGateway> { FirestoreProfileGateway(get()) }
+    single<AuthGateway> { FirebaseAuthGateway(get(), get()) }
+    single<ProfileGateway> { FirestoreProfileGateway(get(), get()) }
     single<ModeStore> { DataStoreModeStore(androidContext()) }
     single {
         FirebaseAccountRepository(get(), get(), get(), get<CoroutineScope>(ApplicationScope))

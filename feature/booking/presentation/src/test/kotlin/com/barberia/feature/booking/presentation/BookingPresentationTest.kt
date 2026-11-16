@@ -42,6 +42,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -84,6 +85,7 @@ class BookingPresentationTest {
         clock,
         com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase(reminders, clock),
         com.barberia.feature.booking.domain.usecase.CancelReminderUseCase(reminders),
+        policy,
     )
 
     private fun booking() = BookingViewModel(
@@ -103,6 +105,32 @@ class BookingPresentationTest {
         vm.onIntent(ClientHomeIntent.CodeChanged("abc234"))
         vm.onIntent(ClientHomeIntent.Join)
         assertEquals("Barber Gold", vm.state.value.shop?.name)
+    }
+
+    @Test fun `si falla Mis citas se dice el motivo y la app no se cae`() {
+        store.saved["uid-1"] = "t1"
+        bookings.agendaError = com.barberia.feature.booking.domain.model.BookingFailure.NoAccess
+        val vm = clientHome()
+        assertEquals(com.barberia.feature.booking.domain.model.BookingFailure.NoAccess, vm.state.value.failure)
+    }
+
+    @Test fun `A7-c la barberia guardada ya no existe se avisa y pide codigo`() {
+        store.saved["uid-1"] = "borrada"
+        val vm = clientHome()
+        assertNull(vm.state.value.shop)
+        assertEquals(com.barberia.feature.booking.domain.model.BookingFailure.ShopGone, vm.state.value.failure)
+    }
+
+    @Test fun `solo se ofrece cancelar mientras falten mas de 2 horas`() {
+        val start = { h: Long -> clock.instant().plusSeconds(h * 3600) }
+        val appt = com.barberia.feature.booking.domain.model.Appointment(
+            "a1", "t1", "uid-1", "Ana", "b1", "Luis", "s1", "Corte", Money(100), monday, 600, 630,
+            com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED, start(3),
+        )
+        val state = clientHome().state.value
+        assertTrue(state.canCancel(appt))
+        assertFalse(state.canCancel(appt.copy(startsAt = start(1)))) // ya empezó o está por empezar
+        assertFalse(state.canCancel(appt.copy(startsAt = start(-1))))
     }
 
     @Test fun `codigo invalido se muestra sin salir`() {

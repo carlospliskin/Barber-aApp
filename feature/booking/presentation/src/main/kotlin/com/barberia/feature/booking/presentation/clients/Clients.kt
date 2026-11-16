@@ -1,5 +1,6 @@
 package com.barberia.feature.booking.presentation.clients
 
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -90,7 +91,7 @@ class ClientsViewModel(
                     setState { copy(tenantId = t) }
                     if (t == null) emptyFlow() else observeClients(t)
                 }
-                .catch { setState { copy(failure = BookingFailure.NoConnection) } }
+                .catch { e -> setState { copy(failure = e.asBookingFailure()) } }
                 .collect { list -> setState { copy(clients = list, now = clock.instant()) } }
         }
     }

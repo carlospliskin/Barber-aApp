@@ -63,11 +63,14 @@ class FakeBookingRepository : BookingRepository {
 
     override fun observeUpcoming(tenantId: String, clientUid: String, from: LocalDate): Flow<List<Appointment>> {
         lastUpcomingFrom = from
+        agendaError?.let { f -> return kotlinx.coroutines.flow.flow { throw com.barberia.feature.booking.domain.model.BookingException(f) } }
         return all.map { list -> list.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) } }
     }
 
     var lastAgendaDate: LocalDate? = null
     var lastStatus: AppointmentStatus? = null
+    /** Hora que el "servidor" pone al marcar (F7-2). */
+    var serverNow: java.time.Instant? = null
 
     var agendaError: BookingFailure? = null
 
@@ -87,7 +90,7 @@ class FakeBookingRepository : BookingRepository {
         updateClient: ((ClientRecord?) -> ClientRecord)?,
     ): BookingResult<Unit> {
         lastStatus = status
-        all.value = all.value.map { if (it.id == appointment.id) it.copy(status = status) else it }
+        all.value = all.value.map { if (it.id == appointment.id) it.copy(status = status, markedAt = serverNow ?: it.markedAt) else it }
         val uid = appointment.clientUid
         if (uid != null && updateClient != null) clients[uid] = updateClient(clients[uid])
         publishClients()

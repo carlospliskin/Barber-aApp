@@ -22,6 +22,9 @@ fun BookingFailure.messageRes(): Int = when (this) {
     BookingFailure.NoRewardAvailable -> R.string.booking_error_no_reward
     BookingFailure.NoConnection -> R.string.booking_error_connection
     BookingFailure.NoAccess -> R.string.booking_error_no_access
+    BookingFailure.ShopGone -> R.string.booking_error_shop_gone
+    BookingFailure.UndoExpired -> R.string.booking_error_undo_expired
+    BookingFailure.RewardAlreadyUsed -> R.string.booking_error_reward_used
     BookingFailure.InvalidClient -> R.string.booking_error_invalid_client
     else -> R.string.booking_error_unknown
 }
@@ -29,3 +32,14 @@ fun BookingFailure.messageRes(): Int = when (this) {
 private val DAY = DateTimeFormatter.ofPattern("EEE d MMM", Locale.forLanguageTag("es-MX"))
 
 fun LocalDate.shortLabel(): String = format(DAY).replaceFirstChar { it.uppercase() }
+
+/** A16-e: falla real de un Flow (booking o catálogo); "sin conexión" solo si no se sabe más. */
+fun Throwable.asBookingFailure(): BookingFailure = when (this) {
+    is com.barberia.feature.booking.domain.model.BookingException -> failure
+    is com.barberia.feature.catalog.domain.model.CatalogException -> when (failure) {
+        com.barberia.feature.catalog.domain.model.CatalogFailure.NotOwner -> BookingFailure.NoAccess
+        com.barberia.feature.catalog.domain.model.CatalogFailure.NoConnection -> BookingFailure.NoConnection
+        else -> BookingFailure.Unknown(failure.toString())
+    }
+    else -> BookingFailure.NoConnection
+}

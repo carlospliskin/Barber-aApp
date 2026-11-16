@@ -23,7 +23,9 @@ Encontrados revisando el código ya implementado.
 | ID | Prioridad | Esfuerzo | Hueco | Cómo resolverlo | Cómo probarlo |
 |---|---|---|---|---|---|
 | F7-1 | ✅ | S | **Re-penalización inmediata.** Al terminar la penalización, `noShows` sigue en 3; el 4.º no-show vuelve a penalizar 14 días (`total >= 3` en `Loyalty.kt`). **Decisión:** ¿se cuenta desde cero después de cada penalización? | Opción A: penalizar cuando `noShows % 3 == 0`. Opción B: contar solo no-shows de los últimos 90 días. | Test de dominio: 3 no-shows → penaliza; 4.º → no penaliza (opción A). |
-| F7-2 | P1 | M | **No hay "deshacer".** Si el personal marca atendida o no-show por error, no se puede corregir (A6). Contadores y penalización quedan mal; perdonar solo borra no-shows. | "Deshacer" solo del dueño, dentro de 15 min: estado → BOOKED y contador −1, en el mismo batch. Regla nueva para esa transición. | Reglas: deshacer en ≤ 15 min pasa; después, o hecho por un barbero, falla. Dominio: contador −1. |
+| F7-2 | ✅ | M | **No había "deshacer"** de atendida/no-show. | Ver «Resueltos». |
+| F7-2-b | P3 | S | Deshacer el no-show que penalizó **no restaura las citas futuras** que la penalización canceló (F7-3). | La agenda ya dice cuántas se cancelaron; ofrecer volver a agendarlas (el horario puede estar tomado). |
+| F7-2-c | P3 | S | La agenda recalcula "qué se puede hacer" solo cuando cambian las citas: **"Deshacer" puede seguir visible pasados los 15 min** (al tocarlo dice que ya pasó). | Un reloj que actualice `now` cada minuto mientras la agenda está abierta. |
 | F7-3 | ✅ | S | **Penalizado con citas futuras.** La penalización no toca las citas ya reservadas. **Decisión:** ¿se cancelan o se respetan? | Si se cancelan: en el mismo flujo del 3.er no-show, cancelar sus citas BOOKED futuras y liberar bloques. | Dominio + reglas del batch. |
 | F7-4 | P2 | S | **Pantallas desactualizadas.** "Penalizado hasta", y los botones atendida, no-show y cancelar, se calculan al llegar datos. Con la pantalla abierta no se actualizan al pasar la hora. | Un "reloj" en el ViewModel que actualice `now` cada minuto. | ViewModel con reloj de prueba: avanzar el tiempo cambia `canComplete` y `penalizedUntil`. |
 | F7-5 | P2 | M | **Lista de clientes limitada.** Solo los 50 actualizados más recientemente, sin búsqueda ni paginación. Un penalizado antiguo puede no aparecer. | Paginación (`startAfter`) y búsqueda por nombre (prefijo en un campo `nameLower`). | Gateway contra emulador; ViewModel con fake. |
@@ -50,10 +52,10 @@ Encontrados revisando el código ya implementado.
 | A7 | ✅ | M | **Eliminar cuenta y datos** (obligatorio en Google Play). | Ver «Resueltos». |
 | A7-b | ✅ | S | **Barberos de una barbería borrada** seguían con un rol que apuntaba a nada. | Ver «Resueltos» (junto con A16). |
 | A16 | ✅ | M | **El dueño no podía quitarle el acceso a un barbero.** Desactivarlo en el catálogo no tocaba su perfil: seguía viendo su agenda (nombres y teléfonos) y podía cancelar o marcar citas. | Ver «Resueltos». |
-| A16-d | P3 | S | Un barbero sin acceso todavía ve **"+ Agendar cliente"** (falla al guardar). | Ocultarlo cuando la agenda dice "sin acceso". |
-| A16-e | P3 | S | Otras pantallas (catálogo, "Mis citas") todavía muestran **"Sin conexión" ante cualquier error**, aunque sea falta de permiso. | Usar `BookingException`/`CatalogException` con la falla real en cada `.catch`. |
-| A16-f | P3 | S | La **caché de Firestore** del teléfono de un barbero revocado conserva las citas que ya vio (no se muestran, pero están en el disco). | Al soltar el rol o cerrar sesión: `terminate()` + `clearPersistence()`. |
-| A7-c | P2 | S | **Clientes de una barbería borrada** la siguen teniendo guardada en el teléfono y sus recordatorios locales siguen programados. | Si `tenants/{id}` no existe al abrir el home: olvidarla y cancelar sus recordatorios. |
+| A16-d | ✅ | S | Un barbero sin acceso veía "+ Agendar cliente". | Ver «Resueltos». |
+| A16-e | ✅ | S | Pantallas que decían "Sin conexión" ante cualquier error. | Ver «Resueltos». |
+| A16-f | ✅ | S | Caché de Firestore de la cuenta anterior en el teléfono. | Ver «Resueltos». Verificado solo indirectamente en el emulador (QA no es depurable): falta comprobarlo en un teléfono. |
+| A7-c | ✅ | S | Clientes de una barbería borrada la seguían teniendo guardada. | Ver «Resueltos». |
 | A7-d | P2 | S | **Barbería muy grande:** Spark permite 20 000 borrados al día; más de ~9 000 citas no se borran en un solo día. | Ya se puede reintentar (sigue donde quedó). Avisar en la pantalla y contar lo borrado. |
 | PLAY-1 | **P0** | S | **Política de privacidad y formulario de "Seguridad de los datos"** en Play Console. | Datos que se guardan: email, nombre, teléfono, citas. Play también pide un **enlace web para solicitar el borrado** sin instalar la app (página simple que explique el borrado desde la app y dé un correo de contacto). |
 | X3 | P2 | S | **El ícono es provisional** (tijeras vectoriales). | Reemplazar por el ícono de marca cuando exista. |
@@ -107,7 +109,7 @@ Encontrados revisando el código ya implementado.
 |---|---|---|
 | 1. Decisiones (sin código) | F7-1, F7-3, F7-6, F7-8, A14 | Hay que elegir política antes de programar. |
 | 2. Fase 8 | V3 (App Check), N3 (recordatorios), L4 (Crashlytics), L3 (ícono y fuentes) | Ya era la siguiente fase y cierra el riesgo de abuso. |
-| 3. Huecos de negocio | F7-1 ✅, F7-2, N1 ✅, N2 ✅ | Lo que más va a notar una barbería real en su primera semana. |
+| 3. Huecos de negocio | F7-1 ✅, F7-2 ✅, N1 ✅, N2 ✅ | Lo que más va a notar una barbería real en su primera semana. |
 | 4. Red de seguridad | Q1, Q2, Q3 | Antes de que el código crezca más. |
 | 5. Fase 9 | A7 ✅, A7-b ✅, A16 ✅, PLAY-1, L1, L2 | Publicación. |
 | 6. Después del lanzamiento | El resto de P2 y P3 (AR1-AR4, F7-4, F7-5, N4-N6, Q4-Q6) | Mejoras sin bloqueo. |
@@ -140,3 +142,13 @@ Encontrados revisando el código ya implementado.
 | A16-a | (nuevo) | Al perder el acceso, la agenda seguía mostrando las citas de la caché local: ahora se vacía al recibir el error. |
 | A16-b | (nuevo) | "Seguir solo como cliente" guardaba el cambio pero la pantalla no avanzaba: borrar el modo **antes** navegaba, destruía la pantalla y cancelaba el resto. Lo mismo pasaba (por suerte sin efecto) al eliminar la cuenta. Ahora el modo se borra al final. |
 | A16-c | (nuevo) | La agenda decía "Sin conexión" ante una falta de permiso: ahora "Ya no tienes acceso a esta barbería" (`BookingFailure.NoAccess`). |
+| F7-2 | Huecos de negocio | **"Deshacer"** junto a "✓ Atendida" / "✗ No llegó", solo para el dueño y durante 15 min desde que se marcó (hora del servidor). La cita vuelve a reservada (conserva su horario) y la ficha se corrige en la misma transacción: una visita menos (no si ya canjeó un premio con ella) o una falta menos; si esa falta fue la que penalizó, se quita la penalización y el aviso. Sin cuenta: solo la cita. Reglas `undoesMark` en cita y ficha. |
+| R9 | (nuevo, seguridad) | El servidor no validaba `updatedAt` en las citas: un barbero podía poner cualquier hora (el plazo de deshacer depende de ella). Ahora debe ser `request.time`. |
+| R10 | (nuevo, seguridad) | Se podía marcar "no llegó" **sin sumar la falta** en la primera cita de un cliente: la ficha se crea apuntando a esa cita y la regla solo miraba eso. Ahora la ficha debe escribirse en el mismo batch (`updatedAt == request.time`). |
+| E1 | (nuevo, estabilidad) | **Un error no manejado en una pantalla cerraba la app** (`viewModelScope` sin manejador) y, si era en un intent, la pantalla dejaba de responder. Ahora `MviViewModel` lo atrapa, la cola sigue y en release se reporta a Crashlytics como no fatal. |
+| E2 | (nuevo) | "Mis citas" no tenía `catch`: con un error de Firestore (permiso, índice faltante en producción) la app se cerraba. Ahora muestra el motivo. |
+| A16-e | — | Todos los Flow del repositorio fallan con `BookingException` y cada pantalla muestra la falla real (sin acceso, sin conexión…). |
+| A16-d | — | "+ Agendar cliente" se oculta sin acceso (aunque se cierre el aviso). |
+| A16-f | — | Al cerrar sesión, soltar el rol o borrar la cuenta se deja una marca y en el siguiente arranque se borra la caché de Firestore antes de la primera consulta (`clearPersistence`). |
+| A7-c | — | Si la barbería guardada ya no existe, se olvida (no gasta una lectura en cada arranque) y se avisa "Tu barbería ya no está en la app". Los recordatorios ya eran seguros: el aviso revisa que la cita exista (R2). |
+| U12 | (nuevo) | Al cliente se le ofrecía "Cancelar cita" con menos de 2 h (o ya empezada) y al tocar daba error. Ahora dice que ya no se puede y que avise a la barbería. |

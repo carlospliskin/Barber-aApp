@@ -1,6 +1,7 @@
 package com.barberia.feature.auth.data.firebase
 
 import com.barberia.core.firebase.firebaseCall
+import com.barberia.core.firebase.CachePurge
 import com.barberia.feature.auth.data.gateway.ProfileGateway
 import com.barberia.feature.auth.data.gateway.ProfileRecord
 import com.barberia.feature.auth.data.gateway.TenantRecord
@@ -12,7 +13,10 @@ import kotlinx.coroutines.tasks.await
  * `users/{uid}` y `tenants/{ownerUid}`.
  * `get()` usa el servidor y, sin red, la caché local (las lecturas de caché no se cobran).
  */
-internal class FirestoreProfileGateway(private val db: FirebaseFirestore) : ProfileGateway {
+internal class FirestoreProfileGateway(
+    private val db: FirebaseFirestore,
+    private val purge: CachePurge,
+) : ProfileGateway {
 
     override suspend fun fetch(uid: String): ProfileRecord? = firebaseCall {
         val doc = db.collection(USERS).document(uid).get().await()
@@ -66,6 +70,7 @@ internal class FirestoreProfileGateway(private val db: FirebaseFirestore) : Prof
         db.collection(USERS).document(uid).update(
             mapOf("staffTenantId" to null, "staffRole" to null, "staffBarberId" to null, "staffInviteCode" to null),
         ).await()
+        purge.request() // A16-f: la agenda que vio como barbero no se queda en el teléfono
         Unit
     }
 

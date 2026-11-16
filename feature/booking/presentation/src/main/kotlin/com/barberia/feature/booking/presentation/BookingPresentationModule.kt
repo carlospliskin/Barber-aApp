@@ -14,6 +14,7 @@ import com.barberia.feature.booking.presentation.walkin.WalkInViewModel
 import com.barberia.feature.booking.domain.usecase.CancelReminderUseCase
 import com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
+import com.barberia.feature.booking.domain.usecase.UndoMarkUseCase
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
 import com.barberia.feature.booking.domain.usecase.MarkNoShowUseCase
@@ -60,6 +61,7 @@ val bookingPresentationModule = module {
     factoryOf(::MarkCompletedUseCase)
     factory { MarkNoShowUseCase(get(), get(), get()) }
     factoryOf(::CancelByStaffUseCase)
+    factoryOf(::UndoMarkUseCase) // F7-2
     factoryOf(::RedeemBarberInviteUseCase)
     viewModelOf(::AgendaViewModel)
     viewModelOf(::RedeemInviteViewModel)

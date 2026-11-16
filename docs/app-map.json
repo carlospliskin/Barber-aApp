@@ -36,15 +36,15 @@
       "layer": "Android + Compose",
       "dependsOn": [],
       "kotlinFiles": 2,
-      "unitTests": 2
+      "unitTests": 4
     },
     {
       "path": ":core:firebase",
       "folder": "core/firebase",
       "layer": "Android",
       "dependsOn": [],
-      "kotlinFiles": 2,
-      "unitTests": 0
+      "kotlinFiles": 3,
+      "unitTests": 2
     },
     {
       "path": ":core:designsystem",
@@ -130,7 +130,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 13,
-      "unitTests": 66
+      "unitTests": 76
     },
     {
       "path": ":feature:booking:data",
@@ -141,7 +141,7 @@
         ":feature:booking:domain"
       ],
       "kotlinFiles": 11,
-      "unitTests": 32
+      "unitTests": 34
     },
     {
       "path": ":feature:booking:presentation",
@@ -155,7 +155,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 14,
-      "unitTests": 33
+      "unitTests": 40
     }
   ],
   "navigation": {
@@ -650,7 +650,8 @@
         "NextDay",
         "NoShow",
         "PreviousDay",
-        "Today"
+        "Today",
+        "Undo"
       ],
       "useCases": [
         "CancelByStaffUseCase",
@@ -659,7 +660,8 @@
         "MarkNoShowUseCase",
         "ObserveAgendaUseCase",
         "ObserveCatalogUseCase",
-        "ObserveCurrentUserUseCase"
+        "ObserveCurrentUserUseCase",
+        "UndoMarkUseCase"
       ]
     },
     {
@@ -1106,6 +1108,13 @@
       "uses": []
     },
     {
+      "name": "UndoMarkUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
       "name": "UpdateServiceUseCase",
       "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
       "uses": [
@@ -1249,5 +1258,5 @@
       ]
     }
   ],
-  "rulesTests": 135
+  "rulesTests": 147
 }

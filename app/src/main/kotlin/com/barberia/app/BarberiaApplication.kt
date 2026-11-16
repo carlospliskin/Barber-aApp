@@ -1,6 +1,8 @@
 package com.barberia.app
 
 import android.app.Application
+import com.barberia.core.mvi.MviErrors
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.barberia.app.di.appModule
 import com.barberia.app.di.authDomainModule
 import com.barberia.core.firebase.FirebaseConfig
@@ -25,6 +27,10 @@ class BarberiaApplication : Application() {
             crashReports = BuildConfig.CRASH_REPORTS,
             appCheckInstaller = appCheckInstaller(), // por build type: src/release, src/debug, src/qa
         )
+        // Errores inesperados de pantallas: no cierran la app; en release se reportan como no fatales.
+        if (BuildConfig.CRASH_REPORTS) {
+            MviErrors.reporter = { FirebaseCrashlytics.getInstance().recordException(it) }
+        }
         startKoin {
             androidContext(this@BarberiaApplication)
             modules(

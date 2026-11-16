@@ -50,7 +50,9 @@ fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: (
             TextButton(onClick = onBack) { Text(stringResource(R.string.booking_back)) }
             Text(stringResource(R.string.agenda_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
             // N1: quien llama o llega al local
-            TextButton(onClick = onAddWalkIn, enabled = state.tenantId != null) { Text(stringResource(R.string.agenda_add_walkin)) }
+            if (!state.noAccess) { // A16-d
+                TextButton(onClick = onAddWalkIn, enabled = state.tenantId != null) { Text(stringResource(R.string.agenda_add_walkin)) }
+            }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { onIntent(AgendaIntent.PreviousDay) }) { Text("‹") }
@@ -86,7 +88,7 @@ fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: (
             Text(stringResource(R.string.agenda_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         state.appointments.forEach {
-            AgendaCard(it, state.busyId == it.id, state.canComplete(it), state.canNoShow(it), state.canCancel(it), onIntent)
+            AgendaCard(it, state.busyId == it.id, state.canComplete(it), state.canNoShow(it), state.canCancel(it), state.canUndo(it), onIntent)
         }
     }
 }
@@ -98,6 +100,7 @@ private fun AgendaCard(
     canComplete: Boolean,
     canNoShow: Boolean,
     canCancel: Boolean,
+    canUndo: Boolean,
     onIntent: (AgendaIntent) -> Unit,
 ) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -134,8 +137,19 @@ private fun AgendaCard(
                         }
                     }
                 }
-                AppointmentStatus.COMPLETED -> Text(stringResource(R.string.agenda_status_completed), color = MaterialTheme.colorScheme.primary)
-                AppointmentStatus.NO_SHOW -> Text(stringResource(R.string.agenda_status_no_show), color = MaterialTheme.colorScheme.error)
+                AppointmentStatus.COMPLETED, AppointmentStatus.NO_SHOW -> Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (a.status == AppointmentStatus.COMPLETED) {
+                        Text(stringResource(R.string.agenda_status_completed), color = MaterialTheme.colorScheme.primary)
+                    } else {
+                        Text(stringResource(R.string.agenda_status_no_show), color = MaterialTheme.colorScheme.error)
+                    }
+                    // F7-2: corregir un toque por error (solo el dueño, 15 min)
+                    if (canUndo) {
+                        TextButton(onClick = { onIntent(AgendaIntent.Undo(a.id)) }, enabled = !busy) {
+                            Text(stringResource(R.string.agenda_undo))
+                        }
+                    }
+                }
                 AppointmentStatus.CANCELLED -> Text(stringResource(R.string.booking_cancelled), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }

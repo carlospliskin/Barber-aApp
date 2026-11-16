@@ -45,8 +45,21 @@ data class Appointment(
     val startsAt: Instant,
     /** N1: teléfono (solo dígitos) del cliente sin cuenta, para avisarle. */
     val clientPhone: String? = null,
+    /** F7-2: cuándo se marcó atendida/no-show (hora del servidor, `updatedAt`). */
+    val markedAt: Instant? = null,
 ) {
     val slots: Set<Int> get() = slotKeys(startMinute, endMinute - startMinute)
+
+    /** F7-2: "atendida" o "no llegó" se pueden deshacer durante [UNDO_WINDOW]. */
+    fun canUndo(now: Instant): Boolean {
+        val at = markedAt ?: return false
+        return status in UNDOABLE && now.isBefore(at.plus(UNDO_WINDOW))
+    }
+
+    companion object {
+        val UNDO_WINDOW: java.time.Duration = java.time.Duration.ofMinutes(15)
+        private val UNDOABLE = setOf(AppointmentStatus.COMPLETED, AppointmentStatus.NO_SHOW)
+    }
     val isWalkIn: Boolean get() = clientUid == null && !isFromDeletedAccount
 
     /** A7: el cliente borró su cuenta (una cita sin cuenta siempre lleva nombre). */
@@ -105,6 +118,12 @@ sealed interface BookingFailure {
     data object NoConnection : BookingFailure
     /** A16: sin permiso (le quitaron el acceso o la barbería ya no existe). */
     data object NoAccess : BookingFailure
+    /** A7-c: la barbería guardada ya no existe (se borró). */
+    data object ShopGone : BookingFailure
+    /** F7-2: pasaron los 15 minutos para deshacer. */
+    data object UndoExpired : BookingFailure
+    /** F7-2: ya canjeó un premio contando esa visita. */
+    data object RewardAlreadyUsed : BookingFailure
     data class Unknown(val detail: String? = null) : BookingFailure
 }
 
