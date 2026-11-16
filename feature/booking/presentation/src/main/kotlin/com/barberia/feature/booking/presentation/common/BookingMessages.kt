@@ -45,3 +45,7 @@ fun Throwable.asBookingFailure(): BookingFailure = when (this) {
 
     else -> BookingFailure.NoConnection
 }
+
+/** N1-b: enlace `wa.me` con el mensaje ya escrito (el personal solo toca "enviar"). */
+fun whatsAppLink(number: String, message: String): String =
+    "https://wa.me/$number?text=" + java.net.URLEncoder.encode(message, Charsets.UTF_8).replace("+", "%20")

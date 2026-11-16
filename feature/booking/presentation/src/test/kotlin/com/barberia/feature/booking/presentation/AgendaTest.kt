@@ -202,6 +202,29 @@ class AgendaTest {
         assertEquals(false, vm.state.value.canNoShow(a2))
     }
 
+    @Test fun `N1-b avisar por WhatsApp solo a citas sin app con telefono y antes de la hora`() {
+        runBlocking {
+            bookings.book(
+                appt("w1", "b1", 780, "2026-11-16T19:00:00Z").copy(clientUid = null, clientName = "Pedro", clientPhone = "5512345678")
+            )
+            bookings.book(
+                appt("w2", "b1", 540, "2026-11-16T15:00:00Z").copy(clientUid = null, clientName = "Juan", clientPhone = "5512345678")
+            )
+            bookings.book(appt("w3", "b1", 840, "2026-11-16T20:00:00Z").copy(clientUid = null, clientName = "Sin tel"))
+        }
+        val s = vm(StaffRole.OWNER).state.value
+        fun remind(id: String) = s.whatsAppNumber(s.appointments.first { it.id == id })
+        assertEquals("525512345678", remind("w1"))
+        assertNull(remind("w2")) // ya pasó
+        assertNull(remind("w3")) // sin teléfono
+        assertNull(remind("a2")) // tiene la app
+    }
+
+    @Test fun `N1-b el enlace de WhatsApp lleva el mensaje codificado`() = assertEquals(
+        "https://wa.me/525512345678?text=Hola%20Pedro%2C%20%C2%BFvienes%3F",
+        com.barberia.feature.booking.presentation.common.whatsAppLink("525512345678", "Hola Pedro, ¿vienes?")
+    )
+
     @Test fun `F7-3 al tercer no-show avisa cuantas citas futuras se cancelaron`() {
         runBlocking {
             bookings.clients["cli"] = com.barberia.feature.booking.domain.model.ClientRecord("cli", "Ana", 0, 2, 0, null)

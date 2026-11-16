@@ -11,6 +11,7 @@ import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
+import com.barberia.feature.booking.domain.model.whatsAppNumber
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
 import com.barberia.feature.booking.domain.usecase.DaySummary
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
@@ -67,6 +68,9 @@ data class AgendaState(
 
     /** F7-2: solo el dueño (el que filtra) y dentro de 15 min. */
     fun canUndo(a: Appointment) = canFilter && a.canUndo(now)
+
+    /** N1-b: avisar por WhatsApp a un cliente sin app, mientras la cita no empiece. */
+    fun whatsAppNumber(a: Appointment): String? = a.whatsAppNumber?.takeIf { canCancel(a) }
 
     fun canNoShow(a: Appointment) = a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt.plus(MarkNoShowUseCase.NO_SHOW_GRACE))
 }

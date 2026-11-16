@@ -141,8 +141,8 @@
         ":core:common",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 13,
-      "unitTests": 76
+      "kotlinFiles": 14,
+      "unitTests": 81
     },
     {
       "path": ":feature:booking:data",
@@ -168,7 +168,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 14,
-      "unitTests": 44
+      "unitTests": 46
     }
   ],
   "navigation": {

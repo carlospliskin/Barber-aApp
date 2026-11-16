@@ -101,7 +101,8 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] N1-e. Atender o marcar no-show una cita sin cuenta → sin ficha (la regla P7 la exigía).
 - [x] N2. Días libres (completo o rango) por barbero y "cerrar la barbería" → en el catálogo, sin lecturas extra; disponibilidad y selector de días los respetan.
 - [x] N2-a. El documento del catálogo podía crecer sin límite → se borran los días libres pasados al guardar; máx. 30 por barbero.
-- [ ] N1-b. Recordatorio para el cliente sin app (WhatsApp desde la agenda).
+- [x] N1-b. Recordatorio para el cliente sin app (WhatsApp desde la agenda, `wa.me`).
+- [ ] N1-d. El aviso por WhatsApp no dice el nombre de la barbería (la agenda no lo carga) (P3).
 - [ ] N1-c. Unir el historial de un cliente sin app cuando se registra.
 - [ ] N2-b. Bloquear un día que ya tiene citas: avisar cuántas y ofrecer cancelarlas.
 - [ ] N2-c. "Hoy" del formulario usa la zona del teléfono (depende de N5).

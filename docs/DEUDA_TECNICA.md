@@ -61,7 +61,7 @@ Encontrados revisando el código ya implementado.
 | X3 | P2 | S | **El ícono es provisional** (tijeras vectoriales). | Reemplazar por el ícono de marca cuando exista. |
 | N1 | ✅ | L | **El personal no puede reservar por un cliente** (por teléfono o de mostrador). | Ver «Resueltos». |
 | N2 | ✅ | M | **Sin excepciones de horario.** | Ver «Resueltos». |
-| N1-b | P2 | S | **El cliente sin app no recibe recordatorio.** Solo queda su teléfono en la cita. | Botón "Avisar por WhatsApp" en la tarjeta de la agenda (enlace `wa.me`, gratis, lo manda el personal). |
+| N1-b | ✅ | S | **El cliente sin app no recibía recordatorio.** | "Avisar por WhatsApp" en la agenda: abre `wa.me` con el mensaje escrito (servicio, día, hora, barbero); lo envía el personal. Solo citas sin app con teléfono válido y antes de la hora. 10 dígitos = México (+52). |
 | N1-c | P3 | M | **Un cliente sin app que después se registra** no hereda sus visitas. | Unir por teléfono cuando el dueño lo decida (pantalla de clientes). |
 | N2-b | P2 | S | **Bloquear un día con citas ya reservadas** no las cancela ni avisa cuántas hay. Hoy el formulario solo lo recuerda con un texto. | Al guardar, consultar las citas de ese día (1 lectura por cita) y ofrecer cancelarlas. |
 | N2-c | P3 | S | **"Hoy" del formulario de día libre** sale de la zona del teléfono, no de la barbería (N5). | Pasar la zona de la barbería al caso de uso cuando exista N5. |

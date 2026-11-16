@@ -46,6 +46,8 @@
     <string name="walkin_confirm">Agendar %1$s a las %2$s</string>
     <string name="agenda_add_walkin">+ Agendar cliente</string>
     <string name="agenda_walkin_tag">Sin app</string>
+    <string name="agenda_whatsapp">Avisar por WhatsApp</string>
+    <string name="agenda_whatsapp_message">Hola %1$s, te recordamos tu cita de %2$s el %3$s a las %4$s con %5$s. ¡Te esperamos!</string>
     <string name="agenda_title">Agenda</string>
     <string name="agenda_today">Hoy</string>
     <string name="agenda_all">Todos</string>

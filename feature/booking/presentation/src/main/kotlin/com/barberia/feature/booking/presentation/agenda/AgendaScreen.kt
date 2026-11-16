@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -30,6 +31,7 @@ import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.presentation.R
 import com.barberia.feature.booking.presentation.common.messageRes
 import com.barberia.feature.booking.presentation.common.shortLabel
+import com.barberia.feature.booking.presentation.common.whatsAppLink
 import com.barberia.feature.catalog.domain.model.TimeRange
 import org.koin.androidx.compose.koinViewModel
 
@@ -95,6 +97,7 @@ fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: (
                 state.canNoShow(it),
                 state.canCancel(it),
                 state.canUndo(it),
+                state.whatsAppNumber(it),
                 onIntent
             )
         }
@@ -109,6 +112,7 @@ private fun AgendaCard(
     canNoShow: Boolean,
     canCancel: Boolean,
     canUndo: Boolean,
+    whatsApp: String?,
     onIntent: (AgendaIntent) -> Unit
 ) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
@@ -139,6 +143,7 @@ private fun AgendaCard(
                             Text(stringResource(R.string.agenda_no_show))
                         }
                     }
+                    if (whatsApp != null) WhatsAppButton(a, whatsApp)
                     if (canCancel) {
                         TextButton(onClick = { onIntent(AgendaIntent.Cancel(a.id)) }, enabled = !busy) {
                             Text(stringResource(R.string.booking_cancel), color = MaterialTheme.colorScheme.error)
@@ -166,5 +171,22 @@ private fun AgendaCard(
                 )
             }
         }
+    }
+}
+
+/** N1-b: abre WhatsApp con el recordatorio escrito; lo envía el personal (gratis, sin servidor). */
+@Composable
+private fun WhatsAppButton(a: Appointment, number: String) {
+    val uri = LocalUriHandler.current
+    val message = stringResource(
+        R.string.agenda_whatsapp_message,
+        a.clientName,
+        a.serviceName,
+        a.date.shortLabel(),
+        TimeRange.label(a.startMinute),
+        a.barberName
+    )
+    TextButton(onClick = { runCatching { uri.openUri(whatsAppLink(number, message)) } }) {
+        Text(stringResource(R.string.agenda_whatsapp))
     }
 }
