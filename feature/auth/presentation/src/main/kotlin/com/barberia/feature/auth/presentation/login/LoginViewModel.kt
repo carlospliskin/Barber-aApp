@@ -2,32 +2,41 @@ package com.barberia.feature.auth.presentation.login
 
 import com.barberia.core.common.AppResult
 import com.barberia.core.mvi.MviViewModel
-import com.barberia.feature.auth.domain.model.destination
-import com.barberia.feature.auth.domain.usecase.LoginUseCase
-import com.barberia.feature.auth.presentation.common.userMessage
+import com.barberia.feature.auth.domain.usecase.SendPasswordResetUseCase
+import com.barberia.feature.auth.domain.usecase.SignInUseCase
 
 class LoginViewModel(
-    private val login: LoginUseCase,
+    private val signIn: SignInUseCase,
+    private val sendPasswordReset: SendPasswordResetUseCase,
 ) : MviViewModel<LoginState, LoginIntent, LoginEffect>(LoginState()) {
 
     override suspend fun handleIntent(intent: LoginIntent) {
         when (intent) {
-            is LoginIntent.EmailChanged -> setState { copy(email = intent.value, errorMessage = null) }
-            is LoginIntent.PasswordChanged -> setState { copy(password = intent.value, errorMessage = null) }
-            LoginIntent.DismissError -> setState { copy(errorMessage = null) }
+            is LoginIntent.EmailChanged -> mutate(LoginMutation.EmailChanged(intent.value))
+            is LoginIntent.PasswordChanged -> mutate(LoginMutation.PasswordChanged(intent.value))
+            LoginIntent.DismissFailure -> mutate(LoginMutation.FailureDismissed)
+            LoginIntent.GoToRegister -> sendEffect(LoginEffect.OpenRegister)
             LoginIntent.Submit -> submit()
+            LoginIntent.ForgotPassword -> forgotPassword()
         }
     }
 
     private suspend fun submit() {
-        if (!currentState.canSubmit) return
-        setState { copy(isLoading = true, errorMessage = null) }
-        when (val result = login(currentState.email, currentState.password)) {
-            is AppResult.Success -> {
-                setState { copy(isLoading = false, password = "") }
-                sendEffect(LoginEffect.Navigate(result.value.destination()))
-            }
-            is AppResult.Failure -> setState { copy(isLoading = false, errorMessage = result.error.userMessage()) }
+        if (currentState.isLoading) return
+        mutate(LoginMutation.Started)
+        // Si sale bien, la sesión cambia y SessionViewModel navega. Aquí no se navega.
+        when (val r = signIn(currentState.email, currentState.password)) {
+            is AppResult.Success -> mutate(LoginMutation.Succeeded)
+            is AppResult.Failure -> mutate(LoginMutation.Failed(r.error))
         }
     }
+
+    private suspend fun forgotPassword() {
+        when (val r = sendPasswordReset(currentState.email)) {
+            is AppResult.Success -> sendEffect(LoginEffect.PasswordResetSent)
+            is AppResult.Failure -> mutate(LoginMutation.Failed(r.error))
+        }
+    }
+
+    private fun mutate(m: LoginMutation) = setState { reduce(m) }
 }

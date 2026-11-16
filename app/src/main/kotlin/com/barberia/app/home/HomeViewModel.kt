@@ -4,35 +4,32 @@ import com.barberia.core.mvi.MviViewModel
 import com.barberia.core.mvi.UiEffect
 import com.barberia.core.mvi.UiIntent
 import com.barberia.core.mvi.UiState
-import com.barberia.feature.auth.domain.usecase.GetCurrentUserUseCase
-import com.barberia.feature.auth.domain.usecase.LogoutUseCase
+import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
+import com.barberia.feature.auth.domain.usecase.SignOutUseCase
 
-data class HomeState(val displayName: String = "", val initials: String = "") : UiState
+data class HomeState(val displayName: String = "", val email: String = "", val emailVerified: Boolean = true) : UiState
 
 sealed interface HomeIntent : UiIntent {
-    data object Load : HomeIntent
-    data object Logout : HomeIntent
+    data object SignOut : HomeIntent
 }
 
-sealed interface HomeEffect : UiEffect {
-    data object LoggedOut : HomeEffect
-}
+sealed interface HomeEffect : UiEffect
 
-/** Home provisional: se reemplaza por los módulos feature:home-owner / home-client al portarlos. */
+/** Home provisional hasta portar feature:home-owner / home-client. Cerrar sesión navega solo (por la sesión). */
 class HomeViewModel(
-    private val getCurrentUser: GetCurrentUserUseCase,
-    private val logout: LogoutUseCase,
+    observeUser: ObserveCurrentUserUseCase,
+    private val signOut: SignOutUseCase,
 ) : MviViewModel<HomeState, HomeIntent, HomeEffect>(HomeState()) {
 
-    override suspend fun handleIntent(intent: HomeIntent) {
-        when (intent) {
-            HomeIntent.Load -> getCurrentUser()?.let { user ->
-                setState { copy(displayName = user.displayName, initials = user.initials) }
-            }
-            HomeIntent.Logout -> {
-                logout()
-                sendEffect(HomeEffect.LoggedOut)
+    init {
+        launchInScope {
+            observeUser().collect { u ->
+                if (u != null) setState { copy(displayName = u.displayName, email = u.email, emailVerified = u.emailVerified) }
             }
         }
+    }
+
+    override suspend fun handleIntent(intent: HomeIntent) = when (intent) {
+        HomeIntent.SignOut -> signOut()
     }
 }

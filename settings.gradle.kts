@@ -20,8 +20,8 @@ rootProject.name = "BarberiaApp"
 
 include(":app")
 include(":core:common")
-include(":core:network")
 include(":core:mvi")
+include(":core:firebase")
 include(":core:designsystem")
 include(":feature:auth:domain")
 include(":feature:auth:data")

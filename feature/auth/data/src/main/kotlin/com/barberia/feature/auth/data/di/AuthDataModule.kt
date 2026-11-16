@@ -1,20 +1,29 @@
 package com.barberia.feature.auth.data.di
 
-import android.content.Context
-import androidx.datastore.preferences.preferencesDataStore
-import com.barberia.feature.auth.data.local.DataStoreSessionStorage
-import com.barberia.feature.auth.data.local.SessionStorage
-import com.barberia.feature.auth.data.remote.AuthRemoteDataSource
-import com.barberia.feature.auth.data.repository.AuthRepositoryImpl
+import com.barberia.feature.auth.data.firebase.DataStoreModeStore
+import com.barberia.feature.auth.data.firebase.FirebaseAuthGateway
+import com.barberia.feature.auth.data.firebase.FirestoreProfileGateway
+import com.barberia.feature.auth.data.gateway.AuthGateway
+import com.barberia.feature.auth.data.gateway.ModeStore
+import com.barberia.feature.auth.data.gateway.ProfileGateway
+import com.barberia.feature.auth.data.repository.FirebaseAccountRepository
 import com.barberia.feature.auth.domain.repository.AuthRepository
+import com.barberia.feature.auth.domain.repository.SessionRepository
+import kotlinx.coroutines.CoroutineScope
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.qualifier.named
+import org.koin.dsl.binds
 import org.koin.dsl.module
 
-private val Context.sessionDataStore by preferencesDataStore(name = "session")
+/** Scope de toda la app (lo provee `app`). La sesión vive aquí, no en una pantalla. */
+val ApplicationScope = named("application_scope")
 
-/** Requiere un `GraphQLClient` provisto por el módulo `app`. */
+/** Requiere `FirebaseAuth` y `FirebaseFirestore` (módulo core:firebase). */
 val authDataModule = module {
-    single { AuthRemoteDataSource(client = get()) }
-    single<SessionStorage> { DataStoreSessionStorage(androidContext().sessionDataStore) }
-    single<AuthRepository> { AuthRepositoryImpl(remote = get(), storage = get()) }
+    single<AuthGateway> { FirebaseAuthGateway(get()) }
+    single<ProfileGateway> { FirestoreProfileGateway(get()) }
+    single<ModeStore> { DataStoreModeStore(androidContext()) }
+    single {
+        FirebaseAccountRepository(get(), get(), get(), get<CoroutineScope>(ApplicationScope))
+    } binds arrayOf(AuthRepository::class, SessionRepository::class)
 }

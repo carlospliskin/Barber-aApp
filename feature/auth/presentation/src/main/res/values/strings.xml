@@ -1,0 +1,41 @@
+<resources>
+    <string name="auth_app_name">Barbería</string>
+    <string name="auth_tagline">Reserva tu estilo</string>
+    <string name="auth_email">Email</string>
+    <string name="auth_password">Contraseña</string>
+    <string name="auth_sign_in">Iniciar sesión</string>
+    <string name="auth_forgot_password">Olvidé mi contraseña</string>
+    <string name="auth_reset_sent">Si el email está registrado, te enviamos un enlace para cambiar la contraseña.</string>
+    <string name="auth_no_account">¿No tienes cuenta? Regístrate</string>
+    <string name="auth_register_title">Crear cuenta</string>
+    <string name="auth_type_client">Soy cliente</string>
+    <string name="auth_type_owner">Tengo una barbería</string>
+    <string name="auth_name">Tu nombre</string>
+    <string name="auth_business_name">Nombre de la barbería</string>
+    <string name="auth_phone">Teléfono</string>
+    <string name="auth_phone_optional">Teléfono (opcional)</string>
+    <string name="auth_register">Crear cuenta</string>
+    <string name="auth_back">Ya tengo cuenta</string>
+    <string name="auth_greeting">Hola, %1$s</string>
+    <string name="auth_choose_mode">¿Cómo quieres entrar?</string>
+    <string name="auth_mode_owner">Dueño</string>
+    <string name="auth_mode_barber">Barbero</string>
+    <string name="auth_mode_client">Cliente</string>
+    <string name="auth_offline">No pudimos cargar tu perfil. Revisa tu conexión.</string>
+    <string name="auth_retry">Reintentar</string>
+
+    <string name="auth_error_email">Escribe un email válido</string>
+    <string name="auth_error_password_empty">Escribe tu contraseña</string>
+    <string name="auth_error_password_short">Mínimo 8 caracteres</string>
+    <string name="auth_error_name">Escribe tu nombre</string>
+    <string name="auth_error_business">Escribe el nombre de la barbería</string>
+    <string name="auth_error_phone">Teléfono de 10 dígitos</string>
+    <string name="auth_error_credentials">Email o contraseña incorrectos</string>
+    <string name="auth_error_email_in_use">Este email ya está registrado</string>
+    <string name="auth_error_weak_password">La contraseña es muy débil</string>
+    <string name="auth_error_no_connection">Sin conexión. Verifica tu internet</string>
+    <string name="auth_error_too_many">Demasiados intentos. Espera un momento</string>
+    <string name="auth_error_not_signed_in">Tu sesión terminó. Vuelve a entrar</string>
+    <string name="auth_error_mode">No tienes acceso a ese modo</string>
+    <string name="auth_error_unknown">Ocurrió un error inesperado</string>
+</resources>

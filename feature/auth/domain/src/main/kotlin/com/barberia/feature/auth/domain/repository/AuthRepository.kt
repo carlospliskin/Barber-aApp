@@ -1,34 +1,42 @@
 package com.barberia.feature.auth.domain.repository
 
 import com.barberia.core.common.AppResult
+import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.auth.domain.model.AuthFailure
 import com.barberia.feature.auth.domain.model.AuthUser
-import com.barberia.feature.auth.domain.model.Capability
+import com.barberia.feature.auth.domain.model.SessionState
+import kotlinx.coroutines.flow.Flow
 
 typealias AuthResult<T> = AppResult<AuthFailure, T>
 
-/** Contrato de autenticación. El dominio no sabe nada de GraphQL, DataStore ni Android. */
+/** Operaciones de cuenta. No devuelve el usuario: la sesión se observa en [SessionRepository]. */
 interface AuthRepository {
-    /** Usuario de la sesión en memoria (después de restaurar o iniciar sesión). */
-    val currentUser: AuthUser?
-
-    suspend fun restoreSession(): AuthResult<AuthUser?>
-    suspend fun login(email: String, password: String): AuthResult<AuthUser>
-    suspend fun registerOwner(request: RegisterOwnerRequest): AuthResult<AuthUser>
-    suspend fun registerClient(request: RegisterClientRequest): AuthResult<AuthUser>
-    suspend fun switchMode(mode: Capability): AuthResult<AuthUser>
-    suspend fun logout()
+    suspend fun signIn(email: String, password: String): AuthResult<Unit>
+    suspend fun registerOwner(registration: OwnerRegistration): AuthResult<Unit>
+    suspend fun registerClient(registration: ClientRegistration): AuthResult<Unit>
+    suspend fun sendPasswordReset(email: String): AuthResult<Unit>
+    suspend fun signOut()
 }
 
-data class RegisterOwnerRequest(
+/** Estado de sesión observable (sobrevive a la muerte del proceso) y modo elegido guardado localmente. */
+interface SessionRepository {
+    val session: Flow<SessionState>
+    val selectedMode: Flow<AppMode?>
+    fun currentUser(): AuthUser?
+    suspend fun saveMode(mode: AppMode?)
+    /** Vuelve a leer el perfil (después de registrarse o tras un error de red). */
+    fun refresh()
+}
+
+data class OwnerRegistration(
     val email: String,
     val password: String,
-    val barberiaName: String,
     val ownerName: String,
-    val phone: String? = null,
+    val businessName: String,
+    val phone: String?,
 )
 
-data class RegisterClientRequest(
+data class ClientRegistration(
     val email: String,
     val password: String,
     val name: String,

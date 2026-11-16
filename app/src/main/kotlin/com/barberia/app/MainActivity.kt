@@ -6,6 +6,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import com.barberia.app.navigation.BarberiaNavHost
 import com.barberia.core.designsystem.theme.BarberTheme
 
@@ -18,7 +22,12 @@ class MainActivity : ComponentActivity() {
             navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         setContent {
-            BarberTheme { BarberiaNavHost() }
+            BarberTheme {
+                // Surface raíz: fija el color de texto por defecto (onBackground) para todas las pantallas.
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    BarberiaNavHost()
+                }
+            }
         }
     }
 }

@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -17,9 +16,11 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(project(":feature:auth:domain"))
-    implementation(project(":core:network"))
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.coroutines.play.services)
     implementation(libs.androidx.datastore.preferences)
-    implementation(libs.serialization.json)
     implementation(libs.koin.android)
 
     testImplementation(libs.junit4)

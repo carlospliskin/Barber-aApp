@@ -1,8 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
 }
+
+// Release: valores reales de Firebase en `firebase.properties` (fuera de git). Ver docs/FIREBASE.md.
+val firebaseProps = Properties().apply {
+    rootProject.file("firebase.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+fun firebase(key: String) = "\"${firebaseProps.getProperty(key, "")}\""
 
 android {
     namespace = "com.barberia.app"
@@ -19,13 +27,20 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
-            // Emulador Android → localhost de la máquina
-            buildConfigField("String", "GRAPHQL_URL", "\"http://10.0.2.2:8080/graphql\"")
+            // Proyecto demo + Emulator Suite: no existe en la nube, no gasta cuota.
+            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"demo-barberia\"")
+            buildConfigField("String", "FIREBASE_APP_ID", "\"1:000000000000:android:0000000000000000\"")
+            buildConfigField("String", "FIREBASE_API_KEY", "\"demo-api-key\"")
+            // 10.0.2.2 = la Mac vista desde el emulador de Android
+            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"10.0.2.2\"")
         }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            buildConfigField("String", "GRAPHQL_URL", "\"https://api.barberia.app/graphql\"")
+            buildConfigField("String", "FIREBASE_PROJECT_ID", firebase("projectId"))
+            buildConfigField("String", "FIREBASE_APP_ID", firebase("appId"))
+            buildConfigField("String", "FIREBASE_API_KEY", firebase("apiKey"))
+            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"\"")
         }
     }
 
@@ -43,16 +58,15 @@ kotlin { jvmToolchain(21) }
 
 dependencies {
     implementation(project(":core:common"))
-    implementation(project(":core:network"))
     implementation(project(":core:mvi"))
     implementation(project(":core:designsystem"))
+    implementation(project(":core:firebase"))
     implementation(project(":feature:auth:domain"))
     implementation(project(":feature:auth:data"))
     implementation(project(":feature:auth:presentation"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.serialization.json)
     implementation(libs.koin.android)

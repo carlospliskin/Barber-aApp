@@ -20,10 +20,10 @@ dependencies {
     implementation(project(":feature:auth:domain"))
     implementation(project(":core:mvi"))
     implementation(project(":core:designsystem"))
-    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.koin.androidx.compose)
     debugImplementation(libs.compose.ui.tooling)
 
+    testImplementation(testFixtures(project(":feature:auth:domain")))
     testImplementation(libs.junit4)
     testImplementation(libs.coroutines.test)
     testImplementation(libs.turbine)
