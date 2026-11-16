@@ -18,7 +18,10 @@
     <string name="catalog_schedule">Horario</string>
     <string name="catalog_schedule_of">Horario de %1$s</string>
     <string name="catalog_no_schedule">Sin horario: no se puede reservar</string>
-    <string name="catalog_days_working">%1$d días a la semana</string>
+    <plurals name="catalog_days_working">
+        <item quantity="one">%1$d día a la semana</item>
+        <item quantity="other">%1$d días a la semana</item>
+    </plurals>
     <string name="catalog_from">Entra</string>
     <string name="catalog_to">Sale</string>
     <string name="catalog_save">Guardar</string>

@@ -3,6 +3,7 @@ package com.barberia.feature.booking.domain.usecase
 import com.barberia.core.common.AppResult
 import com.barberia.feature.booking.domain.availability.AvailabilityCalculator
 import com.barberia.feature.booking.domain.model.Appointment
+import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingPolicy
@@ -10,12 +11,14 @@ import com.barberia.feature.booking.domain.model.BookingRequest
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.model.slotKeys
 import com.barberia.feature.booking.domain.repository.BookingRepository
+import com.barberia.feature.booking.domain.repository.JoinedBarbershopStore
 import com.barberia.feature.catalog.domain.editor.IdGenerator
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.repository.CatalogRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -135,19 +138,66 @@ class CancelAppointmentUseCase(
     }
 }
 
-class ObserveMyAppointmentsUseCase(private val bookings: BookingRepository) {
-    operator fun invoke(tenantId: String, clientUid: String): Flow<List<Appointment>> =
-        bookings.observeClientAppointments(tenantId, clientUid)
+class ObserveMyAppointmentsUseCase(private val bookings: BookingRepository, private val clock: Clock) {
+    /** R4: solo de hoy (en la zona de la barbería) en adelante. */
+    operator fun invoke(tenantId: String, clientUid: String, zone: ZoneId): Flow<List<Appointment>> =
+        bookings.observeUpcoming(tenantId, clientUid, clock.nowIn(zone).toLocalDate())
 }
 
-class JoinBarbershopUseCase(private val bookings: BookingRepository) {
-    /** B0: código de 6 caracteres → id de la barbería. */
-    suspend operator fun invoke(rawCode: String): BookingResult<String> {
+class JoinBarbershopUseCase(
+    private val bookings: BookingRepository,
+    private val store: JoinedBarbershopStore,
+) {
+    /** B0/R8: código de 6 caracteres → barbería; se guarda en el teléfono. */
+    suspend operator fun invoke(rawCode: String, uid: String): BookingResult<Barbershop> {
         val code = ShareCodes.normalize(rawCode) ?: return AppResult.Failure(BookingFailure.InvalidCode)
-        return when (val r = bookings.resolveShareCode(code)) {
-            is AppResult.Success -> r.value?.let { AppResult.Success(it) } ?: AppResult.Failure(BookingFailure.InvalidCode)
-            is AppResult.Failure -> r
+        val tenantId = when (val r = bookings.resolveShareCode(code)) {
+            is AppResult.Success -> r.value ?: return AppResult.Failure(BookingFailure.InvalidCode)
+            is AppResult.Failure -> return r
         }
+        val shop = when (val r = bookings.barbershop(tenantId)) {
+            is AppResult.Success -> r.value ?: return AppResult.Failure(BookingFailure.InvalidCode)
+            is AppResult.Failure -> return r
+        }
+        store.save(uid, tenantId)
+        return AppResult.Success(shop)
+    }
+}
+
+class ObserveJoinedBarbershopUseCase(
+    private val bookings: BookingRepository,
+    private val store: JoinedBarbershopStore,
+) {
+    /** Barbería guardada (Success(null) si todavía no elige una). */
+    operator fun invoke(uid: String): Flow<BookingResult<Barbershop?>> = store.tenantId(uid).map { id ->
+        if (id == null) AppResult.Success(null) else bookings.barbershop(id)
+    }
+}
+
+class LeaveBarbershopUseCase(private val store: JoinedBarbershopStore) {
+    suspend operator fun invoke(uid: String) = store.save(uid, null)
+}
+
+class EnsureShareCodeUseCase(private val bookings: BookingRepository, private val random: Random) {
+    /** R7: devuelve el código de la barbería; si no tiene, crea uno libre (reintenta si choca). */
+    suspend operator fun invoke(tenantId: String): BookingResult<String> {
+        val shop = when (val r = bookings.barbershop(tenantId)) {
+            is AppResult.Success -> r.value ?: return AppResult.Failure(BookingFailure.NotYours)
+            is AppResult.Failure -> return r
+        }
+        shop.shareCode?.let { return AppResult.Success(it) }
+        repeat(MAX_ATTEMPTS) {
+            val code = ShareCodes.generate(random)
+            when (val claimed = bookings.claimShareCode(tenantId, code)) {
+                is AppResult.Failure -> return claimed
+                is AppResult.Success -> if (claimed.value) return AppResult.Success(code)
+            }
+        }
+        return AppResult.Failure(BookingFailure.Unknown("No se encontró un código libre"))
+    }
+
+    private companion object {
+        const val MAX_ATTEMPTS = 5
     }
 }
 

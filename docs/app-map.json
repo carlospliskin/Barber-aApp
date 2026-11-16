@@ -14,6 +14,7 @@
         ":feature:auth:presentation",
         ":feature:booking:data",
         ":feature:booking:domain",
+        ":feature:booking:presentation",
         ":feature:catalog:data",
         ":feature:catalog:domain",
         ":feature:catalog:presentation"
@@ -50,7 +51,7 @@
       "folder": "core/designsystem",
       "layer": "Android + Compose",
       "dependsOn": [],
-      "kotlinFiles": 4,
+      "kotlinFiles": 5,
       "unitTests": 0
     },
     {
@@ -128,8 +129,8 @@
         ":core:common",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 4,
-      "unitTests": 19
+      "kotlinFiles": 5,
+      "unitTests": 25
     },
     {
       "path": ":feature:booking:data",
@@ -139,8 +140,22 @@
         ":core:firebase",
         ":feature:booking:domain"
       ],
-      "kotlinFiles": 5,
-      "unitTests": 13
+      "kotlinFiles": 6,
+      "unitTests": 16
+    },
+    {
+      "path": ":feature:booking:presentation",
+      "folder": "feature/booking/presentation",
+      "layer": "Android + Compose",
+      "dependsOn": [
+        ":core:designsystem",
+        ":core:mvi",
+        ":feature:auth:domain",
+        ":feature:booking:domain",
+        ":feature:catalog:domain"
+      ],
+      "kotlinFiles": 7,
+      "unitTests": 11
     }
   ],
   "navigation": {
@@ -171,6 +186,10 @@
         "screen": "HomeRoute"
       },
       {
+        "route": "BookingDest",
+        "screen": "BookingRoute"
+      },
+      {
         "route": "CatalogDest",
         "screen": "CatalogRoute"
       }
@@ -190,6 +209,16 @@
         "from": "HomeDest",
         "to": "CatalogDest",
         "trigger": "botón en pantalla"
+      },
+      {
+        "from": "HomeDest",
+        "to": "BookingDest",
+        "trigger": "botón en pantalla"
+      },
+      {
+        "from": "BookingDest",
+        "to": "(atrás)",
+        "trigger": "volver"
       },
       {
         "from": "CatalogDest",
@@ -279,6 +308,19 @@
       ]
     },
     {
+      "route": "BookingDest",
+      "steps": [
+        {
+          "to": "HomeDest",
+          "how": "la sesión resuelve **OwnerHome**"
+        },
+        {
+          "to": "BookingDest",
+          "how": "tocar el botón que navega"
+        }
+      ]
+    },
+    {
       "route": "CatalogDest",
       "steps": [
         {
@@ -299,6 +341,7 @@
       "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SplashScreen.kt",
       "viewModel": "SessionViewModel",
       "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SessionViewModel.kt",
+      "embedded": [],
       "intents": [
         "Retry",
         "SignOut"
@@ -315,6 +358,7 @@
       "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SplashScreen.kt",
       "viewModel": "SessionViewModel",
       "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SessionViewModel.kt",
+      "embedded": [],
       "intents": [
         "Retry",
         "SignOut"
@@ -331,6 +375,7 @@
       "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/login/LoginScreen.kt",
       "viewModel": "LoginViewModel",
       "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/login/LoginViewModel.kt",
+      "embedded": [],
       "intents": [
         "DismissFailure",
         "EmailChanged",
@@ -350,6 +395,7 @@
       "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/register/RegisterScreen.kt",
       "viewModel": "RegisterViewModel",
       "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/register/RegisterViewModel.kt",
+      "embedded": [],
       "intents": [
         "Back",
         "BusinessNameChanged",
@@ -371,6 +417,7 @@
       "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/mode/ModeSelector.kt",
       "viewModel": "ModeSelectorViewModel",
       "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/mode/ModeSelector.kt",
+      "embedded": [],
       "intents": [
         "Select"
       ],
@@ -385,12 +432,56 @@
       "file": "app/src/main/kotlin/com/barberia/app/home/HomeScreen.kt",
       "viewModel": "HomeViewModel",
       "viewModelFile": "app/src/main/kotlin/com/barberia/app/home/HomeViewModel.kt",
+      "embedded": [
+        {
+          "component": "ClientHomeRoute",
+          "viewModel": "ClientHomeViewModel"
+        },
+        {
+          "component": "ShareCodeCard",
+          "viewModel": "ShareCodeViewModel"
+        }
+      ],
       "intents": [
+        "Cancel",
+        "CodeChanged",
+        "DismissFailure",
+        "Join",
+        "Leave",
         "SignOut"
       ],
       "useCases": [
+        "CancelAppointmentUseCase",
+        "EnsureShareCodeUseCase",
+        "JoinBarbershopUseCase",
+        "LeaveBarbershopUseCase",
         "ObserveCurrentUserUseCase",
+        "ObserveJoinedBarbershopUseCase",
+        "ObserveMyAppointmentsUseCase",
         "SignOutUseCase"
+      ]
+    },
+    {
+      "route": "BookingDest",
+      "screen": "BookingRoute",
+      "file": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/book/BookingScreen.kt",
+      "viewModel": "BookingViewModel",
+      "viewModelFile": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/book/BookingViewModel.kt",
+      "embedded": [],
+      "intents": [
+        "Confirm",
+        "DismissFailure",
+        "SelectBarber",
+        "SelectDate",
+        "SelectService",
+        "SelectSlot"
+      ],
+      "useCases": [
+        "BookAppointmentUseCase",
+        "GetAvailableSlotsUseCase",
+        "ObserveCatalogUseCase",
+        "ObserveCurrentUserUseCase",
+        "ObserveJoinedBarbershopUseCase"
       ]
     },
     {
@@ -399,6 +490,7 @@
       "file": "feature/catalog/presentation/src/main/kotlin/com/barberia/feature/catalog/presentation/CatalogScreen.kt",
       "viewModel": "CatalogViewModel",
       "viewModelFile": "feature/catalog/presentation/src/main/kotlin/com/barberia/feature/catalog/presentation/CatalogViewModel.kt",
+      "embedded": [],
       "intents": [
         "BarberNameChanged",
         "DayEndChanged",
@@ -465,6 +557,13 @@
       ]
     },
     {
+      "name": "EnsureShareCodeUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
       "name": "GetAvailableSlotsUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
       "uses": [
@@ -480,6 +579,11 @@
       ]
     },
     {
+      "name": "LeaveBarbershopUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": []
+    },
+    {
       "name": "ObserveCatalogUseCase",
       "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
       "uses": [
@@ -491,6 +595,13 @@
       "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
       "uses": [
         "SessionRepository"
+      ]
+    },
+    {
+      "name": "ObserveJoinedBarbershopUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository"
       ]
     },
     {
@@ -683,5 +794,5 @@
       ]
     }
   ],
-  "rulesTests": 46
+  "rulesTests": 53
 }

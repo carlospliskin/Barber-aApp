@@ -53,7 +53,7 @@ service cloud.firestore {
     // ── tenants/{ownerUid} ───────────────────────────────────────────────────
     match /tenants/{tenantId} {
       function validTenant(data) {
-        return data.keys().hasOnly(['name', 'ownerUid', 'timezone', 'createdAt'])
+        return data.keys().hasOnly(['name', 'ownerUid', 'timezone', 'createdAt', 'shareCode'])
           && isText(data.name, 1, 80)
           && data.ownerUid == tenantId
           && isText(data.timezone, 3, 64);
@@ -66,8 +66,11 @@ service cloud.firestore {
         && validTenant(request.resource.data)
         && request.resource.data.createdAt == request.time;
       allow update: if isSelf(tenantId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'timezone'])
-        && validTenant(request.resource.data);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'timezone', 'shareCode'])
+        && validTenant(request.resource.data)
+        // R7: solo un código que apunte a esta barbería
+        && (!('shareCode' in request.resource.data.diff(resource.data).affectedKeys())
+            || getAfter(/databases/$(database)/documents/shareCodes/$(request.resource.data.shareCode)).data.tenantId == tenantId);
       allow delete: if false;
     }
 
@@ -108,6 +111,23 @@ service cloud.firestore {
         return signedIn() && resource.data.clientUid == request.auth.uid;
       }
 
+      // R3: startsAt debe corresponder a la fecha y hora local de la cita (±14 h por zona horaria).
+      function startsAtMatches(data) {
+        let parts = data.date.split('-');
+        let localStart = timestamp.date(int(parts[0]), int(parts[1]), int(parts[2]))
+          + duration.value(data.startMinute, 'm');
+        return data.startsAt >= localStart - duration.value(14, 'h')
+          && data.startsAt <= localStart + duration.value(14, 'h');
+      }
+
+      // R1: los bloques corresponden a la hora y duración de la cita (máx. 8 h).
+      function slotsMatch(data) {
+        return data.slotKeys.size() * 5 == data.endMinute - data.startMinute
+          && data.endMinute - data.startMinute <= 480
+          && data.slotKeys[0] == string(data.startMinute)
+          && data.slotKeys[data.slotKeys.size() - 1] == string(data.endMinute - 5);
+      }
+
       function validNew(data) {
         return data.keys().hasOnly(['clientUid', 'clientName', 'barberId', 'barberName', 'serviceId',
             'serviceName', 'priceCents', 'date', 'startMinute', 'endMinute', 'startsAt', 'status',
@@ -117,6 +137,10 @@ service cloud.firestore {
           && data.slotKeys is list && data.slotKeys.size() > 0 && data.slotKeys.size() <= 96
           && data.startMinute is int && data.endMinute is int && data.endMinute > data.startMinute
           && data.startsAt is timestamp && data.startsAt > request.time
+          && data.priceCents is int && data.priceCents >= 0
+          && data.date is string && data.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+          && slotsMatch(data)
+          && startsAtMatches(data)
           && data.dayId == data.barberId + '_' + data.date
           && data.createdAt == request.time
           && dayAfter(data).lastOp == apptId;

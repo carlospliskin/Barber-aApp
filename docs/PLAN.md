@@ -31,8 +31,8 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 2 | Auth con Firebase: login, registro dueño/cliente, recuperar contraseña, modo local, roles en Firestore | ✅ |
 | 3 | Reglas de Firestore + tests en emulador + `firebase.json` | ✅ |
 | 4 | Catálogo de servicios y barberos (dueño) | ✅ |
-| 5 | Disponibilidad y reserva sin choques (cliente) | 🔄 dominio, datos y reglas ✅ · pantallas pendientes |
-| 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ⏳ |
+| 5 | Disponibilidad y reserva sin choques (cliente) | ✅ |
+| 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ⏭️ siguiente |
 | 7 | Clientes, penalizaciones y lealtad | ⏳ |
 | 8 | Recordatorios locales, Crashlytics, App Check, versión release | ⏳ |
 | 9 | Eliminar cuenta (requisito de Google Play) y publicación | ⏳ |
@@ -112,6 +112,23 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [ ] C16. Vincular un barbero del catálogo con una cuenta (para que vea su agenda): se necesita un código de invitación. Fase 6.
 - [ ] C17. Editar el catálogo sin red falla con aviso (las transacciones necesitan servidor). Aceptado para el lanzamiento.
 
+### Revisión de la fase 5 (antes de las pantallas y en la prueba de punta a punta)
+- [x] R1. Una cita podía declarar bloques que no eran de su hora y **bloquear el día entero** del barbero → las reglas exigen que los bloques correspondan a inicio y duración (máx. 8 h).
+- [ ] R2. El precio lo escribe el cliente (podría poner $0). Se valida entero ≥ 0; el cobro es en el local. Revisar si se cobra en la app.
+- [x] R3. `startsAt` inventado para cancelar tarde → debe caer en la fecha y hora de la cita (±14 h por zona).
+- [x] R4. "Mis citas" leía hasta 50 sin orden; las nuevas podían no aparecer → solo de hoy en adelante, ordenadas (índice compuesto).
+- [ ] R5. El dueño podría leer todo el historial de citas → la agenda de la fase 6 debe filtrar por día.
+- [x] R6. No había forma de leer nombre y zona horaria de la barbería.
+- [x] R7. El dueño no podía crear su código ni guardarlo en su barbería; las reglas validan que el código sea suyo.
+- [x] R8. La barbería del cliente se guarda en el teléfono (0 costo); al reinstalar se vuelve a poner el código.
+- [x] B15. Si otro tomó la hora al confirmar, se avisa y se recargan los horarios.
+- [x] B16. Cambiar servicio, barbero o día limpia la hora elegida.
+- [x] U1. "1 días a la semana" → plurales.
+- [x] U2. Se podían elegir días en que el barbero no trabaja.
+- [x] U3. **Otro usuario del mismo teléfono heredaba la barbería guardada** (lo encontró la prueba de punta a punta).
+- [x] U4. "Mis citas" mostraba (y cobraba lecturas de) las canceladas.
+- [x] U5. Chips sin seleccionar se veían como deshabilitados → `BarberChip` en el design system.
+
 ### Encontrados en la fase 5 (reservas)
 - [x] B0. Sin poder listar barberías (H5), el cliente no tenía cómo encontrar la suya → `shareCodes/{CODE}` de 6 caracteres sin letras confusas.
 - [x] B8. No reservar más de 30 días adelante.
@@ -120,8 +137,8 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] B11. Firebase envolvía el "horario tomado" lanzado en la transacción y se veía como error desconocido.
 - [x] B12. `GetAvailableSlots` devolvía lista vacía ante un error de red ("no hay horarios") → ahora devuelve el error.
 - [ ] B4. Cliente penalizado no puede reservar → con la fase 7 (penalizaciones).
-- [ ] B13. Pantallas de reserva (código de barbería, servicio, barbero, día, hora, confirmar, mis citas).
-- [ ] B14. Prueba instrumentada del gateway real de reservas contra el emulador (la doble reserva ya está probada en reglas).
+- [x] B13. Pantallas de reserva (código de barbería, servicio, barbero, día, hora, confirmar, mis citas) + código del dueño.
+- [x] B14. Prueba de punta a punta en emulador con el build QA: dueño arma catálogo y obtiene código; cliente se une, reserva y cancela; un segundo cliente ve el horario ocupado; el día queda liberado al cancelar.
 
 ### Revisión antes de la fase 5
 - [x] G1. **Pérdida de datos**: el formulario de horario solo editaba el primer turno y al guardar borraba el turno partido.

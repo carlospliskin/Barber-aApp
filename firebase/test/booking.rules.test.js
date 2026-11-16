@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, Timestamp, where, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from "firebase/firestore";
 
 let env;
 before(async () => {
@@ -18,11 +18,13 @@ beforeEach(() => env.clearFirestore());
 const db = (uid) => env.authenticatedContext(uid, { email: `${uid}@mail.com` }).firestore();
 const DAY = "b1_2026-11-20";
 const inDays = (d) => Timestamp.fromMillis(Date.now() + d * 86_400_000);
+// Fecha de cita fija y su inicio real: 2026-11-20 10:00 CDMX = 16:00 UTC (los tests corren antes de esa fecha).
+const STARTS = Timestamp.fromDate(new Date("2026-11-20T16:00:00Z"));
 
 const appt = (uid, keys, extra = {}) => ({
   clientUid: uid, clientName: "Ana", barberId: "b1", barberName: "Luis", serviceId: "s1", serviceName: "Corte",
   priceCents: 15000, date: "2026-11-20", startMinute: Number(keys[0]), endMinute: Number(keys.at(-1)) + 5,
-  startsAt: inDays(3), status: "BOOKED", slotKeys: keys, dayId: DAY, createdAt: serverTimestamp(), ...extra,
+  startsAt: STARTS, status: "BOOKED", slotKeys: keys, dayId: DAY, createdAt: serverTimestamp(), ...extra,
 });
 
 /** Reserva como lo hace la app: cita + bloques del día en el mismo batch. */
@@ -36,7 +38,7 @@ function book(uid, id, keys, current = {}, apptExtra = {}) {
   return b.commit();
 }
 
-async function seedBooking(uid, id, keys, startsAt = inDays(3)) {
+async function seedBooking(uid, id, keys, startsAt = STARTS) {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const f = ctx.firestore();
     await setDoc(doc(f, `tenants/ana/appointments/${id}`), { ...appt(uid, keys), startsAt, createdAt: new Date() });
@@ -87,6 +89,25 @@ describe("reservar", () => {
     await assertFails(book("cli", "a1", ["600"], {}, { status: "COMPLETED" }));
     await assertFails(book("cli", "a2", ["700"], {}, { pagado: true }));
   });
+});
+
+describe("abuso saltándose la app", () => {
+  test("R1 los bloques deben empezar en la hora de la cita", () =>
+    assertFails(book("cli", "a1", ["900", "905"], {}, { startMinute: 600, endMinute: 610 })));
+
+  test("R1 la cantidad de bloques debe corresponder a la duración", () =>
+    assertFails(book("cli", "a1", ["600", "605"], {}, { endMinute: 700 })));
+
+  test("R1 una cita no puede durar más de 8 horas (bloquear el día)", () => {
+    const keys = Array.from({ length: 97 }, (_, i) => String(480 + i * 5));
+    return assertFails(book("cli", "a1", keys));
+  });
+
+  test("R3 startsAt debe caer en la fecha de la cita (no se puede inventar para cancelar tarde)", () =>
+    assertFails(book("cli", "a1", ["600"], {}, { startsAt: Timestamp.fromDate(new Date("2027-01-01T16:00:00Z")) })));
+
+  test("R2 el precio debe ser un entero no negativo", () =>
+    assertFails(book("cli", "a1", ["600"], {}, { priceCents: -100 })));
 });
 
 describe("leer", () => {
@@ -141,6 +162,24 @@ describe("cancelar", () => {
 describe("shareCodes (B0)", () => {
   test("el dueño crea el código de su barbería", () =>
     assertSucceeds(setDoc(doc(db("ana"), "shareCodes/ABC234"), { tenantId: "ana", createdAt: serverTimestamp() })));
+
+  test("R7 el dueño guarda en su barbería un código que es suyo", async () => {
+    await env.withSecurityRulesDisabled((ctx) =>
+      setDoc(doc(ctx.firestore(), "tenants/ana"), { name: "Gold", ownerUid: "ana", timezone: "America/Mexico_City", createdAt: new Date() }));
+    const d = db("ana");
+    const b = writeBatch(d);
+    b.set(doc(d, "shareCodes/ABC234"), { tenantId: "ana", createdAt: serverTimestamp() });
+    b.update(doc(d, "tenants/ana"), { shareCode: "ABC234" });
+    await assertSucceeds(b.commit());
+  });
+
+  test("R7 no puede apuntar su barbería al código de otro", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "tenants/ana"), { name: "Gold", ownerUid: "ana", timezone: "America/Mexico_City", createdAt: new Date() });
+      await setDoc(doc(ctx.firestore(), "shareCodes/ZZZ999"), { tenantId: "beto", createdAt: new Date() });
+    });
+    await assertFails(updateDoc(doc(db("ana"), "tenants/ana"), { shareCode: "ZZZ999" }));
+  });
 
   test("nadie crea un código para la barbería de otro", () =>
     assertFails(setDoc(doc(db("cli"), "shareCodes/ABC234"), { tenantId: "ana", createdAt: serverTimestamp() })));

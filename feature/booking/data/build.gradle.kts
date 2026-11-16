@@ -5,4 +5,5 @@ dependencies {
     implementation(project(":core:firebase"))
     implementation(libs.coroutines.play.services)
     implementation(libs.koin.android)
+    implementation(libs.androidx.datastore.preferences)
 }

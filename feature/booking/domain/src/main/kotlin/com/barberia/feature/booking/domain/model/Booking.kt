@@ -41,6 +41,14 @@ data class Appointment(
     val slots: Set<Int> get() = slotKeys(startMinute, endMinute - startMinute)
 }
 
+/** Datos públicos de la barbería que necesita el cliente (R6). */
+data class Barbershop(
+    val id: String,
+    val name: String,
+    val zone: ZoneId,
+    val shareCode: String?,
+)
+
 data class BookingRequest(
     val tenantId: String,
     /** Zona horaria de la barbería (B6): "hoy" y "ahora" se calculan aquí, no con la del teléfono. */

@@ -3,6 +3,7 @@ package com.barberia.feature.booking.domain.testing
 import com.barberia.core.common.AppResult
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
+import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.model.dayId
@@ -44,8 +45,24 @@ class FakeBookingRepository : BookingRepository {
         return AppResult.Success(Unit)
     }
 
-    override fun observeClientAppointments(tenantId: String, clientUid: String): Flow<List<Appointment>> =
-        all.map { list -> list.filter { it.clientUid == clientUid } }
+    val barbershops = mutableMapOf<String, Barbershop>()
+    var claims = 0
+    var lastUpcomingFrom: LocalDate? = null
+
+    override fun observeUpcoming(tenantId: String, clientUid: String, from: LocalDate): Flow<List<Appointment>> {
+        lastUpcomingFrom = from
+        return all.map { list -> list.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) } }
+    }
 
     override suspend fun resolveShareCode(code: String): BookingResult<String?> = AppResult.Success(shareCodes[code])
+
+    override suspend fun barbershop(tenantId: String): BookingResult<Barbershop?> = AppResult.Success(barbershops[tenantId])
+
+    override suspend fun claimShareCode(tenantId: String, code: String): BookingResult<Boolean> {
+        claims++
+        if (code in shareCodes) return AppResult.Success(false)
+        shareCodes[code] = tenantId
+        barbershops[tenantId]?.let { barbershops[tenantId] = it.copy(shareCode = code) }
+        return AppResult.Success(true)
+    }
 }

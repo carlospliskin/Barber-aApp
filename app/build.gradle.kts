@@ -81,6 +81,7 @@ dependencies {
     implementation(project(":feature:catalog:presentation"))
     implementation(project(":feature:booking:domain"))
     implementation(project(":feature:booking:data"))
+    implementation(project(":feature:booking:presentation"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

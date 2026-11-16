@@ -6,6 +6,8 @@ import com.barberia.feature.booking.data.gateway.BookingGateway
 import com.barberia.feature.booking.data.gateway.SlotTakenException
 import com.barberia.feature.booking.data.mapper.AppointmentMapper
 import com.barberia.feature.booking.domain.model.Appointment
+import com.barberia.feature.booking.domain.model.AppointmentStatus
+import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.model.dayId
@@ -14,6 +16,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
+import java.time.ZoneId
+
+private val DEFAULT_ZONE: ZoneId = ZoneId.of("America/Mexico_City")
 
 internal class FirestoreBookingRepository(private val gateway: BookingGateway) : BookingRepository {
 
@@ -46,13 +51,27 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
         )
     }
 
-    override fun observeClientAppointments(tenantId: String, clientUid: String): Flow<List<Appointment>> =
-        gateway.observeClient(tenantId, clientUid).map { docs ->
+    override fun observeUpcoming(tenantId: String, clientUid: String, from: LocalDate): Flow<List<Appointment>> =
+        gateway.observeUpcoming(tenantId, clientUid, from.toString()).map { docs ->
             docs.mapNotNull { (id, data) -> AppointmentMapper.fromMap(id, tenantId, data) }
+                .filter { it.status == AppointmentStatus.BOOKED } // U4 (la consulta ya filtra; doble seguro)
                 .sortedWith(compareBy({ it.date }, { it.startMinute }))
         }
 
     override suspend fun resolveShareCode(code: String) = attempt { gateway.shareCode(code) }
+
+    override suspend fun barbershop(tenantId: String) = attempt {
+        gateway.tenant(tenantId)?.let { t ->
+            Barbershop(
+                id = tenantId,
+                name = t["name"] as? String ?: "",
+                zone = (t["timezone"] as? String)?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: DEFAULT_ZONE,
+                shareCode = t["shareCode"] as? String,
+            )
+        }
+    }
+
+    override suspend fun claimShareCode(tenantId: String, code: String) = attempt { gateway.claimShareCode(tenantId, code) }
 
     /**
      * Si las reglas rechazan una reserva, en la práctica es porque otro cliente ganó el horario (B3);

@@ -22,14 +22,14 @@ import java.time.Instant
  */
 internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : BookingGateway {
 
-    private fun tenant(id: String) = db.collection("tenants").document(id)
+    private fun tenantRef(id: String) = db.collection("tenants").document(id)
 
     override suspend fun getDay(tenantId: String, dayId: String): Map<String, Any?>? = firebaseCall {
-        tenant(tenantId).collection("days").document(dayId).get().await().data
+        tenantRef(tenantId).collection("days").document(dayId).get().await().data
     }
 
     override suspend fun activeAppointments(tenantId: String, clientUid: String) = firebaseCall {
-        tenant(tenantId).collection("appointments")
+        tenantRef(tenantId).collection("appointments")
             .whereEqualTo("clientUid", clientUid)
             .whereEqualTo("status", "BOOKED")
             .get().await()
@@ -45,8 +45,8 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
     ) {
         unwrapSlotTaken {
             firebaseCall {
-                val dayRef = tenant(tenantId).collection("days").document(dayId)
-                val apptRef = tenant(tenantId).collection("appointments").document(apptId)
+                val dayRef = tenantRef(tenantId).collection("days").document(dayId)
+                val apptRef = tenantRef(tenantId).collection("appointments").document(apptId)
                 db.runTransaction { tx ->
                     @Suppress("UNCHECKED_CAST")
                     val booked = (tx.get(dayRef).get("booked") as? Map<String, Any?>).orEmpty()
@@ -69,11 +69,11 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         firebaseCall {
             val batch = db.batch()
             batch.update(
-                tenant(tenantId).collection("appointments").document(apptId),
+                tenantRef(tenantId).collection("appointments").document(apptId),
                 mapOf("status" to "CANCELLED", "updatedAt" to FieldValue.serverTimestamp()),
             )
             batch.update(
-                tenant(tenantId).collection("days").document(dayId),
+                tenantRef(tenantId).collection("days").document(dayId),
                 keys.associate { "booked.$it" to FieldValue.delete() } +
                     mapOf("lastOp" to apptId, "updatedAt" to FieldValue.serverTimestamp()),
             )
@@ -81,11 +81,18 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         }
     }
 
-    override fun observeClient(tenantId: String, clientUid: String): Flow<List<Pair<String, Map<String, Any?>>>> =
+    override fun observeUpcoming(
+        tenantId: String,
+        clientUid: String,
+        fromDate: String,
+    ): Flow<List<Pair<String, Map<String, Any?>>>> =
         callbackFlow {
-            // Sin orderBy: con un filtro de igualdad no hace falta índice compuesto; se ordena en el repositorio.
-            val registration = tenant(tenantId).collection("appointments")
+            // R4: solo de hoy en adelante, ordenadas. Índice compuesto en firebase/firestore.indexes.json.
+            val registration = tenantRef(tenantId).collection("appointments")
                 .whereEqualTo("clientUid", clientUid)
+                .whereEqualTo("status", "BOOKED") // U4: las canceladas no se leen (no se pagan)
+                .whereGreaterThanOrEqualTo("date", fromDate)
+                .orderBy("date")
                 .limit(MAX_LISTED)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
@@ -101,8 +108,22 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         db.collection("shareCodes").document(code).get().await().getString("tenantId")
     }
 
+    override suspend fun tenant(tenantId: String): Map<String, Any?>? = firebaseCall {
+        tenantRef(tenantId).get().await().data
+    }
+
+    override suspend fun claimShareCode(tenantId: String, code: String): Boolean = firebaseCall {
+        val ref = db.collection("shareCodes").document(code)
+        if (ref.get().await().exists()) return@firebaseCall false
+        db.batch()
+            .set(ref, mapOf("tenantId" to tenantId, "createdAt" to FieldValue.serverTimestamp()))
+            .update(tenantRef(tenantId), "shareCode", code)
+            .commit().await()
+        true
+    }
+
     private companion object {
-        const val MAX_LISTED = 50L
+        const val MAX_LISTED = 20L
     }
 }
 

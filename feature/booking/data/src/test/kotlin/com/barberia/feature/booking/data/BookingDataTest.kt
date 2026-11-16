@@ -55,8 +55,20 @@ class BookingDataTest {
         override suspend fun cancel(tenantId: String, apptId: String, dayId: String, keys: Set<String>) {
             lastCancel = keys
         }
-        override fun observeClient(tenantId: String, clientUid: String) = live
-        override suspend fun shareCode(code: String): String? = if (code == "ABC234") "t" else null
+        var lastFrom: String? = null
+        var tenant: Map<String, Any?>? = null
+        val codes = mutableMapOf("ABC234" to "t")
+        override fun observeUpcoming(tenantId: String, clientUid: String, fromDate: String): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
+            lastFrom = fromDate
+            return live
+        }
+        override suspend fun shareCode(code: String): String? = codes[code]
+        override suspend fun tenant(tenantId: String) = tenant
+        override suspend fun claimShareCode(tenantId: String, code: String): Boolean {
+            if (code in codes) return false
+            codes[code] = tenantId
+            return true
+        }
     }
 
     private val gw = FakeGateway()
@@ -97,10 +109,31 @@ class BookingDataTest {
         assertEquals(setOf("600", "605", "610"), gw.lastCancel)
     }
 
-    @Test fun `mis citas en vivo, ordenadas por fecha`() = runTest {
+    @Test fun `R4 mis citas desde una fecha, ordenadas`() = runTest {
         val later = cita.copy(id = "a2", date = LocalDate.of(2026, 11, 25))
         gw.live.value = listOf("a2" to AppointmentMapper.toMap(later), "a1" to AppointmentMapper.toMap(cita))
-        assertEquals(listOf("a1", "a2"), repo.observeClientAppointments("t", "cli").first().map { it.id })
+        assertEquals(listOf("a1", "a2"), repo.observeUpcoming("t", "cli", LocalDate.of(2026, 11, 16)).first().map { it.id })
+        assertEquals("2026-11-16", gw.lastFrom)
+    }
+
+    @Test fun `U4 las canceladas no salen en mis citas`() = runTest {
+        gw.live.value = listOf("a1" to AppointmentMapper.toMap(cita.copy(status = AppointmentStatus.CANCELLED)))
+        assertEquals(emptyList<String>(), repo.observeUpcoming("t", "cli", LocalDate.of(2026, 11, 16)).first().map { it.id })
+    }
+
+    @Test fun `R6 datos de la barberia, con zona por defecto si viene mal`() = runTest {
+        gw.tenant = mapOf("name" to "Gold", "timezone" to "Marte/Olimpo", "shareCode" to "ABC234")
+        assertEquals(
+            AppResult.Success(com.barberia.feature.booking.domain.model.Barbershop("t", "Gold", java.time.ZoneId.of("America/Mexico_City"), "ABC234")),
+            repo.barbershop("t"),
+        )
+        gw.tenant = null
+        assertEquals(AppResult.Success(null), repo.barbershop("t"))
+    }
+
+    @Test fun `R7 un codigo ocupado no se puede tomar`() = runTest {
+        assertEquals(AppResult.Success(false), repo.claimShareCode("t2", "ABC234"))
+        assertEquals(AppResult.Success(true), repo.claimShareCode("t2", "XYZ789"))
     }
 
     @Test fun `B11 SlotTaken envuelto por Firebase se recupera`() = runTest {

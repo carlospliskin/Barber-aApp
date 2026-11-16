@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -163,7 +164,7 @@ private fun BarbersList(barbers: List<Barber>, canEdit: Boolean, onIntent: (Cata
                     val days = b.schedule.days.size
                     Text(
                         if (days == 0) stringResource(R.string.catalog_no_schedule)
-                        else stringResource(R.string.catalog_days_working, days),
+                        else pluralStringResource(R.plurals.catalog_days_working, days, days),
                         color = if (days == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 },

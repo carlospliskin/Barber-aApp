@@ -1,0 +1,105 @@
+package com.barberia.feature.booking.presentation.client
+
+import com.barberia.core.common.AppResult
+import com.barberia.core.mvi.MviViewModel
+import com.barberia.core.mvi.UiEffect
+import com.barberia.core.mvi.UiIntent
+import com.barberia.core.mvi.UiState
+import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
+import com.barberia.feature.booking.domain.model.Appointment
+import com.barberia.feature.booking.domain.model.Barbershop
+import com.barberia.feature.booking.domain.model.BookingFailure
+import com.barberia.feature.booking.domain.usecase.CancelAppointmentUseCase
+import com.barberia.feature.booking.domain.usecase.JoinBarbershopUseCase
+import com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase
+import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCase
+import com.barberia.feature.booking.domain.usecase.ObserveMyAppointmentsUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+
+data class ClientHomeState(
+    val uid: String? = null,
+    val shop: Barbershop? = null,
+    val loading: Boolean = true,
+    val code: String = "",
+    val joining: Boolean = false,
+    val appointments: List<Appointment> = emptyList(),
+    val cancellingId: String? = null,
+    val failure: BookingFailure? = null,
+) : UiState
+
+sealed interface ClientHomeIntent : UiIntent {
+    data class CodeChanged(val value: String) : ClientHomeIntent
+    data object Join : ClientHomeIntent
+    data object Leave : ClientHomeIntent
+    data class Cancel(val appointmentId: String) : ClientHomeIntent
+    data object DismissFailure : ClientHomeIntent
+}
+
+sealed interface ClientHomeEffect : UiEffect
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class ClientHomeViewModel(
+    observeUser: ObserveCurrentUserUseCase,
+    observeJoined: ObserveJoinedBarbershopUseCase,
+    private val join: JoinBarbershopUseCase,
+    private val leave: LeaveBarbershopUseCase,
+    observeMine: ObserveMyAppointmentsUseCase,
+    private val cancel: CancelAppointmentUseCase,
+) : MviViewModel<ClientHomeState, ClientHomeIntent, ClientHomeEffect>(ClientHomeState()) {
+
+    init {
+        launchInScope {
+            observeUser()
+                .map { it?.uid }
+                .distinctUntilChanged()
+                .flatMapLatest { uid ->
+                    if (uid == null) flowOf(null to null) else observeJoined(uid).map { uid to it }
+                }
+                .flatMapLatest { (uid, joined) ->
+                    val shop = (joined as? AppResult.Success)?.value
+                    setState {
+                        copy(
+                            uid = uid,
+                            shop = shop,
+                            loading = false,
+                            failure = (joined as? AppResult.Failure)?.error ?: failure,
+                        )
+                    }
+                    if (uid == null || shop == null) flowOf(emptyList()) else observeMine(shop.id, uid, shop.zone)
+                }
+                .collect { list -> setState { copy(appointments = list) } }
+        }
+    }
+
+    override suspend fun handleIntent(intent: ClientHomeIntent) {
+        when (intent) {
+            is ClientHomeIntent.CodeChanged -> setState { copy(code = intent.value.uppercase(), failure = null) }
+            ClientHomeIntent.DismissFailure -> setState { copy(failure = null) }
+            ClientHomeIntent.Leave -> currentState.uid?.let { leave(it) }
+            ClientHomeIntent.Join -> {
+                setState { copy(joining = true, failure = null) }
+                val uid = currentState.uid ?: return
+                val r = join(currentState.code, uid)
+                setState {
+                    when (r) {
+                        is AppResult.Success -> copy(joining = false, shop = r.value, code = "")
+                        is AppResult.Failure -> copy(joining = false, failure = r.error)
+                    }
+                }
+            }
+            is ClientHomeIntent.Cancel -> {
+                val appt = currentState.appointments.find { it.id == intent.appointmentId } ?: return
+                val shop = currentState.shop ?: return
+                val uid = currentState.uid ?: return
+                setState { copy(cancellingId = appt.id) }
+                val r = cancel(appt, shop.zone, uid)
+                setState { copy(cancellingId = null, failure = (r as? AppResult.Failure)?.error) }
+            }
+        }
+    }
+}

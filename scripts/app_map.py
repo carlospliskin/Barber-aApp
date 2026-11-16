@@ -169,6 +169,17 @@ def intents_of(vm_file: Path, vm_name: str) -> list[str]:
     return sorted(set(re.findall(r"data (?:class|object) (\w+)", body)))
 
 
+def composable_info(name: str, files: list[Path]) -> tuple[Path | None, str | None, str]:
+    """Archivo, ViewModel (parámetro `viewModel:`) y cuerpo de una función @Composable."""
+    for f in files:
+        text = read(f)
+        m = re.search(rf"fun {name}\((.*?)\)\s*\{{", text, re.S)
+        if m:
+            vm = re.search(r"viewModel:\s*(\w+ViewModel)", m.group(1))
+            return f, (vm.group(1) if vm else None), block_after(text, m.end() - 1)
+    return None, None, ""
+
+
 def screens(nav: dict) -> list[dict]:
     files = all_kotlin()
     result = []
@@ -176,25 +187,32 @@ def screens(nav: dict) -> list[dict]:
         screen = d["screen"]
         if not screen:
             continue
-        src = next((f for f in files if re.search(rf"fun {screen}\(", read(f))), None)
-        vm = None
-        if src:
-            m = re.search(rf"fun {screen}\((.*?)\)\s*\{{", read(src), re.S)
-            if m:
-                vm_match = re.search(r"viewModel:\s*(\w+ViewModel)", m.group(1))
-                vm = vm_match.group(1) if vm_match else None
+        src, vm, body = composable_info(screen, files)
         if vm is None and d["route"] in ("SplashDest", "OfflineDest"):
             vm = "SessionViewModel"
+        # Componentes con su propio ViewModel dentro de la pantalla (p. ej. HomeRoute → ClientHomeRoute, ShareCodeCard).
+        embedded = []
+        for call in sorted(set(re.findall(r"\b([A-Z]\w*(?:Route|Card|Section))\(", body)) - {screen}):
+            _, child_vm, _ = composable_info(call, files)
+            if child_vm:
+                embedded.append({"component": call, "viewModel": child_vm})
+        vms = [v for v in [vm] + [e["viewModel"] for e in embedded] if v]
+        use_cases, intents = set(), set()
+        for v in vms:
+            vf = find_class_file(v, files)
+            if vf:
+                use_cases |= {t for t in constructor_types(read(vf), v) if t.endswith("UseCase")}
+                intents |= set(intents_of(vf, v))
         vm_file = find_class_file(vm, files) if vm else None
-        use_cases = [t for t in constructor_types(read(vm_file), vm) if t.endswith("UseCase")] if vm_file else []
         result.append({
             "route": d["route"],
             "screen": screen,
             "file": rel(src) if src else None,
             "viewModel": vm,
             "viewModelFile": rel(vm_file) if vm_file else None,
-            "intents": intents_of(vm_file, vm) if vm_file else [],
-            "useCases": sorted(set(use_cases)),
+            "embedded": embedded,
+            "intents": sorted(intents),
+            "useCases": sorted(use_cases),
         })
     return result
 
@@ -312,6 +330,8 @@ def render(data: dict) -> str:
     for s in scr:
         screen = f"[`{s['screen']}`](../{s['file']})" if s["file"] else s["screen"]
         vm = f"[`{s['viewModel']}`](../{s['viewModelFile']})" if s["viewModelFile"] else (s["viewModel"] or "—")
+        if s["embedded"]:
+            vm += "<br/>+ " + ", ".join(f"`{e['component']}` ({e['viewModel']})" for e in s["embedded"])
         intents = ", ".join(s["intents"]) or "—"
         ucs = ", ".join(s["useCases"]) or "—"
         out.append(f"| `{s['route']}` | {screen} | {vm} | {intents} | {ucs} |")

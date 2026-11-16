@@ -1,0 +1,39 @@
+<resources>
+    <string name="booking_join_title">Encuentra tu barbería</string>
+    <string name="booking_join_hint">Pide a tu barbería su código de 6 letras y escríbelo aquí.</string>
+    <string name="booking_code">Código de la barbería</string>
+    <string name="booking_join">Entrar</string>
+    <string name="booking_change_shop">Cambiar de barbería</string>
+    <string name="booking_book">Reservar cita</string>
+    <string name="booking_my_appointments">Mis próximas citas</string>
+    <string name="booking_no_appointments">No tienes citas próximas.</string>
+    <string name="booking_cancel">Cancelar cita</string>
+    <string name="booking_cancelled">Cancelada</string>
+    <string name="booking_appt_line">%1$s · %2$s a las %3$s</string>
+    <string name="booking_with">con %1$s · %2$s</string>
+    <string name="booking_sign_out">Cerrar sesión</string>
+
+    <string name="booking_title">Reservar</string>
+    <string name="booking_back">Volver</string>
+    <string name="booking_step_service">1. Servicio</string>
+    <string name="booking_step_barber">2. Barbero</string>
+    <string name="booking_step_day">3. Día</string>
+    <string name="booking_step_time">4. Hora</string>
+    <string name="booking_no_slots">No hay horarios ese día. Prueba otro día o barbero.</string>
+    <string name="booking_no_catalog">Esta barbería todavía no tiene servicios o barberos con horario.</string>
+    <string name="booking_confirm">Confirmar %1$s a las %2$s</string>
+    <string name="booking_done">¡Listo! Tu cita quedó reservada.</string>
+
+    <string name="booking_share_title">Código para tus clientes</string>
+    <string name="booking_share_hint">Compártelo por WhatsApp: con él tus clientes encuentran tu barbería y reservan.</string>
+
+    <string name="booking_error_taken">Alguien más tomó ese horario. Elige otro.</string>
+    <string name="booking_error_unavailable">Ese horario ya no está disponible.</string>
+    <string name="booking_error_service">Ese servicio ya no está disponible.</string>
+    <string name="booking_error_barber">Ese barbero ya no está disponible.</string>
+    <string name="booking_error_too_many">Ya tienes el máximo de citas activas. Cancela una para reservar otra.</string>
+    <string name="booking_error_cancel_late">Ya no se puede cancelar: faltan menos de 2 horas.</string>
+    <string name="booking_error_code">Código no válido. Revisa las 6 letras.</string>
+    <string name="booking_error_connection">Sin conexión. Intenta de nuevo.</string>
+    <string name="booking_error_unknown">Ocurrió un error. Intenta de nuevo.</string>
+</resources>

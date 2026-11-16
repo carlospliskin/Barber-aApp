@@ -18,7 +18,14 @@ internal interface BookingGateway {
     /** Batch: cita CANCELLED + quitar sus bloques del día. */
     suspend fun cancel(tenantId: String, apptId: String, dayId: String, keys: Set<String>)
 
-    fun observeClient(tenantId: String, clientUid: String): Flow<List<Pair<String, Map<String, Any?>>>>
+    /** R4: citas del cliente con `date >= fromDate` (yyyy-MM-dd), ordenadas por fecha, máx. 20. */
+    fun observeUpcoming(tenantId: String, clientUid: String, fromDate: String): Flow<List<Pair<String, Map<String, Any?>>>>
 
     suspend fun shareCode(code: String): String?
+
+    /** Documento `tenants/{id}` o null. */
+    suspend fun tenant(tenantId: String): Map<String, Any?>?
+
+    /** Crea `shareCodes/{code}` y lo guarda en la barbería. `false` si el código ya existe. */
+    suspend fun claimShareCode(tenantId: String, code: String): Boolean
 }
