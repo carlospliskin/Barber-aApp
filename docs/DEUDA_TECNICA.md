@@ -75,7 +75,8 @@ Encontrados revisando el código ya implementado.
 
 | ID | Prioridad | Esfuerzo | Deuda | Cómo resolverla |
 |---|---|---|---|---|
-| Q1 | P1 | M | **0 tests instrumentados.** El código real de Firebase (transacciones, conversión de fechas, consultas) solo se probó a mano en el emulador. | Tests `androidTest` de cada gateway contra Firebase Emulator Suite. |
+| Q1 | ✅ | M | **0 tests instrumentados.** | Ver «Resueltos». |
+| Q1-b | P2 | M | Los tests instrumentados **no corren en el CI** (necesitan un emulador Android + Firebase). | Job con `reactivecircus/android-emulator-runner` y `firebase emulators:exec`; ~10 min por corrida (minutos de Actions). |
 | Q2 | P1 | M | **Las pruebas de punta a punta no están en el repo.** Se hicieron con un script local de adb. | Versionarlas con Maestro (YAML legible) o Compose UI Test; correrlas en CI con un emulador. |
 | Q3 | P2 | S | **detekt / ktlint** no corren en CI. | Agregar el plugin al `build-logic` y el paso al CI. |
 | Q4 | P2 | M | Sin tests de UI (Compose) ni capturas de referencia. | Compose UI Test para formularios críticos (login, reserva). |
@@ -157,3 +158,5 @@ Encontrados revisando el código ya implementado.
 | E4 | (nuevo, error) | "Agendar cliente" usaba `.first()` después de un `catch`: con un error del catálogo lanzaba `NoSuchElementException` (antes de E1 cerraba la app). Ahora `firstOrNull()`. |
 | E5 | (nuevo) | Si una acción de la agenda fallaba de forma inesperada, los botones de esa cita quedaban bloqueados. Ahora se liberan y se muestra el error. |
 | U13 | (nuevo) | Una cita que ya pasó (sin marcar) decía "faltan menos de 2 horas": ahora "Ya pasó la hora de esta cita". |
+| Q1 | P1 | **10 tests instrumentados** con el SDK real de Firebase y las reglas reales (`scripts/android-tests.sh`): reservar y horario tomado, cancelar, marcar + deshacer (F7-2), agenda sin acceso, consulta de grupo + anonimizar + borrar barbería (A7), invitar/aceptar/revocar/volver (A16), registrar dueño en un batch y eliminar cuenta. Módulo `core:firebase-testing`. |
+| E6 | (nuevo) | En debug/QA los errores inesperados de pantalla (E1) se tragaban en silencio: ahora van a logcat. |

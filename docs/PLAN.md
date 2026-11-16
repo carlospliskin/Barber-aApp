@@ -218,6 +218,9 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] E4. `first()` tras `catch` en "Agendar cliente".
 - [x] E5. Botones bloqueados tras un error inesperado en la agenda.
 - [x] U13. Cita ya pasada decía "faltan menos de 2 horas".
+- [x] Q1. Tests instrumentados de los gateways contra Emulator Suite (10, `scripts/android-tests.sh`).
+- [x] E6. Errores inesperados visibles en logcat en debug/QA.
+- [ ] Q1-b. Correr los instrumentados en el CI (P2).
 - [ ] A7-c. Clientes de una barbería borrada la conservan en el teléfono con recordatorios (P2).
 - [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
 - [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app).

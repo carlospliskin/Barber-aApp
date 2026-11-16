@@ -1,6 +1,7 @@
 package com.barberia.app
 
 import android.app.Application
+import android.util.Log
 import com.barberia.core.mvi.MviErrors
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.barberia.app.di.appModule
@@ -28,8 +29,11 @@ class BarberiaApplication : Application() {
             appCheckInstaller = appCheckInstaller(), // por build type: src/release, src/debug, src/qa
         )
         // Errores inesperados de pantallas: no cierran la app; en release se reportan como no fatales.
-        if (BuildConfig.CRASH_REPORTS) {
-            MviErrors.reporter = { FirebaseCrashlytics.getInstance().recordException(it) }
+        MviErrors.reporter = if (BuildConfig.CRASH_REPORTS) {
+            { FirebaseCrashlytics.getInstance().recordException(it) }
+        } else {
+            // debug/QA: que se vea en logcat (antes se tragaba en silencio y un bug pasaba desapercibido)
+            { Log.e("Barberia", "Error inesperado en una pantalla", it) }
         }
         startKoin {
             androidContext(this@BarberiaApplication)

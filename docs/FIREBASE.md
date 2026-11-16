@@ -27,6 +27,17 @@ Levanta el emulador de Firestore, corre `firebase/test/*.test.js` y lo apaga.
 Si ya tienes los emuladores corriendo, usa `node --test --test-concurrency=1 firebase/test/*.test.js` desde la raíz.
 Los tests usan el proyecto `demo-rules`: no borran los datos de la app (`demo-barberia`).
 
+## Tests instrumentados (Q1)
+
+Repositorios y gateways reales (transacciones, batches, fechas, consultas de grupo) contra Emulator Suite con
+las reglas reales. Viven en `src/androidTest` de `feature/*/data` y usan `core:firebase-testing`
+(`FirebaseEmulator`: limpia el emulador, crea cuentas, verifica correos y siembra datos como administrador).
+
+```bash
+(cd firebase && npm run emulators)   # en otra terminal
+scripts/android-tests.sh             # instala y corre en emulator-5570 (ANDROID_SERIAL para otro)
+```
+
 ## Build QA
 `./gradlew :app:assembleQa` genera el mismo APK que release (con R8) pero apuntando al emulador.
 Así se prueban los problemas de R8 antes de publicar.

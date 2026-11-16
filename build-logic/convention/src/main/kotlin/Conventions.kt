@@ -35,6 +35,8 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             namespace = defaultNamespace
             compileSdk = Build.COMPILE_SDK
             defaultConfig.minSdk = Build.MIN_SDK
+            // Q1: tests instrumentados (androidTest) contra Firebase Emulator Suite.
+            defaultConfig.testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
             compileOptions {
                 sourceCompatibility = Build.JAVA
                 targetCompatibility = Build.JAVA
@@ -42,6 +44,12 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
         }
         extensions.configure<KotlinProjectExtension> { jvmToolchain(Build.JVM) }
         addUnitTestLibraries()
+        dependencies {
+            add("androidTestImplementation", libs.findLibrary("androidx-test-runner").get())
+            add("androidTestImplementation", libs.findLibrary("androidx-test-junit").get())
+            add("androidTestImplementation", libs.findLibrary("junit4").get())
+            add("androidTestImplementation", libs.findLibrary("coroutines-test").get())
+        }
     }
 }
 

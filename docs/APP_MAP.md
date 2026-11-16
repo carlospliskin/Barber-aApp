@@ -8,7 +8,7 @@
 
 | Módulos | Pantallas | Casos de uso | Repositorios | Rutas en Firestore | Tests Kotlin | Tests de reglas |
 |---|---|---|---|---|---|---|
-| 14 | 12 | 49 | 5 | 10 | 341 | 147 |
+| 15 | 12 | 49 | 5 | 10 | 341 | 147 |
 
 ## 1. Módulos y dependencias
 
@@ -20,6 +20,7 @@ graph LR
   core_common[":core:common<br/><small>Kotlin puro</small>"]
   core_mvi[":core:mvi<br/><small>Android + Compose</small>"]
   core_firebase[":core:firebase<br/><small>Android</small>"]
+  core_firebase_testing[":core:firebase-testing<br/><small>Android</small>"]
   core_designsystem[":core:designsystem<br/><small>Android + Compose</small>"]
   feature_auth_domain[":feature:auth:domain<br/><small>Kotlin puro</small>"]
   feature_auth_data[":feature:auth:data<br/><small>Android</small>"]
@@ -43,14 +44,17 @@ graph LR
   app --> feature_catalog_data
   app --> feature_catalog_domain
   app --> feature_catalog_presentation
+  core_firebase_testing --> core_firebase
   feature_auth_domain --> core_common
   feature_auth_data --> core_firebase
+  feature_auth_data --> core_firebase_testing
   feature_auth_data --> feature_auth_domain
   feature_auth_presentation --> core_designsystem
   feature_auth_presentation --> core_mvi
   feature_auth_presentation --> feature_auth_domain
   feature_catalog_domain --> core_common
   feature_catalog_data --> core_firebase
+  feature_catalog_data --> core_firebase_testing
   feature_catalog_data --> feature_catalog_domain
   feature_catalog_presentation --> core_designsystem
   feature_catalog_presentation --> core_mvi
@@ -59,6 +63,7 @@ graph LR
   feature_booking_domain --> core_common
   feature_booking_domain --> feature_catalog_domain
   feature_booking_data --> core_firebase
+  feature_booking_data --> core_firebase_testing
   feature_booking_data --> feature_booking_domain
   feature_booking_presentation --> core_designsystem
   feature_booking_presentation --> core_mvi
@@ -73,15 +78,16 @@ graph LR
 | [`:core:common`](../core/common) | Kotlin puro | 2 | 2 | — |
 | [`:core:mvi`](../core/mvi) | Android + Compose | 2 | 4 | — |
 | [`:core:firebase`](../core/firebase) | Android | 3 | 2 | — |
+| [`:core:firebase-testing`](../core/firebase-testing) | Android | 1 | 0 | `:core:firebase` |
 | [`:core:designsystem`](../core/designsystem) | Android + Compose | 5 | 0 | — |
 | [`:feature:auth:domain`](../feature/auth/domain) | Kotlin puro | 6 | 41 | `:core:common` |
-| [`:feature:auth:data`](../feature/auth/data) | Android | 6 | 21 | `:core:firebase`, `:feature:auth:domain` |
+| [`:feature:auth:data`](../feature/auth/data) | Android | 6 | 21 | `:core:firebase`, `:core:firebase-testing`, `:feature:auth:domain` |
 | [`:feature:auth:presentation`](../feature/auth/presentation) | Android + Compose | 15 | 29 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain` |
 | [`:feature:catalog:domain`](../feature/catalog/domain) | Kotlin puro | 6 | 44 | `:core:common` |
-| [`:feature:catalog:data`](../feature/catalog/data) | Android | 8 | 16 | `:core:firebase`, `:feature:catalog:domain` |
+| [`:feature:catalog:data`](../feature/catalog/data) | Android | 8 | 16 | `:core:firebase`, `:core:firebase-testing`, `:feature:catalog:domain` |
 | [`:feature:catalog:presentation`](../feature/catalog/presentation) | Android + Compose | 6 | 25 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:catalog:domain` |
 | [`:feature:booking:domain`](../feature/booking/domain) | Kotlin puro | 13 | 76 | `:core:common`, `:feature:catalog:domain` |
-| [`:feature:booking:data`](../feature/booking/data) | Android | 11 | 34 | `:core:firebase`, `:feature:booking:domain` |
+| [`:feature:booking:data`](../feature/booking/data) | Android | 11 | 34 | `:core:firebase`, `:core:firebase-testing`, `:feature:booking:domain` |
 | [`:feature:booking:presentation`](../feature/booking/presentation) | Android + Compose | 14 | 44 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:booking:domain`, `:feature:catalog:domain` |
 
 ## 2. Navegación

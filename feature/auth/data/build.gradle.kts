@@ -7,3 +7,7 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.koin.android)
 }
+
+dependencies {
+    androidTestImplementation(project(":core:firebase-testing")) // Q1
+}

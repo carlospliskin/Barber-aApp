@@ -9,3 +9,7 @@ dependencies {
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.core.ktx)
 }
+
+dependencies {
+    androidTestImplementation(project(":core:firebase-testing")) // Q1
+}

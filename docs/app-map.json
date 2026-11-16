@@ -47,6 +47,16 @@
       "unitTests": 2
     },
     {
+      "path": ":core:firebase-testing",
+      "folder": "core/firebase-testing",
+      "layer": "Android",
+      "dependsOn": [
+        ":core:firebase"
+      ],
+      "kotlinFiles": 1,
+      "unitTests": 0
+    },
+    {
       "path": ":core:designsystem",
       "folder": "core/designsystem",
       "layer": "Android + Compose",
@@ -70,6 +80,7 @@
       "layer": "Android",
       "dependsOn": [
         ":core:firebase",
+        ":core:firebase-testing",
         ":feature:auth:domain"
       ],
       "kotlinFiles": 6,
@@ -103,6 +114,7 @@
       "layer": "Android",
       "dependsOn": [
         ":core:firebase",
+        ":core:firebase-testing",
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 8,
@@ -138,6 +150,7 @@
       "layer": "Android",
       "dependsOn": [
         ":core:firebase",
+        ":core:firebase-testing",
         ":feature:booking:domain"
       ],
       "kotlinFiles": 11,

@@ -29,6 +29,7 @@ App Android nativa (Kotlin + Compose) para barberías, con Firebase en plan **Sp
 (cd firebase && npm test)               # reglas de Firestore en el emulador
 (cd firebase && npm run emulators)      # Auth 9199 · Firestore 8085 · UI 4005
 python3 scripts/app_map.py              # regenerar el mapa (el CI falla si está desactualizado)
+scripts/android-tests.sh                # tests instrumentados (SDK real + reglas) en emulator-5570; requiere emuladores
 ```
 
 ## Al cambiar algo
@@ -40,4 +41,5 @@ python3 scripts/app_map.py              # regenerar el mapa (el CI falla si est�
 ## Entorno local (Mac de Carlos)
 - Puertos 9099 y 8080 los usa otro proyecto: no cambiar los de `firebase.json`.
 - Los emuladores Android `Rinde_*` son de otro proyecto. Para probar esta app usa uno propio
-  (p. ej. `Medium_Phone_API_36.0` en el puerto 5570).
+  (p. ej. `Medium_Phone_API_36.0` en el puerto 5570), ligero: `-no-window -cores 2 -memory 2048 -no-boot-anim`.
+  No uses `connectedAndroidTest` (instala en todos los dispositivos): usa `scripts/android-tests.sh`.
