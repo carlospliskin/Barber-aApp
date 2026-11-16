@@ -77,9 +77,10 @@ class BookingPresentationTest {
         ObserveCurrentUserUseCase(session),
         ObserveJoinedBarbershopUseCase(bookings, store),
         JoinBarbershopUseCase(bookings, store),
-        LeaveBarbershopUseCase(store),
+        LeaveBarbershopUseCase(bookings, store),
         ObserveMyAppointmentsUseCase(bookings, clock),
         CancelAppointmentUseCase(bookings, policy, clock),
+        clock,
     )
 
     private fun booking() = BookingViewModel(

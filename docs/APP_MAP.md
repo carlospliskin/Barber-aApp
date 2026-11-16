@@ -8,7 +8,7 @@
 
 | Módulos | Pantallas | Casos de uso | Repositorios | Rutas en Firestore | Tests Kotlin | Tests de reglas |
 |---|---|---|---|---|---|---|
-| 14 | 8 | 25 | 3 | 6 | 164 | 53 |
+| 14 | 8 | 25 | 3 | 6 | 165 | 54 |
 
 ## 1. Módulos y dependencias
 
@@ -80,7 +80,7 @@ graph LR
 | [`:feature:catalog:domain`](../feature/catalog/domain) | Kotlin puro | 4 | 24 | `:core:common` |
 | [`:feature:catalog:data`](../feature/catalog/data) | Android | 5 | 9 | `:core:firebase`, `:feature:catalog:domain` |
 | [`:feature:catalog:presentation`](../feature/catalog/presentation) | Android + Compose | 6 | 15 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:catalog:domain` |
-| [`:feature:booking:domain`](../feature/booking/domain) | Kotlin puro | 5 | 25 | `:core:common`, `:feature:catalog:domain` |
+| [`:feature:booking:domain`](../feature/booking/domain) | Kotlin puro | 5 | 26 | `:core:common`, `:feature:catalog:domain` |
 | [`:feature:booking:data`](../feature/booking/data) | Android | 6 | 16 | `:core:firebase`, `:feature:booking:domain` |
 | [`:feature:booking:presentation`](../feature/booking/presentation) | Android + Compose | 7 | 11 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:booking:domain`, `:feature:catalog:domain` |
 
@@ -151,7 +151,7 @@ para escribir una prueba de interfaz.
 | `EnsureShareCodeUseCase` | BookingRepository | `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
 | `GetAvailableSlotsUseCase` | BookingRepository, CatalogRepository | `BookingDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
 | `JoinBarbershopUseCase` | BookingRepository | `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
-| `LeaveBarbershopUseCase` | — | `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
+| `LeaveBarbershopUseCase` | BookingRepository | `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |
 | `ObserveCatalogUseCase` | CatalogRepository | `BookingDest`, `CatalogDest` | [CatalogUseCases.kt](../feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt) |
 | `ObserveCurrentUserUseCase` | SessionRepository | `BookingDest`, `CatalogDest`, `HomeDest`, `ModeSelectionDest` | [AuthUseCases.kt](../feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt) |
 | `ObserveJoinedBarbershopUseCase` | BookingRepository | `BookingDest`, `HomeDest` | [BookingUseCases.kt](../feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt) |

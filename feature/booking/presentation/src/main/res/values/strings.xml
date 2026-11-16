@@ -33,6 +33,7 @@
     <string name="booking_error_barber">Ese barbero ya no está disponible.</string>
     <string name="booking_error_too_many">Ya tienes el máximo de citas activas. Cancela una para reservar otra.</string>
     <string name="booking_error_cancel_late">Ya no se puede cancelar: faltan menos de 2 horas.</string>
+    <string name="booking_error_has_active">Tienes citas activas aquí. Cancélalas antes de cambiar de barbería.</string>
     <string name="booking_error_code">Código no válido. Revisa las 6 letras.</string>
     <string name="booking_error_connection">Sin conexión. Intenta de nuevo.</string>
     <string name="booking_error_unknown">Ocurrió un error. Intenta de nuevo.</string>

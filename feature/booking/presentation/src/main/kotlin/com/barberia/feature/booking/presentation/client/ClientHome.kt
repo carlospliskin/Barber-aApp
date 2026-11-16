@@ -15,6 +15,8 @@ import com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveMyAppointmentsUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import java.time.Clock
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.emptyFlow
@@ -50,6 +52,7 @@ class ClientHomeViewModel(
     private val leave: LeaveBarbershopUseCase,
     observeMine: ObserveMyAppointmentsUseCase,
     private val cancel: CancelAppointmentUseCase,
+    private val clock: Clock,
 ) : MviViewModel<ClientHomeState, ClientHomeIntent, ClientHomeEffect>(ClientHomeState()) {
 
     init {
@@ -80,7 +83,13 @@ class ClientHomeViewModel(
         when (intent) {
             is ClientHomeIntent.CodeChanged -> setState { copy(code = intent.value.uppercase(), failure = null) }
             ClientHomeIntent.DismissFailure -> setState { copy(failure = null) }
-            ClientHomeIntent.Leave -> currentState.uid?.let { leave(it) }
+            ClientHomeIntent.Leave -> {
+                val uid = currentState.uid ?: return
+                val shop = currentState.shop ?: return
+                val today = LocalDateTime.ofInstant(clock.instant(), shop.zone).toLocalDate()
+                val r = leave(uid, shop.id, today)
+                if (r is AppResult.Failure) setState { copy(failure = r.error) }
+            }
             ClientHomeIntent.Join -> {
                 setState { copy(joining = true, failure = null) }
                 val uid = currentState.uid ?: return

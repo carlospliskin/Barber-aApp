@@ -16,6 +16,7 @@ fun BookingFailure.messageRes(): Int = when (this) {
     BookingFailure.TooManyActive -> R.string.booking_error_too_many
     BookingFailure.CancelTooLate -> R.string.booking_error_cancel_late
     BookingFailure.InvalidCode -> R.string.booking_error_code
+    BookingFailure.HasActiveAppointments -> R.string.booking_error_has_active
     BookingFailure.NoConnection -> R.string.booking_error_connection
     else -> R.string.booking_error_unknown
 }

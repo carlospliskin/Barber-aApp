@@ -26,8 +26,10 @@ class FakeBookingRepository : BookingRepository {
     override suspend fun dayBookings(tenantId: String, barberId: String, date: LocalDate): BookingResult<Set<Int>> =
         failure?.let { AppResult.Failure(it) } ?: AppResult.Success(day(barberId, date).keys)
 
+    var activeOverride: Int? = null
+
     override suspend fun countActive(tenantId: String, clientUid: String, from: LocalDate): BookingResult<Int> =
-        AppResult.Success(all.value.count { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) })
+        activeOverride?.let { AppResult.Success(it) } ?: AppResult.Success(all.value.count { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) })
 
     override suspend fun book(appointment: Appointment): BookingResult<Unit> {
         failure?.let { return AppResult.Failure(it) }

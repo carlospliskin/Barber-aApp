@@ -137,6 +137,7 @@ service cloud.firestore {
           && data.slotKeys is list && data.slotKeys.size() > 0 && data.slotKeys.size() <= 96
           && data.startMinute is int && data.endMinute is int && data.endMinute > data.startMinute
           && data.startsAt is timestamp && data.startsAt > request.time
+          && data.startsAt < request.time + duration.value(31, 'd') // V2: ventana de reserva
           && data.priceCents is int && data.priceCents >= 0
           && data.date is string && data.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
           && slotsMatch(data)

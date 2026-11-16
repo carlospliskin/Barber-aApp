@@ -195,3 +195,15 @@ describe("shareCodes (B0)", () => {
     await assertFails(getDocs(collection(db("cli"), "shareCodes")));
   });
 });
+
+describe("V2 ventana de reserva en el servidor", () => {
+  test("no se reserva a más de 31 días aunque se salte la app", () => {
+    const d = db("cli");
+    const b = writeBatch(d);
+    b.set(doc(d, "tenants/ana/appointments/a1"), appt("cli", ["600"], {
+      date: "2027-06-01", dayId: "b1_2027-06-01", startsAt: Timestamp.fromDate(new Date("2027-06-01T16:00:00Z")),
+    }));
+    b.set(doc(d, "tenants/ana/days/b1_2027-06-01"), { booked: { 600: "a1" }, lastOp: "a1", updatedAt: serverTimestamp() });
+    return assertFails(b.commit());
+  });
+});

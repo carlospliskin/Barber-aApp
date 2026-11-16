@@ -174,8 +174,16 @@ class ObserveJoinedBarbershopUseCase(
     }
 }
 
-class LeaveBarbershopUseCase(private val store: JoinedBarbershopStore) {
-    suspend operator fun invoke(uid: String) = store.save(uid, null)
+class LeaveBarbershopUseCase(private val bookings: BookingRepository, private val store: JoinedBarbershopStore) {
+    /** V1: no se deja una barbería con citas activas (dejarían de verse y el cliente las olvidaría). */
+    suspend operator fun invoke(uid: String, tenantId: String, today: LocalDate): BookingResult<Unit> {
+        when (val active = bookings.countActive(tenantId, uid, today)) {
+            is AppResult.Failure -> return active
+            is AppResult.Success -> if (active.value > 0) return AppResult.Failure(BookingFailure.HasActiveAppointments)
+        }
+        store.save(uid, null)
+        return AppResult.Success(Unit)
+    }
 }
 
 class EnsureShareCodeUseCase(private val bookings: BookingRepository, private val random: Random) {

@@ -130,7 +130,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 5,
-      "unitTests": 25
+      "unitTests": 26
     },
     {
       "path": ":feature:booking:data",
@@ -581,7 +581,9 @@
     {
       "name": "LeaveBarbershopUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
-      "uses": []
+      "uses": [
+        "BookingRepository"
+      ]
     },
     {
       "name": "ObserveCatalogUseCase",
@@ -794,5 +796,5 @@
       ]
     }
   ],
-  "rulesTests": 53
+  "rulesTests": 54
 }

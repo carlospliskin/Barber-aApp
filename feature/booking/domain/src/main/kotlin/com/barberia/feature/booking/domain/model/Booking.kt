@@ -71,6 +71,7 @@ sealed interface BookingFailure {
     data object NotYours : BookingFailure
     data object AlreadyClosed : BookingFailure
     data object InvalidCode : BookingFailure
+    data object HasActiveAppointments : BookingFailure
     data object NoConnection : BookingFailure
     data class Unknown(val detail: String? = null) : BookingFailure
 }

@@ -46,6 +46,21 @@ class BarbershopUseCasesTest {
         assertEquals(null, store.saved["ana"])
     }
 
+    @Test fun `V1 no se sale de la barberia con citas activas`() = runTest {
+        repo.barbershops["t1"] = gold
+        repo.shareCodes["ABC234"] = "t1"
+        JoinBarbershopUseCase(repo, store)("ABC234", "ana")
+        repo.activeOverride = 1
+        assertEquals(
+            AppResult.Failure(BookingFailure.HasActiveAppointments),
+            com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase(repo, store)("ana", "t1", java.time.LocalDate.of(2026, 11, 16)),
+        )
+        assertEquals("t1", store.saved["ana"])
+        repo.activeOverride = 0
+        assertEquals(AppResult.Success(Unit), com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase(repo, store)("ana", "t1", java.time.LocalDate.of(2026, 11, 16)))
+        assertEquals(null, store.saved["ana"])
+    }
+
     @Test fun `R7 el duenio obtiene su codigo y se crea solo la primera vez`() = runTest {
         repo.barbershops["t1"] = gold
         val ensure = EnsureShareCodeUseCase(repo, Random(1))
