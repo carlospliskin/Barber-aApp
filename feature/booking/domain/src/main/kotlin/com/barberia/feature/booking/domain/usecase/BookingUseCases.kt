@@ -4,8 +4,8 @@ import com.barberia.core.common.AppResult
 import com.barberia.core.common.ShortCodes
 import com.barberia.feature.booking.domain.availability.AvailabilityCalculator
 import com.barberia.feature.booking.domain.model.Appointment
-import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.AppointmentStatus
+import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingPolicy
 import com.barberia.feature.booking.domain.model.BookingRequest
@@ -18,14 +18,14 @@ import com.barberia.feature.catalog.domain.editor.IdGenerator
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.repository.CatalogRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.Random
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 private fun Clock.nowIn(zone: ZoneId): LocalDateTime = LocalDateTime.ofInstant(instant(), zone)
 
@@ -39,7 +39,7 @@ class GetAvailableSlotsUseCase(
     private val catalog: CatalogRepository,
     private val bookings: BookingRepository,
     private val policy: BookingPolicy,
-    private val clock: Clock,
+    private val clock: Clock
 ) {
     private val calculator = AvailabilityCalculator(policy)
     private val staffCalculator = AvailabilityCalculator(policy.forStaff())
@@ -51,7 +51,7 @@ class GetAvailableSlotsUseCase(
         serviceId: String,
         date: LocalDate,
         /** N1: el personal ve también el turno actual. */
-        forStaff: Boolean = false,
+        forStaff: Boolean = false
     ): BookingResult<List<Int>> {
         val c = when (val r = catalog.current(tenantId)) {
             is AppResult.Success -> r.value
@@ -61,8 +61,9 @@ class GetAvailableSlotsUseCase(
         val service = c.services.find { it.id == serviceId } ?: return AppResult.Failure(BookingFailure.ServiceUnavailable)
         return when (val booked = bookings.dayBookings(tenantId, barberId, date)) {
             is AppResult.Success -> AppResult.Success(
-                (if (forStaff) staffCalculator else calculator).slots(barber, service, date, booked.value, clock.nowIn(zone)),
+                (if (forStaff) staffCalculator else calculator).slots(barber, service, date, booked.value, clock.nowIn(zone))
             )
+
             is AppResult.Failure -> booked
         }
     }
@@ -73,7 +74,7 @@ class BookAppointmentUseCase(
     private val bookings: BookingRepository,
     private val policy: BookingPolicy,
     private val clock: Clock,
-    private val ids: IdGenerator,
+    private val ids: IdGenerator
 ) {
     private val calculator = AvailabilityCalculator(policy)
 
@@ -96,6 +97,7 @@ class BookAppointmentUseCase(
         // P2 (B4): penalizado por no-shows
         when (val client = bookings.client(req.tenantId, req.clientUid)) {
             is AppResult.Failure -> return client
+
             is AppResult.Success -> client.value?.penaltyUntil?.let { until ->
                 if (until.isAfter(clock.instant())) return AppResult.Failure(BookingFailure.Penalized(until))
             }
@@ -103,6 +105,7 @@ class BookAppointmentUseCase(
         // B5
         when (val active = bookings.countActive(req.tenantId, req.clientUid, now.toLocalDate())) {
             is AppResult.Failure -> return active
+
             is AppResult.Success -> if (active.value >= policy.maxActivePerClient) {
                 return AppResult.Failure(BookingFailure.TooManyActive)
             }
@@ -127,7 +130,7 @@ class BookAppointmentUseCase(
             startMinute = req.startMinute,
             endMinute = req.startMinute + service.durationMinutes,
             status = AppointmentStatus.BOOKED,
-            startsAt = req.date.atStartOfDay(req.zone).plusMinutes(req.startMinute.toLong()).toInstant(),
+            startsAt = req.date.atStartOfDay(req.zone).plusMinutes(req.startMinute.toLong()).toInstant()
         )
         return when (val saved = bookings.book(appointment)) {
             is AppResult.Success -> AppResult.Success(appointment)
@@ -145,7 +148,7 @@ class BookWalkInUseCase(
     private val bookings: BookingRepository,
     policy: BookingPolicy,
     private val clock: Clock,
-    private val ids: IdGenerator,
+    private val ids: IdGenerator
 ) {
     private val calculator = AvailabilityCalculator(policy.forStaff())
 
@@ -187,7 +190,7 @@ class BookWalkInUseCase(
             endMinute = req.startMinute + service.durationMinutes,
             status = AppointmentStatus.BOOKED,
             startsAt = req.date.atStartOfDay(req.zone).plusMinutes(req.startMinute.toLong()).toInstant(),
-            clientPhone = phone,
+            clientPhone = phone
         )
         return when (val saved = bookings.book(appointment)) {
             is AppResult.Success -> AppResult.Success(appointment)
@@ -201,11 +204,7 @@ class BookWalkInUseCase(
     }
 }
 
-class CancelAppointmentUseCase(
-    private val bookings: BookingRepository,
-    private val policy: BookingPolicy,
-    private val clock: Clock,
-) {
+class CancelAppointmentUseCase(private val bookings: BookingRepository, private val policy: BookingPolicy, private val clock: Clock) {
     suspend operator fun invoke(appointment: Appointment, zone: ZoneId, byUid: String): BookingResult<Unit> {
         if (appointment.clientUid != byUid) return AppResult.Failure(BookingFailure.NotYours)
         if (appointment.status != AppointmentStatus.BOOKED) return AppResult.Failure(BookingFailure.AlreadyClosed)
@@ -223,10 +222,7 @@ class ObserveMyAppointmentsUseCase(private val bookings: BookingRepository, priv
         bookings.observeUpcoming(tenantId, clientUid, clock.nowIn(zone).toLocalDate())
 }
 
-class JoinBarbershopUseCase(
-    private val bookings: BookingRepository,
-    private val store: JoinedBarbershopStore,
-) {
+class JoinBarbershopUseCase(private val bookings: BookingRepository, private val store: JoinedBarbershopStore) {
     /** B0/R8: código de 6 caracteres → barbería; se guarda en el teléfono. */
     suspend operator fun invoke(rawCode: String, uid: String): BookingResult<Barbershop> {
         val code = ShareCodes.normalize(rawCode) ?: return AppResult.Failure(BookingFailure.InvalidCode)
@@ -243,10 +239,7 @@ class JoinBarbershopUseCase(
     }
 }
 
-class ObserveJoinedBarbershopUseCase(
-    private val bookings: BookingRepository,
-    private val store: JoinedBarbershopStore,
-) {
+class ObserveJoinedBarbershopUseCase(private val bookings: BookingRepository, private val store: JoinedBarbershopStore) {
     /** Barbería guardada (Success(null) si todavía no elige una). */
     operator fun invoke(uid: String): Flow<BookingResult<Barbershop?>> = store.tenantId(uid).map { id ->
         if (id == null) return@map AppResult.Success(null)

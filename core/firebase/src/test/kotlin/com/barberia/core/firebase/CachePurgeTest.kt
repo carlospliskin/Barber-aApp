@@ -9,7 +9,9 @@ class CachePurgeTest {
     private class MemoryFlag : PurgeFlag {
         var value = false
         override fun get() = value
-        override fun set(value: Boolean) { this.value = value }
+        override fun set(value: Boolean) {
+            this.value = value
+        }
     }
 
     @Test fun `sin pedirlo no se borra (la cache ahorra lecturas)`() {

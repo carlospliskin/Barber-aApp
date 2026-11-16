@@ -5,8 +5,8 @@ import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.model.ClientRecord
-import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
+import kotlinx.coroutines.flow.Flow
 
 interface BookingRepository {
     /** Bloques ocupados de un barbero en un día (1 lectura). */
@@ -50,7 +50,7 @@ interface BookingRepository {
     suspend fun setStatus(
         appointment: Appointment,
         status: AppointmentStatus,
-        updateClient: ((ClientRecord?) -> ClientRecord)?,
+        updateClient: ((ClientRecord?) -> ClientRecord)?
     ): BookingResult<Unit>
 
     suspend fun client(tenantId: String, uid: String): BookingResult<ClientRecord?>
@@ -64,7 +64,7 @@ interface BookingRepository {
     suspend fun updateClient(
         tenantId: String,
         uid: String,
-        change: (ClientRecord) -> BookingResult<ClientRecord>,
+        change: (ClientRecord) -> BookingResult<ClientRecord>
     ): BookingResult<ClientRecord>
 
     /** Barbería a la que apunta un código para compartir (B0), o null. */

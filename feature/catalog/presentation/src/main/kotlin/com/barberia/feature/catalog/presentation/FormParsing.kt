@@ -34,7 +34,6 @@ private val DATE_FORMAT = java.time.format.DateTimeFormatter.ofPattern("dd/MM/uu
     .withResolverStyle(java.time.format.ResolverStyle.STRICT)
 
 /** N2: "24/12/2026" → fecha (estricto: 31/02 no existe). */
-fun parseDate(text: String): java.time.LocalDate? =
-    runCatching { java.time.LocalDate.parse(text.trim(), DATE_FORMAT) }.getOrNull()
+fun parseDate(text: String): java.time.LocalDate? = runCatching { java.time.LocalDate.parse(text.trim(), DATE_FORMAT) }.getOrNull()
 
 fun java.time.LocalDate.toInput(): String = format(DATE_FORMAT)

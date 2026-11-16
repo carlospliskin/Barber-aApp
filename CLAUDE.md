@@ -25,6 +25,7 @@ App Android nativa (Kotlin + Compose) para barberías, con Firebase en plan **Sp
 ## Comandos
 ```bash
 ./gradlew test                          # tests JVM de todos los módulos (+ grafo de Koin)
+./gradlew lintKotlin                    # estilo ktlint (CI); ./gradlew formatKotlin lo corrige
 ./gradlew :app:assembleDebug            # debug contra emuladores
 ./gradlew :app:assembleQa               # igual que release (R8) pero contra emuladores
 (cd firebase && npm test)               # reglas de Firestore en el emulador

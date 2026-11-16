@@ -36,10 +36,12 @@ fun LocalDate.shortLabel(): String = format(DAY).replaceFirstChar { it.uppercase
 /** A16-e: falla real de un Flow (booking o catálogo); "sin conexión" solo si no se sabe más. */
 fun Throwable.asBookingFailure(): BookingFailure = when (this) {
     is com.barberia.feature.booking.domain.model.BookingException -> failure
+
     is com.barberia.feature.catalog.domain.model.CatalogException -> when (failure) {
         com.barberia.feature.catalog.domain.model.CatalogFailure.NotOwner -> BookingFailure.NoAccess
         com.barberia.feature.catalog.domain.model.CatalogFailure.NoConnection -> BookingFailure.NoConnection
         else -> BookingFailure.Unknown(failure.toString())
     }
+
     else -> BookingFailure.NoConnection
 }

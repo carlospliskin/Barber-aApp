@@ -34,7 +34,7 @@ data class RedeemInviteState(
     val code: String = "",
     val busy: Boolean = false,
     val joinedAs: String? = null,
-    val failure: CatalogFailure? = null,
+    val failure: CatalogFailure? = null
 ) : UiState
 
 sealed interface RedeemInviteIntent : UiIntent {
@@ -48,7 +48,7 @@ sealed interface RedeemInviteEffect : UiEffect
 class RedeemInviteViewModel(
     observeUser: ObserveCurrentUserUseCase,
     private val redeem: RedeemBarberInviteUseCase,
-    private val refreshSession: RetrySessionUseCase,
+    private val refreshSession: RetrySessionUseCase
 ) : MviViewModel<RedeemInviteState, RedeemInviteIntent, RedeemInviteEffect>(RedeemInviteState()) {
 
     init {
@@ -60,6 +60,7 @@ class RedeemInviteViewModel(
     override suspend fun handleIntent(intent: RedeemInviteIntent) {
         when (intent) {
             is RedeemInviteIntent.CodeChanged -> setState { copy(code = intent.value.uppercase(), failure = null) }
+
             RedeemInviteIntent.Redeem -> {
                 val uid = currentState.uid ?: return
                 setState { copy(busy = true, failure = null) }
@@ -68,6 +69,7 @@ class RedeemInviteViewModel(
                         setState { copy(busy = false, joinedAs = r.value.barberName, code = "") }
                         refreshSession() // A9: el perfil ahora es BARBER → la sesión lleva al selector de modo
                     }
+
                     is AppResult.Failure -> setState { copy(busy = false, failure = r.error) }
                 }
             }
@@ -88,8 +90,10 @@ fun RedeemInviteCard(modifier: Modifier = Modifier, viewModel: RedeemInviteViewM
             }
             Text(stringResource(R.string.invite_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
             BarberTextField(
-                state.code, { viewModel.onIntent(RedeemInviteIntent.CodeChanged(it)) }, stringResource(R.string.invite_code),
-                error = state.failure?.let { stringResource(it.inviteMessageRes()) },
+                state.code,
+                { viewModel.onIntent(RedeemInviteIntent.CodeChanged(it)) },
+                stringResource(R.string.invite_code),
+                error = state.failure?.let { stringResource(it.inviteMessageRes()) }
             )
             BarberButton(stringResource(R.string.invite_accept), { viewModel.onIntent(RedeemInviteIntent.Redeem) }, isLoading = state.busy)
         }

@@ -7,12 +7,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestoreSettings
 import com.google.firebase.firestore.memoryCacheSettings
-import kotlinx.coroutines.tasks.await
-import org.json.JSONArray
-import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.time.Instant
+import kotlinx.coroutines.tasks.await
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Q1: SDK real de Firebase contra Emulator Suite (proyecto `demo-*`: no existe en la nube).
@@ -34,7 +34,7 @@ object FirebaseEmulator {
         FirebaseApp.getApps(context).find { it.name == NAME } ?: FirebaseApp.initializeApp(
             context,
             FirebaseOptions.Builder().setProjectId(PROJECT).setApplicationId("1:1:android:1").setApiKey("fake-key").build(),
-            NAME,
+            NAME
         )
     }
 
@@ -67,7 +67,7 @@ object FirebaseEmulator {
         http(
             "POST",
             "http://$HOST:$AUTH_PORT/identitytoolkit.googleapis.com/v1/projects/$PROJECT/accounts:update",
-            JSONObject().put("localId", user.uid).put("emailVerified", true).toString(),
+            JSONObject().put("localId", user.uid).put("emailVerified", true).toString()
         )
         user.reload().await()
         user.getIdToken(true).await()
@@ -85,7 +85,7 @@ object FirebaseEmulator {
             "update",
             JSONObject()
                 .put("name", "projects/$PROJECT/databases/(default)/documents/$path")
-                .put("fields", JSONObject().apply { data.forEach { (k, v) -> put(k, toValue(v)) } }),
+                .put("fields", JSONObject().apply { data.forEach { (k, v) -> put(k, toValue(v)) } })
         )
         http("POST", "$DOCS:commit", JSONObject().put("writes", JSONArray().put(write)).toString())
     }
@@ -103,30 +103,46 @@ object FirebaseEmulator {
 
     private fun toValue(v: Any?): JSONObject = when (v) {
         null -> JSONObject().put("nullValue", JSONObject.NULL)
+
         is Boolean -> JSONObject().put("booleanValue", v)
+
         is Int, is Long -> JSONObject().put("integerValue", v.toString())
+
         is Number -> JSONObject().put("doubleValue", v.toDouble())
+
         is String -> JSONObject().put("stringValue", v)
+
         is Instant -> JSONObject().put("timestampValue", v.toString())
+
         is List<*> -> JSONObject().put("arrayValue", JSONObject().put("values", JSONArray(v.map { toValue(it) })))
+
         is Map<*, *> -> JSONObject().put(
             "mapValue",
-            JSONObject().put("fields", JSONObject().apply { v.forEach { (k, x) -> put(k.toString(), toValue(x)) } }),
+            JSONObject().put("fields", JSONObject().apply { v.forEach { (k, x) -> put(k.toString(), toValue(x)) } })
         )
+
         else -> error("Tipo no soportado en seed: ${v::class}")
     }
 
     private fun fromValue(o: JSONObject): Any? = when {
         o.has("nullValue") -> null
+
         o.has("booleanValue") -> o.getBoolean("booleanValue")
+
         o.has("integerValue") -> o.getString("integerValue").toLong()
+
         o.has("doubleValue") -> o.getDouble("doubleValue")
+
         o.has("stringValue") -> o.getString("stringValue")
+
         o.has("timestampValue") -> Instant.parse(o.getString("timestampValue"))
+
         o.has("arrayValue") -> o.getJSONObject("arrayValue").optJSONArray("values")
             ?.let { a -> (0 until a.length()).map { fromValue(a.getJSONObject(it)) } } ?: emptyList<Any?>()
+
         o.has("mapValue") -> o.getJSONObject("mapValue").optJSONObject("fields")
             ?.let { f -> f.keys().asSequence().associateWith { fromValue(f.getJSONObject(it)) } } ?: emptyMap<String, Any?>()
+
         else -> error("Valor no soportado: $o")
     }
 

@@ -83,7 +83,7 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
             TopAppBar(
                 title = { Text(stringResource(R.string.catalog_title)) },
                 navigationIcon = { TextButton(onClick = onBack) { Text(stringResource(R.string.catalog_back)) } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -96,11 +96,11 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
                     text = { Text(label) },
                     icon = { Text("+", Modifier.clearAndSetSemantics { }) },
                     // C13: TalkBack anunciaba solo "+".
-                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = label },
+                    modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = label }
                 )
             }
         },
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
             TabRow(selectedTabIndex = state.tab.ordinal, containerColor = MaterialTheme.colorScheme.background) {
@@ -109,8 +109,18 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
                         selected = state.tab == tab,
                         onClick = { onIntent(CatalogIntent.TabSelected(tab)) },
                         text = {
-                            Text(stringResource(if (tab == CatalogTab.SERVICES) R.string.catalog_tab_services else R.string.catalog_tab_barbers))
-                        },
+                            Text(
+                                stringResource(
+                                    if (tab ==
+                                        CatalogTab.SERVICES
+                                    ) {
+                                        R.string.catalog_tab_services
+                                    } else {
+                                        R.string.catalog_tab_barbers
+                                    }
+                                )
+                            )
+                        }
                     )
                 }
             }
@@ -118,7 +128,7 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
                 Text(
                     stringResource(R.string.catalog_read_only),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(16.dp)
                 )
             }
             when (state.tab) {
@@ -129,9 +139,13 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
     }
     when (val d = state.dialog) {
         is ServiceForm -> ServiceDialog(d, state.isSaving, onIntent)
+
         is BarberForm -> BarberDialog(d, state.isSaving, onIntent)
+
         is Schedule -> ScheduleDialog(d, state.isSaving, onIntent)
+
         is CatalogDialog.TimeOffForm -> TimeOffDialog(d, state.isSaving, onIntent)
+
         is CatalogDialog.RevokeAccess -> AlertDialog(
             onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
             title = { Text(stringResource(R.string.catalog_revoke_title, d.barberName)) },
@@ -141,7 +155,7 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
                         null -> stringResource(R.string.catalog_revoke_hint)
                         0 -> stringResource(R.string.catalog_revoke_none)
                         else -> pluralStringResource(R.plurals.catalog_revoke_done, d.revoked, d.revoked)
-                    },
+                    }
                 )
             },
             confirmButton = {
@@ -153,8 +167,9 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
                 { TextButton(onClick = { onIntent(CatalogIntent.DismissDialog) }) { Text(stringResource(R.string.catalog_cancel)) } }
             } else {
                 null
-            },
+            }
         )
+
         is CatalogDialog.Invite -> AlertDialog(
             onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
             title = { Text(stringResource(R.string.catalog_invite_title, d.barberName)) },
@@ -166,8 +181,9 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
             },
             confirmButton = {
                 TextButton(onClick = { onIntent(CatalogIntent.DismissDialog) }) { Text(stringResource(R.string.catalog_done)) }
-            },
+            }
         )
+
         null -> Unit
     }
 }
@@ -184,7 +200,7 @@ private fun ServicesList(services: List<Service>, canEdit: Boolean, onIntent: (C
                     Switch(s.active, { onIntent(CatalogIntent.SetServiceActive(s.id, it)) }, enabled = canEdit)
                 },
                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
-                modifier = Modifier.clickable(enabled = canEdit) { onIntent(CatalogIntent.OpenEditService(s.id)) },
+                modifier = Modifier.clickable(enabled = canEdit) { onIntent(CatalogIntent.OpenEditService(s.id)) }
             )
             HorizontalDivider()
         }
@@ -209,9 +225,12 @@ private fun BarbersList(barbers: List<Barber>, canEdit: Boolean, onIntent: (Cata
                     Column {
                         val days = b.schedule.days.size
                         Text(
-                            if (days == 0) stringResource(R.string.catalog_no_schedule)
-                            else pluralStringResource(R.plurals.catalog_days_working, days, days),
-                            color = if (days == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                            if (days == 0) {
+                                stringResource(R.string.catalog_no_schedule)
+                            } else {
+                                pluralStringResource(R.plurals.catalog_days_working, days, days)
+                            },
+                            color = if (days == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         // N2: días libres próximos
                         b.timeOff.forEach { off ->
@@ -249,7 +268,7 @@ private fun BarbersList(barbers: List<Barber>, canEdit: Boolean, onIntent: (Cata
                     }
                 },
                 colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
-                modifier = Modifier.clickable(enabled = canEdit) { onIntent(CatalogIntent.OpenEditBarber(b.id)) },
+                modifier = Modifier.clickable(enabled = canEdit) { onIntent(CatalogIntent.OpenEditBarber(b.id)) }
             )
             HorizontalDivider()
         }
@@ -261,7 +280,7 @@ private fun EmptyText(res: Int) {
     Text(
         stringResource(res),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(24.dp),
+        modifier = Modifier.padding(24.dp)
     )
 }
 
@@ -270,12 +289,7 @@ private fun Set<CatalogError>.textFor(vararg errors: CatalogError): String? =
     errors.firstOrNull { it in this }?.let { stringResource(it.messageRes()) }
 
 @Composable
-private fun FormDialog(
-    title: String,
-    isSaving: Boolean,
-    onIntent: (CatalogIntent) -> Unit,
-    content: @Composable () -> Unit,
-) {
+private fun FormDialog(title: String, isSaving: Boolean, onIntent: (CatalogIntent) -> Unit, content: @Composable () -> Unit) {
     AlertDialog(
         onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
         title = { Text(title) },
@@ -287,7 +301,7 @@ private fun FormDialog(
         },
         dismissButton = {
             TextButton(onClick = { onIntent(CatalogIntent.DismissDialog) }) { Text(stringResource(R.string.catalog_cancel)) }
-        },
+        }
     )
 }
 
@@ -296,16 +310,29 @@ private fun ServiceDialog(form: ServiceForm, isSaving: Boolean, onIntent: (Catal
     FormDialog(stringResource(R.string.catalog_service), isSaving, onIntent) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             BarberTextField(
-                form.name, { onIntent(CatalogIntent.ServiceNameChanged(it)) }, stringResource(R.string.catalog_service_name),
-                error = form.errors.textFor(CatalogError.NAME_REQUIRED, CatalogError.NAME_TOO_LONG, CatalogError.NAME_DUPLICATED, CatalogError.TOO_MANY_ITEMS),
+                form.name,
+                { onIntent(CatalogIntent.ServiceNameChanged(it)) },
+                stringResource(R.string.catalog_service_name),
+                error = form.errors.textFor(
+                    CatalogError.NAME_REQUIRED,
+                    CatalogError.NAME_TOO_LONG,
+                    CatalogError.NAME_DUPLICATED,
+                    CatalogError.TOO_MANY_ITEMS
+                )
             )
             BarberTextField(
-                form.duration, { onIntent(CatalogIntent.ServiceDurationChanged(it)) }, stringResource(R.string.catalog_duration),
-                keyboardType = KeyboardType.Number, error = form.errors.textFor(CatalogError.DURATION_INVALID),
+                form.duration,
+                { onIntent(CatalogIntent.ServiceDurationChanged(it)) },
+                stringResource(R.string.catalog_duration),
+                keyboardType = KeyboardType.Number,
+                error = form.errors.textFor(CatalogError.DURATION_INVALID)
             )
             BarberTextField(
-                form.price, { onIntent(CatalogIntent.ServicePriceChanged(it)) }, stringResource(R.string.catalog_price),
-                keyboardType = KeyboardType.Decimal, error = form.errors.textFor(CatalogError.PRICE_INVALID),
+                form.price,
+                { onIntent(CatalogIntent.ServicePriceChanged(it)) },
+                stringResource(R.string.catalog_price),
+                keyboardType = KeyboardType.Decimal,
+                error = form.errors.textFor(CatalogError.PRICE_INVALID)
             )
         }
     }
@@ -315,8 +342,15 @@ private fun ServiceDialog(form: ServiceForm, isSaving: Boolean, onIntent: (Catal
 private fun BarberDialog(form: BarberForm, isSaving: Boolean, onIntent: (CatalogIntent) -> Unit) {
     FormDialog(stringResource(R.string.catalog_barber), isSaving, onIntent) {
         BarberTextField(
-            form.name, { onIntent(CatalogIntent.BarberNameChanged(it)) }, stringResource(R.string.catalog_barber_name),
-            error = form.errors.textFor(CatalogError.NAME_REQUIRED, CatalogError.NAME_TOO_LONG, CatalogError.NAME_DUPLICATED, CatalogError.TOO_MANY_ITEMS),
+            form.name,
+            { onIntent(CatalogIntent.BarberNameChanged(it)) },
+            stringResource(R.string.catalog_barber_name),
+            error = form.errors.textFor(
+                CatalogError.NAME_REQUIRED,
+                CatalogError.NAME_TOO_LONG,
+                CatalogError.NAME_DUPLICATED,
+                CatalogError.TOO_MANY_ITEMS
+            )
         )
     }
 }
@@ -338,18 +372,22 @@ private fun ScheduleDialog(form: Schedule, isSaving: Boolean, onIntent: (Catalog
                     draft.extra.forEach { r ->
                         Text(
                             stringResource(R.string.catalog_extra_shift, r.startLabel, r.endLabel),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Row(Modifier.fillMaxWidth()) {
                         BarberTextField(
-                            draft.start, { onIntent(CatalogIntent.DayStartChanged(day, it)) },
-                            stringResource(R.string.catalog_from), modifier = Modifier.weight(1f),
+                            draft.start,
+                            { onIntent(CatalogIntent.DayStartChanged(day, it)) },
+                            stringResource(R.string.catalog_from),
+                            modifier = Modifier.weight(1f)
                         )
                         Spacer(Modifier.width(8.dp))
                         BarberTextField(
-                            draft.end, { onIntent(CatalogIntent.DayEndChanged(day, it)) },
-                            stringResource(R.string.catalog_to), modifier = Modifier.weight(1f),
+                            draft.end,
+                            { onIntent(CatalogIntent.DayEndChanged(day, it)) },
+                            stringResource(R.string.catalog_to),
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -362,8 +400,11 @@ private fun ScheduleDialog(form: Schedule, isSaving: Boolean, onIntent: (Catalog
 private fun TimeOff.label(): String {
     val date = date.toInput()
     val r = range
-    return if (r == null) stringResource(R.string.catalog_time_off_line_day, date)
-    else stringResource(R.string.catalog_time_off_line_range, date, r.startLabel, r.endLabel)
+    return if (r == null) {
+        stringResource(R.string.catalog_time_off_line_day, date)
+    } else {
+        stringResource(R.string.catalog_time_off_line_range, date, r.startLabel, r.endLabel)
+    }
 }
 
 @Composable
@@ -371,10 +412,16 @@ private fun TimeOffDialog(form: CatalogDialog.TimeOffForm, isSaving: Boolean, on
     val title = form.barberName?.let { stringResource(R.string.catalog_time_off_of, it) } ?: stringResource(R.string.catalog_close_shop)
     FormDialog(title, isSaving, onIntent) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (form.barberId == null) Text(stringResource(R.string.catalog_close_shop_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (form.barberId ==
+                null
+            ) {
+                Text(stringResource(R.string.catalog_close_shop_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             BarberTextField(
-                form.date, { onIntent(CatalogIntent.TimeOffDateChanged(it)) }, stringResource(R.string.catalog_time_off_date),
-                error = form.errors.textFor(CatalogError.DATE_INVALID, CatalogError.TIME_OFF_PAST, CatalogError.TOO_MANY_ITEMS),
+                form.date,
+                { onIntent(CatalogIntent.TimeOffDateChanged(it)) },
+                stringResource(R.string.catalog_time_off_date),
+                error = form.errors.textFor(CatalogError.DATE_INVALID, CatalogError.TIME_OFF_PAST, CatalogError.TOO_MANY_ITEMS)
             )
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.catalog_time_off_whole_day), Modifier.weight(1f))
@@ -384,13 +431,17 @@ private fun TimeOffDialog(form: CatalogDialog.TimeOffForm, isSaving: Boolean, on
                 form.errors.textFor(CatalogError.SCHEDULE_RANGE_INVALID)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 Row(Modifier.fillMaxWidth()) {
                     BarberTextField(
-                        form.start, { onIntent(CatalogIntent.TimeOffStartChanged(it)) },
-                        stringResource(R.string.catalog_from), modifier = Modifier.weight(1f),
+                        form.start,
+                        { onIntent(CatalogIntent.TimeOffStartChanged(it)) },
+                        stringResource(R.string.catalog_from),
+                        modifier = Modifier.weight(1f)
                     )
                     Spacer(Modifier.width(8.dp))
                     BarberTextField(
-                        form.end, { onIntent(CatalogIntent.TimeOffEndChanged(it)) },
-                        stringResource(R.string.catalog_to), modifier = Modifier.weight(1f),
+                        form.end,
+                        { onIntent(CatalogIntent.TimeOffEndChanged(it)) },
+                        stringResource(R.string.catalog_to),
+                        modifier = Modifier.weight(1f)
                     )
                 }
             }
@@ -404,12 +455,15 @@ private fun TimeOffDialog(form: CatalogDialog.TimeOffForm, isSaving: Boolean, on
 private fun CatalogPreview() = BarberTheme {
     CatalogScreen(
         CatalogState(
-            tenantId = "t", canEdit = true,
+            tenantId = "t",
+            canEdit = true,
             catalog = Catalog(
                 listOf(Service("1", "Corte clásico", 30, Money(15_000)), Service("2", "Barba", 20, Money(9_950), active = false)),
-                emptyList(), 2,
-            ),
+                emptyList(),
+                2
+            )
         ),
-        {}, {},
+        {},
+        {}
     )
 }

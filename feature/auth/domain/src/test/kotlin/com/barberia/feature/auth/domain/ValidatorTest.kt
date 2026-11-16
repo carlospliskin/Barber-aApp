@@ -1,8 +1,7 @@
 package com.barberia.feature.auth.domain
 
-import com.barberia.feature.auth.domain.testing.*
-
 import com.barberia.feature.auth.domain.model.FieldError
+import com.barberia.feature.auth.domain.testing.*
 import com.barberia.feature.auth.domain.validation.AuthValidator
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -34,16 +33,20 @@ class ValidatorTest {
 
     @Test fun `junta todos los errores a la vez para marcarlos en el formulario`() {
         val errors = AuthValidator.ownerRegistration(
-            email = "x", password = "1", ownerName = " ", businessName = "", phone = null,
+            email = "x",
+            password = "1",
+            ownerName = " ",
+            businessName = "",
+            phone = null
         )
         assertEquals(
             setOf(
                 FieldError.EMAIL_INVALID,
                 FieldError.PASSWORD_TOO_SHORT,
                 FieldError.NAME_REQUIRED,
-                FieldError.BUSINESS_NAME_REQUIRED,
+                FieldError.BUSINESS_NAME_REQUIRED
             ),
-            errors,
+            errors
         )
     }
 }

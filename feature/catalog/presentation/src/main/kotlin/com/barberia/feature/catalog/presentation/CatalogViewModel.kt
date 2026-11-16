@@ -10,14 +10,17 @@ import com.barberia.feature.catalog.domain.model.CatalogError
 import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.ServiceDraft
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.usecase.AddBarberUseCase
-import com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase
-import com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase
 import com.barberia.feature.catalog.domain.usecase.AddServiceUseCase
+import com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase
+import com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
+import com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase
 import com.barberia.feature.catalog.domain.usecase.RenameBarberUseCase
+import com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase
 import com.barberia.feature.catalog.domain.usecase.SetBarberActiveUseCase
 import com.barberia.feature.catalog.domain.usecase.SetBarberScheduleUseCase
 import com.barberia.feature.catalog.domain.usecase.SetServiceActiveUseCase
@@ -26,10 +29,8 @@ import com.barberia.feature.catalog.presentation.CatalogDialog.BarberForm
 import com.barberia.feature.catalog.presentation.CatalogDialog.Schedule
 import com.barberia.feature.catalog.presentation.CatalogDialog.ServiceForm
 import com.barberia.feature.catalog.presentation.CatalogDialog.TimeOffForm
-import com.barberia.feature.catalog.domain.model.TimeOff
-import com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase
-import com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
@@ -37,7 +38,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import java.time.DayOfWeek
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CatalogViewModel(
@@ -54,7 +54,7 @@ class CatalogViewModel(
     private val addTimeOff: AddTimeOffUseCase,
     private val removeTimeOff: RemoveTimeOffUseCase,
     private val revokeAccess: RevokeBarberAccessUseCase,
-    private val clock: Clock,
+    private val clock: Clock
 ) : MviViewModel<CatalogState, CatalogIntent, CatalogEffect>(CatalogState()) {
 
     init {
@@ -80,26 +80,36 @@ class CatalogViewModel(
     override suspend fun handleIntent(intent: CatalogIntent) {
         when (intent) {
             is CatalogIntent.TabSelected -> setState { copy(tab = intent.tab) }
+
             CatalogIntent.DismissDialog -> setState { copy(dialog = null) }
+
             CatalogIntent.DismissFailure -> setState { copy(failure = null) }
 
             CatalogIntent.OpenNewService -> openIfEditable(ServiceForm())
+
             is CatalogIntent.OpenEditService -> currentState.catalog.services.find { it.id == intent.id }?.let {
                 openIfEditable(ServiceForm(it.id, it.name, it.durationMinutes.toString(), it.price.toInput()))
             }
+
             is CatalogIntent.ServiceNameChanged -> editService { copy(name = intent.value, errors = errors - NAME_ERRORS) }
+
             is CatalogIntent.ServiceDurationChanged ->
                 editService { copy(duration = intent.value, errors = errors - CatalogError.DURATION_INVALID) }
+
             is CatalogIntent.ServicePriceChanged ->
                 editService { copy(price = intent.value, errors = errors - CatalogError.PRICE_INVALID) }
+
             is CatalogIntent.SetServiceActive ->
                 save { t -> setServiceActive(t, intent.id, intent.active) }
 
             CatalogIntent.OpenNewBarber -> openIfEditable(BarberForm())
+
             is CatalogIntent.OpenEditBarber -> currentState.catalog.barbers.find { it.id == intent.id }?.let {
                 openIfEditable(BarberForm(it.id, it.name))
             }
+
             is CatalogIntent.BarberNameChanged -> editBarber { copy(name = intent.value, errors = errors - NAME_ERRORS) }
+
             is CatalogIntent.SetBarberActive -> save { t -> setBarberActive(t, intent.id, intent.active) }
 
             is CatalogIntent.OpenSchedule -> currentState.catalog.barbers.find { it.id == intent.barberId }?.let { b ->
@@ -109,22 +119,32 @@ class CatalogViewModel(
                 }
                 openIfEditable(Schedule(b.id, b.name, days))
             }
+
             is CatalogIntent.DayToggled -> editDay(intent.day) { copy(enabled = intent.enabled) }
+
             is CatalogIntent.DayStartChanged -> editDay(intent.day) { copy(start = intent.value) }
+
             is CatalogIntent.DayEndChanged -> editDay(intent.day) { copy(end = intent.value) }
 
             is CatalogIntent.OpenTimeOff -> {
                 val barber = intent.barberId?.let { id -> currentState.catalog.barbers.find { it.id == id } ?: return }
                 openIfEditable(TimeOffForm(barber?.id, barber?.name, date = LocalDate.now(clock).toInput()))
             }
+
             is CatalogIntent.TimeOffDateChanged -> editTimeOff { copy(date = intent.value) }
+
             is CatalogIntent.TimeOffWholeDayToggled -> editTimeOff { copy(wholeDay = intent.wholeDay) }
+
             is CatalogIntent.TimeOffStartChanged -> editTimeOff { copy(start = intent.value) }
+
             is CatalogIntent.TimeOffEndChanged -> editTimeOff { copy(end = intent.value) }
+
             is CatalogIntent.RemoveTimeOff -> save { t -> removeTimeOff(t, intent.barberId, intent.off) }
 
             CatalogIntent.SaveDialog -> saveDialog()
+
             is CatalogIntent.InviteBarber -> invite(intent.barberId)
+
             is CatalogIntent.OpenRevokeAccess -> currentState.catalog.barbers.find { it.id == intent.barberId }?.let {
                 openIfEditable(CatalogDialog.RevokeAccess(it.id, it.name))
             }
@@ -139,6 +159,7 @@ class CatalogViewModel(
             is AppResult.Success -> setState {
                 copy(isSaving = false, dialog = CatalogDialog.Invite(r.value.barberName, r.value.code, r.value.expiresAt))
             }
+
             is AppResult.Failure -> setState { copy(isSaving = false, failure = r.error) }
         }
     }
@@ -168,12 +189,15 @@ class CatalogViewModel(
                 val draft = ServiceDraft(d.name, minutes!!, price!!)
                 save { t -> d.editingId?.let { updateService(t, it, draft) } ?: addService(t, draft) }
             }
+
             is BarberForm -> save { t -> d.editingId?.let { renameBarber(t, it, d.name) } ?: addBarber(t, d.name) }
+
             is Schedule -> {
                 val schedule = d.toSchedule()
                     ?: return setState { copy(dialog = d.copy(errors = setOf(CatalogError.SCHEDULE_RANGE_INVALID))) }
                 save { t -> setSchedule(t, d.barberId, schedule) }
             }
+
             is TimeOffForm -> {
                 val date = parseDate(d.date)
                     ?: return setState { copy(dialog = d.copy(errors = setOf(CatalogError.DATE_INVALID))) }
@@ -189,7 +213,9 @@ class CatalogViewModel(
                 }
                 save { t -> addTimeOff(t, d.barberId, TimeOff(date, range)) }
             }
+
             is CatalogDialog.RevokeAccess -> if (d.revoked != null) setState { copy(dialog = null) } else revoke(d)
+
             is CatalogDialog.Invite, null -> setState { copy(dialog = null) }
         }
     }
@@ -203,6 +229,7 @@ class CatalogViewModel(
         setState {
             when (result) {
                 is AppResult.Success -> copy(isSaving = false, dialog = null, catalog = result.value)
+
                 is AppResult.Failure -> when (val f = result.error) {
                     is CatalogFailure.Validation -> copy(isSaving = false, dialog = dialog?.withErrors(f.errors))
                     else -> copy(isSaving = false, failure = f)

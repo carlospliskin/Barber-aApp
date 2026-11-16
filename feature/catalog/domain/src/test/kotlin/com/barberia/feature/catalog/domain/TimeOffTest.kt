@@ -10,14 +10,14 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
 import com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase
 import com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.Clock
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 /** N2: días libres, vacaciones y "hoy salgo temprano". */
 class TimeOffTest {
@@ -51,23 +51,22 @@ class TimeOffTest {
     @Test fun `N2 un rango invalido o una fecha pasada no se guardan`() {
         assertEquals(
             setOf(CatalogError.SCHEDULE_RANGE_INVALID),
-            editor.addTimeOff(twoBarbers, "id-1", TimeOff(today, TimeRange(600, 607)), today).errors(),
+            editor.addTimeOff(twoBarbers, "id-1", TimeOff(today, TimeRange(600, 607)), today).errors()
         )
         assertEquals(
             setOf(CatalogError.TIME_OFF_PAST),
-            editor.addTimeOff(twoBarbers, "id-1", TimeOff(today.minusDays(1)), today).errors(),
+            editor.addTimeOff(twoBarbers, "id-1", TimeOff(today.minusDays(1)), today).errors()
         )
     }
 
-    @Test fun `N2 barbero que no existe`() =
-        assertEquals(
-            AppResult.Failure(CatalogFailure.NotFound),
-            editor.addTimeOff(twoBarbers, "nadie", TimeOff(today), today),
-        )
+    @Test fun `N2 barbero que no existe`() = assertEquals(
+        AppResult.Failure(CatalogFailure.NotFound),
+        editor.addTimeOff(twoBarbers, "nadie", TimeOff(today), today)
+    )
 
     @Test fun `N2 al guardar se borran los dias libres pasados (el documento no crece) y se ordenan`() {
         val old = twoBarbers.copy(
-            barbers = twoBarbers.barbers.map { it.copy(timeOff = listOf(TimeOff(today.minusDays(10)), TimeOff(today.plusDays(9)))) },
+            barbers = twoBarbers.barbers.map { it.copy(timeOff = listOf(TimeOff(today.minusDays(10)), TimeOff(today.plusDays(9)))) }
         )
         val c = editor.addTimeOff(old, "id-1", TimeOff(today.plusDays(2)), today).ok()
         assertEquals(listOf(TimeOff(today.plusDays(2)), TimeOff(today.plusDays(9))), c.barbers[0].timeOff)
@@ -83,7 +82,7 @@ class TimeOffTest {
         repeat(CatalogEditor.MAX_TIME_OFF) { c = editor.addTimeOff(c, "id-1", TimeOff(today.plusDays(it.toLong())), today).ok() }
         assertEquals(
             setOf(CatalogError.TOO_MANY_ITEMS),
-            editor.addTimeOff(c, "id-1", TimeOff(today.plusDays(40)), today).errors(),
+            editor.addTimeOff(c, "id-1", TimeOff(today.plusDays(40)), today).errors()
         )
     }
 
@@ -113,15 +112,18 @@ class TimeOffTest {
         assertEquals(emptyList<TimeOff>(), repo.stored.value.barbers[0].timeOff)
         assertEquals(
             setOf(CatalogError.TIME_OFF_PAST),
-            AddTimeOffUseCase(repo, editor, clock)("t1", "id-1", TimeOff(today.minusDays(1))).errors(),
+            AddTimeOffUseCase(repo, editor, clock)("t1", "id-1", TimeOff(today.minusDays(1))).errors()
         )
     }
 
     @Test fun `N2 un barbero trabaja un dia si tiene horario y no lo tiene libre completo`() {
         val luis = com.barberia.feature.catalog.domain.model.Barber(
-            "b1", "Luis",
-            schedule = com.barberia.feature.catalog.domain.model.WeeklySchedule(mapOf(today.dayOfWeek to listOf(TimeRange.of("10:00", "14:00")))),
-            timeOff = listOf(TimeOff(today.plusDays(7)), TimeOff(today.plusDays(14), TimeRange.of("10:00", "11:00"))),
+            "b1",
+            "Luis",
+            schedule = com.barberia.feature.catalog.domain.model.WeeklySchedule(
+                mapOf(today.dayOfWeek to listOf(TimeRange.of("10:00", "14:00")))
+            ),
+            timeOff = listOf(TimeOff(today.plusDays(7)), TimeOff(today.plusDays(14), TimeRange.of("10:00", "11:00")))
         )
         assertTrue(luis.worksOn(today))
         assertFalse(luis.worksOn(today.plusDays(1))) // no tiene horario ese día

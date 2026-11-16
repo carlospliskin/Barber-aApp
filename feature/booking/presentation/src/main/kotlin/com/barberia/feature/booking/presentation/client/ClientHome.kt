@@ -12,21 +12,21 @@ import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingPolicy
 import com.barberia.feature.booking.domain.usecase.CancelAppointmentUseCase
 import com.barberia.feature.booking.domain.usecase.CancelReminderUseCase
-import com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase
 import com.barberia.feature.booking.domain.usecase.JoinBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveMyAppointmentsUseCase
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import java.time.Clock
 import java.time.LocalDateTime
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
-import com.barberia.feature.booking.presentation.common.asBookingFailure
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 data class ClientHomeState(
     val uid: String? = null,
@@ -39,7 +39,7 @@ data class ClientHomeState(
     val failure: BookingFailure? = null,
     /** Hora con la que se decide qué se ofrece (se actualiza al llegar las citas). */
     val now: java.time.Instant = java.time.Instant.EPOCH,
-    val cancelWindow: java.time.Duration = java.time.Duration.ofHours(2),
+    val cancelWindow: java.time.Duration = java.time.Duration.ofHours(2)
 ) : UiState {
     /** B7: el cliente cancela hasta 2 h antes; después ya no se le ofrece (antes daba error al tocar). */
     fun canCancel(a: Appointment) =
@@ -70,9 +70,9 @@ class ClientHomeViewModel(
     private val clock: Clock,
     private val syncReminders: SyncRemindersUseCase,
     private val cancelReminder: CancelReminderUseCase,
-    policy: BookingPolicy,
+    policy: BookingPolicy
 ) : MviViewModel<ClientHomeState, ClientHomeIntent, ClientHomeEffect>(
-    ClientHomeState(now = clock.instant(), cancelWindow = java.time.Duration.ofHours(policy.cancelHoursBefore)),
+    ClientHomeState(now = clock.instant(), cancelWindow = java.time.Duration.ofHours(policy.cancelHoursBefore))
 ) {
 
     init {
@@ -90,7 +90,7 @@ class ClientHomeViewModel(
                             uid = uid,
                             shop = shop,
                             loading = false,
-                            failure = (joined as? AppResult.Failure)?.error ?: failure,
+                            failure = (joined as? AppResult.Failure)?.error ?: failure
                         )
                     }
                     if (uid == null || shop == null) {
@@ -112,7 +112,9 @@ class ClientHomeViewModel(
     override suspend fun handleIntent(intent: ClientHomeIntent) {
         when (intent) {
             is ClientHomeIntent.CodeChanged -> setState { copy(code = intent.value.uppercase(), failure = null) }
+
             ClientHomeIntent.DismissFailure -> setState { copy(failure = null) }
+
             ClientHomeIntent.Leave -> {
                 val uid = currentState.uid ?: return
                 val shop = currentState.shop ?: return
@@ -120,6 +122,7 @@ class ClientHomeViewModel(
                 val r = leave(uid, shop.id, today)
                 if (r is AppResult.Failure) setState { copy(failure = r.error) }
             }
+
             ClientHomeIntent.Join -> {
                 setState { copy(joining = true, failure = null) }
                 val uid = currentState.uid ?: return
@@ -131,6 +134,7 @@ class ClientHomeViewModel(
                     }
                 }
             }
+
             is ClientHomeIntent.Cancel -> {
                 val appt = currentState.appointments.find { it.id == intent.appointmentId } ?: return
                 val shop = currentState.shop ?: return

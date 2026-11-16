@@ -14,12 +14,12 @@ import com.barberia.feature.catalog.domain.model.Service
 import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
+import java.time.DayOfWeek
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.DayOfWeek
 
 class CatalogDataTest {
 
@@ -27,23 +27,24 @@ class CatalogDataTest {
         services = listOf(Service("s1", "Corte", 30, Money(15_000), active = true)),
         barbers = listOf(
             Barber(
-                "b1", "Luis", active = false,
+                "b1",
+                "Luis",
+                active = false,
                 schedule = WeeklySchedule(
-                    mapOf(DayOfWeek.MONDAY to listOf(TimeRange.of("10:00", "14:00"), TimeRange.of("16:00", "20:00"))),
-                ),
-            ),
+                    mapOf(DayOfWeek.MONDAY to listOf(TimeRange.of("10:00", "14:00"), TimeRange.of("16:00", "20:00")))
+                )
+            )
         ),
-        version = 7,
+        version = 7
     )
 
     // ── Mapper ────────────────────────────────────────────────────────────────
-    @Test fun `ida y vuelta sin perder datos`() =
-        assertEquals(catalog, CatalogMapper.fromMap(CatalogMapper.toMap(catalog)))
+    @Test fun `ida y vuelta sin perder datos`() = assertEquals(catalog, CatalogMapper.fromMap(CatalogMapper.toMap(catalog)))
 
     @Test fun `Firestore devuelve numeros como Long y puede faltar algun campo`() {
         val raw = mapOf(
             "version" to 2L,
-            "services" to listOf(mapOf("id" to "s1", "name" to "Corte", "durationMinutes" to 30L, "priceCents" to 15000L)),
+            "services" to listOf(mapOf("id" to "s1", "name" to "Corte", "durationMinutes" to 30L, "priceCents" to 15000L))
         )
         val c = CatalogMapper.fromMap(raw)!!
         assertEquals(Service("s1", "Corte", 30, Money(15_000), active = true), c.services.single())
@@ -54,7 +55,7 @@ class CatalogDataTest {
         val raw = mapOf(
             "version" to 1L,
             "services" to listOf(mapOf("name" to "sin id"), "basura"),
-            "barbers" to listOf(mapOf("id" to "b1", "name" to "Luis", "schedule" to mapOf("FUNDAY" to listOf(1)))),
+            "barbers" to listOf(mapOf("id" to "b1", "name" to "Luis", "schedule" to mapOf("FUNDAY" to listOf(1))))
         )
         val c = CatalogMapper.fromMap(raw)!!
         assertEquals(emptyList<Service>(), c.services)
@@ -64,8 +65,13 @@ class CatalogDataTest {
     @Test fun `N2 dias libres ida y vuelta (dia completo y rango)`() {
         val withOff = catalog.copy(
             barbers = catalog.barbers.map {
-                it.copy(timeOff = listOf(TimeOff(java.time.LocalDate.of(2026, 12, 25)), TimeOff(java.time.LocalDate.of(2026, 12, 24), TimeRange.of("15:00", "20:00"))))
-            },
+                it.copy(
+                    timeOff = listOf(
+                        TimeOff(java.time.LocalDate.of(2026, 12, 25)),
+                        TimeOff(java.time.LocalDate.of(2026, 12, 24), TimeRange.of("15:00", "20:00"))
+                    )
+                )
+            }
         )
         assertEquals(withOff, CatalogMapper.fromMap(CatalogMapper.toMap(withOff)))
     }
@@ -73,8 +79,8 @@ class CatalogDataTest {
     @Test fun `N2 un dia libre corrupto se ignora`() {
         val raw = mapOf(
             "barbers" to listOf(
-                mapOf("id" to "b1", "name" to "Luis", "timeOff" to listOf(mapOf("date" to "no-es-fecha"), mapOf("date" to "2026-12-25"))),
-            ),
+                mapOf("id" to "b1", "name" to "Luis", "timeOff" to listOf(mapOf("date" to "no-es-fecha"), mapOf("date" to "2026-12-25")))
+            )
         )
         assertEquals(listOf(TimeOff(java.time.LocalDate.of(2026, 12, 25))), CatalogMapper.fromMap(raw)!!.barbers.single().timeOff)
     }
@@ -88,7 +94,10 @@ class CatalogDataTest {
         override fun observe(tenantId: String) = live
         override suspend fun transact(tenantId: String, update: (Map<String, Any?>?) -> Map<String, Any?>?) {
             error?.let { throw it }
-            update(doc)?.let { doc = it; live.value = it }
+            update(doc)?.let {
+                doc = it
+                live.value = it
+            }
         }
     }
 

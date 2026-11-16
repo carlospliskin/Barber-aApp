@@ -10,15 +10,15 @@ import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
 import com.barberia.feature.catalog.domain.testing.FakeInviteRepository
 import com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase
 import com.barberia.feature.catalog.domain.usecase.RedeemBarberInviteUseCase
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Test
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
 import java.util.Random
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Test
 
 class InviteUseCasesTest {
     private val now = Instant.parse("2026-11-16T16:00:00Z")
@@ -49,7 +49,10 @@ class InviteUseCasesTest {
 
     @Test fun `A1 aceptar invitacion valida`() = runTest {
         invites.stored["MVK234"] = valid
-        assertEquals(AppResult.Success(valid), RedeemBarberInviteUseCase(invites, catalog, clock)(" mvk-234 ", uid = "tono", alreadyStaff = false))
+        assertEquals(
+            AppResult.Success(valid),
+            RedeemBarberInviteUseCase(invites, catalog, clock)(" mvk-234 ", uid = "tono", alreadyStaff = false)
+        )
         assertEquals("tono" to "MVK234", invites.redeemed)
     }
 
@@ -57,7 +60,7 @@ class InviteUseCasesTest {
         invites.stored["MVK234"] = valid.copy(barberId = "b2") // b2 está inactivo
         assertEquals(
             AppResult.Failure(CatalogFailure.InviteInvalid),
-            RedeemBarberInviteUseCase(invites, catalog, clock)("MVK234", "tono", alreadyStaff = false),
+            RedeemBarberInviteUseCase(invites, catalog, clock)("MVK234", "tono", alreadyStaff = false)
         )
         assertEquals(null, invites.redeemed)
     }

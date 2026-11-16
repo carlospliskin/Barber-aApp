@@ -9,10 +9,10 @@ import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.model.ClientRecord
 import com.barberia.feature.booking.domain.model.dayId
 import com.barberia.feature.booking.domain.repository.BookingRepository
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import java.time.LocalDate
 
 /** Agenda en memoria con la misma garantía que Firestore: un bloque ocupado no se sobrescribe. */
 class FakeBookingRepository : BookingRepository {
@@ -36,7 +36,13 @@ class FakeBookingRepository : BookingRepository {
         AppResult.Success(all.value.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED })
 
     override suspend fun countActive(tenantId: String, clientUid: String, from: LocalDate): BookingResult<Int> =
-        activeOverride?.let { AppResult.Success(it) } ?: AppResult.Success(all.value.count { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) })
+        activeOverride?.let { AppResult.Success(it) }
+            ?: AppResult.Success(
+                all.value.count {
+                    it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED &&
+                        !it.date.isBefore(from)
+                }
+            )
 
     override suspend fun book(appointment: Appointment): BookingResult<Unit> {
         failure?.let { return AppResult.Failure(it) }
@@ -45,7 +51,8 @@ class FakeBookingRepository : BookingRepository {
         appointment.slots.forEach { day[it] = appointment.id }
         all.value = all.value + appointment
         // F7-6: primera reserva crea la ficha en ceros
-        appointment.clientUid?.let { uid -> clients.getOrPut(uid) { ClientRecord.new(uid, appointment.clientName) } } // N1: sin cuenta no hay ficha
+        // N1: sin cuenta no hay ficha
+        appointment.clientUid?.let { uid -> clients.getOrPut(uid) { ClientRecord.new(uid, appointment.clientName) } }
         publishClients()
         return AppResult.Success(Unit)
     }
@@ -63,14 +70,20 @@ class FakeBookingRepository : BookingRepository {
 
     override fun observeUpcoming(tenantId: String, clientUid: String, from: LocalDate): Flow<List<Appointment>> {
         lastUpcomingFrom = from
-        agendaError?.let { f -> return kotlinx.coroutines.flow.flow { throw com.barberia.feature.booking.domain.model.BookingException(f) } }
-        return all.map { list -> list.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) } }
+        agendaError?.let { f ->
+            return kotlinx.coroutines.flow.flow { throw com.barberia.feature.booking.domain.model.BookingException(f) }
+        }
+        return all.map { list ->
+            list.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) }
+        }
     }
 
     var lastAgendaDate: LocalDate? = null
     var lastStatus: AppointmentStatus? = null
+
     /** Simula un error inesperado (bug) al cambiar el estado. */
     var statusCrash: RuntimeException? = null
+
     /** Hora que el "servidor" pone al marcar (F7-2). */
     var serverNow: java.time.Instant? = null
 
@@ -78,18 +91,22 @@ class FakeBookingRepository : BookingRepository {
 
     override fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>> {
         lastAgendaDate = date
-        agendaError?.let { f -> return kotlinx.coroutines.flow.flow { throw com.barberia.feature.booking.domain.model.BookingException(f) } }
+        agendaError?.let { f ->
+            return kotlinx.coroutines.flow.flow { throw com.barberia.feature.booking.domain.model.BookingException(f) }
+        }
         return all.map { list -> list.filter { it.date == date && (barberId == null || it.barberId == barberId) } }
     }
 
     val clients = mutableMapOf<String, ClientRecord>()
     private val clientsFlow = MutableStateFlow<Map<String, ClientRecord>>(emptyMap())
-    private fun publishClients() { clientsFlow.value = clients.toMap() }
+    private fun publishClients() {
+        clientsFlow.value = clients.toMap()
+    }
 
     override suspend fun setStatus(
         appointment: Appointment,
         status: AppointmentStatus,
-        updateClient: ((ClientRecord?) -> ClientRecord)?,
+        updateClient: ((ClientRecord?) -> ClientRecord)?
     ): BookingResult<Unit> {
         statusCrash?.let { throw it }
         lastStatus = status
@@ -115,7 +132,7 @@ class FakeBookingRepository : BookingRepository {
     override suspend fun updateClient(
         tenantId: String,
         uid: String,
-        change: (ClientRecord) -> BookingResult<ClientRecord>,
+        change: (ClientRecord) -> BookingResult<ClientRecord>
     ): BookingResult<ClientRecord> {
         val current = clients[uid] ?: return AppResult.Failure(BookingFailure.NotYours)
         val r = change(current)

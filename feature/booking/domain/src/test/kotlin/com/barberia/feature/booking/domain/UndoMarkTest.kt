@@ -9,16 +9,16 @@ import com.barberia.feature.booking.domain.model.LoyaltyPolicy
 import com.barberia.feature.booking.domain.testing.FakeBookingRepository
 import com.barberia.feature.booking.domain.usecase.UndoMarkUseCase
 import com.barberia.feature.catalog.domain.model.Money
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 /** F7-2: deshacer "atendida" o "no llegó" (solo el dueño, dentro de 15 min). */
 class UndoMarkTest {
@@ -29,7 +29,7 @@ class UndoMarkTest {
 
     private fun appt(status: AppointmentStatus, uid: String? = "cli") = Appointment(
         "a1", "t1", uid, "Ana", "b1", "Luis", "s1", "Corte", Money(100), LocalDate.of(2026, 11, 16), 600, 630, status,
-        Instant.parse("2026-11-16T16:00:00Z"), markedAt = marked,
+        Instant.parse("2026-11-16T16:00:00Z"), markedAt = marked
     )
 
     private fun undo(minutesAfter: Long) = UndoMarkUseCase(repo, policy, clockAt(minutesAfter))

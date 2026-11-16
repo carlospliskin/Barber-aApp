@@ -6,6 +6,7 @@ import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.testing.FakeBookingRepository
 import com.barberia.feature.booking.domain.testing.FakeJoinedStore
 import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCase
+import java.time.ZoneId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
@@ -13,7 +14,6 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
-import java.time.ZoneId
 
 /** A7-c: la barbería guardada en el teléfono ya no existe (el dueño la borró). */
 class ShopGoneTest {

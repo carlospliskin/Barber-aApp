@@ -28,10 +28,10 @@ import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.auth.domain.usecase.ResendVerificationEmailUseCase
 import com.barberia.feature.auth.presentation.R
 import com.barberia.feature.auth.presentation.common.messageRes
-import org.koin.androidx.compose.koinViewModel
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import org.koin.androidx.compose.koinViewModel
 
 data class VerifyEmailState(
     val email: String = "",
@@ -39,7 +39,7 @@ data class VerifyEmailState(
     val lastSentAt: Instant? = null,
     val checking: Boolean = false,
     val notYet: Boolean = false,
-    val failure: AuthFailure? = null,
+    val failure: AuthFailure? = null
 ) : UiState
 
 sealed interface VerifyEmailIntent : UiIntent {
@@ -54,7 +54,7 @@ class VerifyEmailViewModel(
     observeUser: ObserveCurrentUserUseCase,
     private val resend: ResendVerificationEmailUseCase,
     private val check: CheckEmailVerifiedUseCase,
-    private val clock: Clock,
+    private val clock: Clock
 ) : MviViewModel<VerifyEmailState, VerifyEmailIntent, VerifyEmailEffect>(VerifyEmailState()) {
 
     init {
@@ -75,6 +75,7 @@ class VerifyEmailViewModel(
                     }
                 }
             }
+
             VerifyEmailIntent.Check -> {
                 setState { copy(checking = true, notYet = false, failure = null) }
                 val r = check()

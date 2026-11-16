@@ -8,16 +8,16 @@ import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.StaffInvite
 import com.barberia.feature.catalog.domain.repository.CatalogRepository
 import com.barberia.feature.catalog.domain.repository.InviteRepository
-import kotlinx.coroutines.flow.first
 import java.time.Clock
 import java.time.Duration
 import java.util.Random
+import kotlinx.coroutines.flow.first
 
 class CreateBarberInviteUseCase(
     private val invites: InviteRepository,
     private val catalog: CatalogRepository,
     private val clock: Clock,
-    private val random: Random,
+    private val random: Random
 ) {
     /** A1: invitación para un barbero ACTIVO del catálogo; vence en 7 días. */
     suspend operator fun invoke(tenantId: String, barberId: String): CatalogResult<StaffInvite> {
@@ -33,7 +33,7 @@ class CreateBarberInviteUseCase(
                 barberId = barber.id,
                 barberName = barber.name,
                 expiresAt = clock.instant().plus(VALIDITY),
-                usedBy = null,
+                usedBy = null
             )
             when (val r = invites.create(invite)) {
                 is AppResult.Failure -> return r
@@ -49,11 +49,7 @@ class CreateBarberInviteUseCase(
     }
 }
 
-class RedeemBarberInviteUseCase(
-    private val invites: InviteRepository,
-    private val catalog: CatalogRepository,
-    private val clock: Clock,
-) {
+class RedeemBarberInviteUseCase(private val invites: InviteRepository, private val catalog: CatalogRepository, private val clock: Clock) {
     /** A1/A8: un cliente sin rol acepta una invitación vigente y sin usar. */
     suspend operator fun invoke(rawCode: String, uid: String, alreadyStaff: Boolean): CatalogResult<StaffInvite> {
         if (alreadyStaff) return AppResult.Failure(CatalogFailure.AlreadyStaff)

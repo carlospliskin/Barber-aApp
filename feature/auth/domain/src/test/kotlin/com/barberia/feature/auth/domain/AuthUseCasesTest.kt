@@ -1,7 +1,5 @@
 package com.barberia.feature.auth.domain
 
-import com.barberia.feature.auth.domain.testing.*
-
 import com.barberia.core.common.AppResult
 import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.auth.domain.model.AuthFailure
@@ -11,6 +9,7 @@ import com.barberia.feature.auth.domain.model.SessionState
 import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.repository.ClientRegistration
 import com.barberia.feature.auth.domain.repository.OwnerRegistration
+import com.barberia.feature.auth.domain.testing.*
 import com.barberia.feature.auth.domain.usecase.ObserveSessionDestinationUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterClientUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterOwnerUseCase
@@ -39,7 +38,7 @@ class AuthUseCasesTest {
         val result = SignInUseCase(auth)("ana", "")
         assertEquals(
             AppResult.Failure(AuthFailure.Validation(setOf(FieldError.EMAIL_INVALID, FieldError.PASSWORD_EMPTY))),
-            result,
+            result
         )
         assertTrue(auth.calls.isEmpty())
     }
@@ -48,11 +47,11 @@ class AuthUseCasesTest {
     @Test fun `registro de duenio valido normaliza datos`() = runTest {
         val auth = FakeAuthRepository()
         RegisterOwnerUseCase(auth)(
-            OwnerRegistration(" ana@mail.com", "12345678", " Ana ", " Barber Gold ", " 55 1234 5678 "),
+            OwnerRegistration(" ana@mail.com", "12345678", " Ana ", " Barber Gold ", " 55 1234 5678 ")
         )
         assertEquals(
             OwnerRegistration("ana@mail.com", "12345678", "Ana", "Barber Gold", "5512345678"),
-            auth.lastOwner,
+            auth.lastOwner
         )
     }
 
@@ -82,7 +81,7 @@ class AuthUseCasesTest {
         val auth = FakeAuthRepository()
         assertEquals(
             AppResult.Failure(AuthFailure.Validation(setOf(FieldError.EMAIL_INVALID))),
-            SendPasswordResetUseCase(auth)("nada"),
+            SendPasswordResetUseCase(auth)("nada")
         )
         SendPasswordResetUseCase(auth)(" ana@mail.com ")
         assertEquals(listOf("reset:ana@mail.com"), auth.calls)
@@ -117,7 +116,7 @@ class AuthUseCasesTest {
     @Test fun `sin sesion no se puede elegir modo`() = runTest {
         assertEquals(
             AppResult.Failure(AuthFailure.NotSignedIn),
-            SelectModeUseCase(FakeSessionRepository())(AppMode.CLIENT),
+            SelectModeUseCase(FakeSessionRepository())(AppMode.CLIENT)
         )
     }
 

@@ -92,7 +92,7 @@ class CatalogEditor(private val ids: IdGenerator) {
         }
         if (errors.isNotEmpty()) return AppResult.Failure(CatalogFailure.Validation(errors))
         val normalized = WeeklySchedule(
-            schedule.days.filterValues { it.isNotEmpty() }.mapValues { (_, r) -> r.sortedBy { it.startMinute } },
+            schedule.days.filterValues { it.isNotEmpty() }.mapValues { (_, r) -> r.sortedBy { it.startMinute } }
         )
         return ok(catalog.copy(barbers = catalog.barbers.replace(id) { it.copy(schedule = normalized) }))
     }
@@ -153,8 +153,7 @@ class CatalogEditor(private val ids: IdGenerator) {
     }
 
     private fun ok(catalog: Catalog): CatalogResult<Catalog> = AppResult.Success(catalog)
-    private fun invalid(error: CatalogError): CatalogResult<Catalog> =
-        AppResult.Failure(CatalogFailure.Validation(setOf(error)))
+    private fun invalid(error: CatalogError): CatalogResult<Catalog> = AppResult.Failure(CatalogFailure.Validation(setOf(error)))
 
     companion object {
         const val MAX_SERVICES = 50

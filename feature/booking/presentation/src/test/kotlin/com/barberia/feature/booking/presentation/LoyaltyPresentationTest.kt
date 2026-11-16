@@ -19,6 +19,9 @@ import com.barberia.feature.booking.domain.usecase.RedeemRewardUseCase
 import com.barberia.feature.booking.presentation.clients.ClientsIntent
 import com.barberia.feature.booking.presentation.clients.ClientsViewModel
 import com.barberia.feature.booking.presentation.loyalty.LoyaltyViewModel
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -30,13 +33,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoyaltyPresentationTest {
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val now = Instant.parse("2026-11-16T17:00:00Z")
@@ -54,7 +55,7 @@ class LoyaltyPresentationTest {
         RedeemRewardUseCase(repo, loyalty),
         ForgivePenaltyUseCase(repo),
         loyalty,
-        clock,
+        clock
     )
 
     @Test fun `P5 el duenio ve sus clientes, penalizados primero`() {
@@ -82,7 +83,7 @@ class LoyaltyPresentationTest {
             ObserveJoinedBarbershopUseCase(repo, store),
             ObserveMyLoyaltyUseCase(repo),
             loyalty,
-            clock,
+            clock
         )
         val s = vm.state.value
         assertEquals(2, s.visitsTowardNext)

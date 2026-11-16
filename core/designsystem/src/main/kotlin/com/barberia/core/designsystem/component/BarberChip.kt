@@ -12,13 +12,7 @@ import androidx.compose.ui.Modifier
  * con un chip deshabilitado (U5: con los colores por defecto se veían iguales sobre fondo oscuro).
  */
 @Composable
-fun BarberChip(
-    text: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
+fun BarberChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     FilterChip(
         selected = selected,
         onClick = onClick,
@@ -28,7 +22,7 @@ fun BarberChip(
         colors = FilterChipDefaults.filterChipColors(
             labelColor = MaterialTheme.colorScheme.onSurface,
             selectedContainerColor = MaterialTheme.colorScheme.primary,
-            selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-        ),
+            selectedLabelColor = MaterialTheme.colorScheme.onPrimary
+        )
     )
 }

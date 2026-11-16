@@ -44,7 +44,7 @@ fun BookingRoute(onDone: () -> Unit, onBack: () -> Unit, viewModel: BookingViewM
 fun BookingScreen(state: BookingState, onIntent: (BookingIntent) -> Unit, onBack: () -> Unit) {
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.booking_back)) }
@@ -59,7 +59,7 @@ fun BookingScreen(state: BookingState, onIntent: (BookingIntent) -> Unit, onBack
                 BarberChip(
                     text = "${s.name} · ${s.durationMinutes} min · ${s.price.label}",
                     selected = s.id == state.selectedServiceId,
-                    onClick = { onIntent(BookingIntent.SelectService(s.id)) },
+                    onClick = { onIntent(BookingIntent.SelectService(s.id)) }
                 )
             }
         }
@@ -68,7 +68,7 @@ fun BookingScreen(state: BookingState, onIntent: (BookingIntent) -> Unit, onBack
                 BarberChip(
                     text = b.name,
                     selected = b.id == state.selectedBarberId,
-                    onClick = { onIntent(BookingIntent.SelectBarber(b.id)) },
+                    onClick = { onIntent(BookingIntent.SelectBarber(b.id)) }
                 )
             }
         }
@@ -79,7 +79,7 @@ fun BookingScreen(state: BookingState, onIntent: (BookingIntent) -> Unit, onBack
                     text = d.shortLabel(),
                     selected = d == state.selectedDate,
                     onClick = { onIntent(BookingIntent.SelectDate(d)) },
-    enabled = state.isSelectable(d), // U2
+                    enabled = state.isSelectable(d) // U2
                 )
             }
         }
@@ -87,15 +87,17 @@ fun BookingScreen(state: BookingState, onIntent: (BookingIntent) -> Unit, onBack
             Text(stringResource(R.string.booking_step_time), style = MaterialTheme.typography.titleMedium)
             when {
                 state.slotsLoading -> CircularProgressIndicator()
+
                 state.slots.isEmpty() ->
                     Text(stringResource(R.string.booking_no_slots), color = MaterialTheme.colorScheme.onSurfaceVariant)
+
                 else -> FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     state.slots.forEach { m ->
                         BarberChip(
-                    text = TimeRange.label(m),
-                    selected = m == state.selectedSlot,
-                    onClick = { onIntent(BookingIntent.SelectSlot(m)) },
-                )
+                            text = TimeRange.label(m),
+                            selected = m == state.selectedSlot,
+                            onClick = { onIntent(BookingIntent.SelectSlot(m)) }
+                        )
                     }
                 }
             }
@@ -107,7 +109,7 @@ fun BookingScreen(state: BookingState, onIntent: (BookingIntent) -> Unit, onBack
             BarberButton(
                 stringResource(R.string.booking_confirm, date.shortLabel(), TimeRange.label(slot)),
                 { onIntent(BookingIntent.Confirm) },
-                isLoading = state.isBooking,
+                isLoading = state.isBooking
             )
         }
     }

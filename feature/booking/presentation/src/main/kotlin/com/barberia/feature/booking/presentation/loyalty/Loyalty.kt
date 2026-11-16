@@ -25,6 +25,8 @@ import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCas
 import com.barberia.feature.booking.domain.usecase.ObserveMyLoyaltyUseCase
 import com.barberia.feature.booking.presentation.R
 import com.barberia.feature.booking.presentation.clients.dayLabel
+import java.time.Clock
+import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -33,15 +35,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
-import java.time.Clock
-import java.time.Instant
 
 data class LoyaltyState(
     val visible: Boolean = false,
     val visitsTowardNext: Int = 0,
     val visitsPerReward: Int = 10,
     val rewardsAvailable: Int = 0,
-    val penalizedUntil: Instant? = null,
+    val penalizedUntil: Instant? = null
 ) : UiState {
     /** U10: con penalización vigente no se entra al flujo de reserva. */
     val canBook: Boolean get() = penalizedUntil == null
@@ -57,7 +57,7 @@ class LoyaltyViewModel(
     observeJoined: ObserveJoinedBarbershopUseCase,
     observeMine: ObserveMyLoyaltyUseCase,
     private val loyalty: LoyaltyPolicy,
-    private val clock: Clock,
+    private val clock: Clock
 ) : MviViewModel<LoyaltyState, LoyaltyIntent, LoyaltyEffect>(LoyaltyState(visitsPerReward = loyalty.visitsPerReward)) {
 
     init {
@@ -74,7 +74,7 @@ class LoyaltyViewModel(
                             visible = true,
                             visitsTowardNext = c?.visitsTowardNext(loyalty) ?: 0,
                             rewardsAvailable = c?.availableRewards(loyalty) ?: 0,
-                            penalizedUntil = c?.penaltyUntil?.takeIf { c.isPenalized(clock.instant()) },
+                            penalizedUntil = c?.penaltyUntil?.takeIf { c.isPenalized(clock.instant()) }
                         )
                     }
                 }
@@ -93,10 +93,13 @@ fun LoyaltyCard(modifier: Modifier = Modifier, viewModel: LoyaltyViewModel = koi
             s.penalizedUntil?.let {
                 Text(stringResource(R.string.loyalty_penalized, it.dayLabel()), color = MaterialTheme.colorScheme.error)
             }
-            Text(stringResource(R.string.loyalty_progress, s.visitsTowardNext, s.visitsPerReward), style = MaterialTheme.typography.titleSmall)
+            Text(
+                stringResource(R.string.loyalty_progress, s.visitsTowardNext, s.visitsPerReward),
+                style = MaterialTheme.typography.titleSmall
+            )
             LinearProgressIndicator(
                 progress = { s.visitsTowardNext / s.visitsPerReward.toFloat() },
-                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
             )
             if (s.rewardsAvailable > 0) {
                 Text(stringResource(R.string.loyalty_reward, s.rewardsAvailable), color = MaterialTheme.colorScheme.primary)

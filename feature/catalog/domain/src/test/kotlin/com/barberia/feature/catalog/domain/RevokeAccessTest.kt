@@ -4,10 +4,10 @@ import com.barberia.core.common.AppResult
 import com.barberia.feature.catalog.domain.model.StaffInvite
 import com.barberia.feature.catalog.domain.testing.FakeInviteRepository
 import com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase
+import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.Instant
 
 /** A16: el dueño quita el acceso de la app a las cuentas ligadas a un barbero del catálogo. */
 class RevokeAccessTest {
@@ -23,7 +23,7 @@ class RevokeAccessTest {
             invite("BBB234", "b1", "luis-nuevo"), // cambió de teléfono y de cuenta
             invite("CCC234", "b1", null), // sin usar: nadie que revocar
             invite("DDD234", "b2", "pepe"),
-            invite("EEE234", "b1", "otro", tenant = "t2"),
+            invite("EEE234", "b1", "otro", tenant = "t2")
         ).forEach { invites.stored[it.code] = it }
 
         assertEquals(AppResult.Success(2), revoke("t1", "b1"))

@@ -13,17 +13,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.barberia.app.R
 import com.barberia.core.designsystem.component.BarberButton
 import com.barberia.feature.auth.domain.model.AppMode
-import com.barberia.feature.booking.presentation.client.ClientHomeRoute
-import com.barberia.feature.booking.presentation.owner.ShareCodeCard
-import androidx.compose.ui.res.stringResource
-import com.barberia.app.R
+import com.barberia.feature.auth.presentation.account.StaffAccessCard
 import com.barberia.feature.auth.presentation.common.labelRes
 import com.barberia.feature.auth.presentation.verify.VerifyEmailCard
-import com.barberia.feature.auth.presentation.account.StaffAccessCard
+import com.barberia.feature.booking.presentation.client.ClientHomeRoute
+import com.barberia.feature.booking.presentation.owner.ShareCodeCard
 import org.koin.androidx.compose.koinViewModel
 
 /** Home por modo: cliente → reservas; dueño → código, agenda y catálogo; barbero → agenda. */
@@ -35,7 +35,7 @@ fun HomeRoute(
     onOpenAgenda: () -> Unit,
     onOpenClients: () -> Unit,
     onDeleteAccount: () -> Unit,
-    viewModel: HomeViewModel = koinViewModel(),
+    viewModel: HomeViewModel = koinViewModel()
 ) {
     if (mode == AppMode.CLIENT) {
         ClientHomeRoute(onBook = onBook, onSignOut = { viewModel.onIntent(HomeIntent.SignOut) }, onDeleteAccount = onDeleteAccount)
@@ -45,7 +45,7 @@ fun HomeRoute(
     if (!state.loaded) return // X1: no se decide nada (ni se crean códigos) hasta conocer al usuario
     Column(
         Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Center
     ) {
         // U8: etiqueta en español (antes mostraba el nombre interno: "barber").
         Text(stringResource(mode.labelRes()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
@@ -77,6 +77,8 @@ fun HomeRoute(
             Spacer(Modifier.height(12.dp))
         }
         BarberButton(text = stringResource(R.string.home_sign_out), onClick = { viewModel.onIntent(HomeIntent.SignOut) })
-        TextButton(onClick = onDeleteAccount) { Text(stringResource(R.string.home_delete_account), color = MaterialTheme.colorScheme.error) }
+        TextButton(onClick = onDeleteAccount) {
+            Text(stringResource(R.string.home_delete_account), color = MaterialTheme.colorScheme.error)
+        }
     }
 }

@@ -37,7 +37,7 @@ data class ModeSelectorState(
     val displayName: String = "",
     val modes: List<AppMode> = emptyList(),
     val isSaving: Boolean = false,
-    val failure: AuthFailure? = null,
+    val failure: AuthFailure? = null
 ) : UiState
 
 sealed interface ModeSelectorIntent : UiIntent {
@@ -47,10 +47,8 @@ sealed interface ModeSelectorIntent : UiIntent {
 sealed interface ModeSelectorEffect : UiEffect
 
 /** Elegir modo es local (no gasta escrituras en Firestore); la navegación la hace la sesión. */
-class ModeSelectorViewModel(
-    observeUser: ObserveCurrentUserUseCase,
-    private val selectMode: SelectModeUseCase,
-) : MviViewModel<ModeSelectorState, ModeSelectorIntent, ModeSelectorEffect>(ModeSelectorState()) {
+class ModeSelectorViewModel(observeUser: ObserveCurrentUserUseCase, private val selectMode: SelectModeUseCase) :
+    MviViewModel<ModeSelectorState, ModeSelectorIntent, ModeSelectorEffect>(ModeSelectorState()) {
 
     init {
         launchInScope {
@@ -81,13 +79,13 @@ fun ModeSelectorRoute(viewModel: ModeSelectorViewModel = koinViewModel()) {
 fun ModeSelectorScreen(state: ModeSelectorState, onIntent: (ModeSelectorIntent) -> Unit) {
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(stringResource(R.string.auth_greeting, state.displayName), style = MaterialTheme.typography.headlineMedium)
         Text(
             stringResource(R.string.auth_choose_mode),
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(32.dp))
         state.modes.forEach { mode ->

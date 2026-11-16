@@ -22,17 +22,17 @@ import com.barberia.feature.catalog.domain.model.Service
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class LoyaltyTest {
     private val loyalty = LoyaltyPolicy(visitsPerReward = 10, noShowsForPenalty = 3, penaltyDays = 14)
@@ -43,7 +43,7 @@ class LoyaltyTest {
 
     private fun appt(id: String) = Appointment(
         id, "t1", "cli", "Ana", "b1", "Luis", "s1", "Corte", Money(15_000), monday, 600, 630,
-        AppointmentStatus.BOOKED, Instant.parse("2026-11-16T16:00:00Z"),
+        AppointmentStatus.BOOKED, Instant.parse("2026-11-16T16:00:00Z")
     )
 
     // ── Reglas puras ─────────────────────────────────────────────────────────
@@ -119,11 +119,11 @@ class LoyaltyTest {
             Catalog(
                 listOf(Service("s1", "Corte", 30, Money(100))),
                 listOf(Barber("b1", "Luis", schedule = WeeklySchedule(mapOf(DayOfWeek.TUESDAY to listOf(TimeRange.of("10:00", "14:00")))))),
-                1,
-            ),
+                1
+            )
         )
         val r = BookAppointmentUseCase(catalog, repo, BookingPolicy(), clock) { "n1" }(
-            BookingRequest("t1", ZoneId.of("America/Mexico_City"), "cli", "Ana", "b1", "s1", monday.plusDays(1), 600),
+            BookingRequest("t1", ZoneId.of("America/Mexico_City"), "cli", "Ana", "b1", "s1", monday.plusDays(1), 600)
         )
         assertEquals(AppResult.Failure(BookingFailure.Penalized(until)), r)
     }

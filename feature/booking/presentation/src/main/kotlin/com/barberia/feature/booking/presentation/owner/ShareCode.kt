@@ -36,10 +36,8 @@ sealed interface ShareCodeIntent : UiIntent
 sealed interface ShareCodeEffect : UiEffect
 
 /** R7: el dueño ve (y si no existe, se crea) el código de su barbería. */
-class ShareCodeViewModel(
-    observeUser: ObserveCurrentUserUseCase,
-    private val ensure: EnsureShareCodeUseCase,
-) : MviViewModel<ShareCodeState, ShareCodeIntent, ShareCodeEffect>(ShareCodeState()) {
+class ShareCodeViewModel(observeUser: ObserveCurrentUserUseCase, private val ensure: EnsureShareCodeUseCase) :
+    MviViewModel<ShareCodeState, ShareCodeIntent, ShareCodeEffect>(ShareCodeState()) {
 
     init {
         launchInScope {
@@ -65,7 +63,7 @@ fun ShareCodeCard(modifier: Modifier = Modifier, viewModel: ShareCodeViewModel =
     val state by viewModel.state.collectAsStateWithLifecycle()
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(stringResource(R.string.booking_share_title), style = MaterialTheme.typography.titleMedium)
@@ -74,7 +72,7 @@ fun ShareCodeCard(modifier: Modifier = Modifier, viewModel: ShareCodeViewModel =
                 fontSize = 34.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 6.sp,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colorScheme.primary
             )
             Text(stringResource(R.string.booking_share_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
             state.failure?.let { Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error) }

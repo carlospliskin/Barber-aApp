@@ -2,21 +2,21 @@ package com.barberia.app.di
 
 import com.barberia.app.home.HomeViewModel
 import com.barberia.feature.auth.data.di.ApplicationScope
+import com.barberia.feature.auth.domain.repository.UserDataEraser
 import com.barberia.feature.auth.domain.usecase.CheckEmailVerifiedUseCase
+import com.barberia.feature.auth.domain.usecase.CheckStaffAccessUseCase
+import com.barberia.feature.auth.domain.usecase.DeleteAccountUseCase
+import com.barberia.feature.auth.domain.usecase.LeaveStaffUseCase
 import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
-import com.barberia.feature.auth.domain.usecase.ResendVerificationEmailUseCase
 import com.barberia.feature.auth.domain.usecase.ObserveSessionDestinationUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterClientUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterOwnerUseCase
+import com.barberia.feature.auth.domain.usecase.ResendVerificationEmailUseCase
 import com.barberia.feature.auth.domain.usecase.RetrySessionUseCase
 import com.barberia.feature.auth.domain.usecase.SelectModeUseCase
 import com.barberia.feature.auth.domain.usecase.SendPasswordResetUseCase
 import com.barberia.feature.auth.domain.usecase.SignInUseCase
 import com.barberia.feature.auth.domain.usecase.SignOutUseCase
-import com.barberia.feature.auth.domain.usecase.DeleteAccountUseCase
-import com.barberia.feature.auth.domain.usecase.CheckStaffAccessUseCase
-import com.barberia.feature.auth.domain.usecase.LeaveStaffUseCase
-import com.barberia.feature.auth.domain.repository.UserDataEraser
 import com.barberia.feature.booking.domain.usecase.EraseUserDataUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

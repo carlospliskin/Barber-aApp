@@ -9,18 +9,18 @@ import com.barberia.feature.booking.data.mapper.ClientMapper
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.Barbershop
+import com.barberia.feature.booking.domain.model.BookingException
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.model.ClientRecord
 import com.barberia.feature.booking.domain.model.dayId
 import com.barberia.feature.booking.domain.repository.BookingRepository
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import com.barberia.feature.booking.domain.model.BookingException
-import java.time.LocalDate
-import java.time.ZoneId
 
 private val DEFAULT_ZONE: ZoneId = ZoneId.of("America/Mexico_City")
 
@@ -55,7 +55,7 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             // N1: sin cuenta no hay ficha
             appointment.clientUid?.let { uid ->
                 ClientMapper.toMap(ClientRecord.new(uid, appointment.clientName), lastAppointmentId = appointment.id)
-            },
+            }
         )
     }
 
@@ -64,7 +64,7 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             appointment.tenantId,
             appointment.id,
             dayId(appointment.barberId, appointment.date),
-            appointment.slots.map { it.toString() }.toSet(),
+            appointment.slots.map { it.toString() }.toSet()
         )
     }
 
@@ -80,19 +80,16 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             docs.mapNotNull { (id, data) -> AppointmentMapper.fromMap(id, tenantId, data) }
         }.asBookingFlow()
 
-    override suspend fun setStatus(
-        appointment: Appointment,
-        status: AppointmentStatus,
-        updateClient: ((ClientRecord?) -> ClientRecord)?,
-    ) = attempt(onDenied = BookingFailure.TooEarly) {
-        val uid = appointment.clientUid
-        val change: ((Map<String, Any?>?) -> Map<String, Any?>)? = if (uid == null || updateClient == null) {
-            null
-        } else {
-            { raw -> ClientMapper.toMap(updateClient(ClientMapper.fromMap(uid, raw)), lastAppointmentId = appointment.id) }
+    override suspend fun setStatus(appointment: Appointment, status: AppointmentStatus, updateClient: ((ClientRecord?) -> ClientRecord)?) =
+        attempt(onDenied = BookingFailure.TooEarly) {
+            val uid = appointment.clientUid
+            val change: ((Map<String, Any?>?) -> Map<String, Any?>)? = if (uid == null || updateClient == null) {
+                null
+            } else {
+                { raw -> ClientMapper.toMap(updateClient(ClientMapper.fromMap(uid, raw)), lastAppointmentId = appointment.id) }
+            }
+            gateway.setStatus(appointment.tenantId, appointment.id, status.name, uid, change)
         }
-        gateway.setStatus(appointment.tenantId, appointment.id, status.name, uid, change)
-    }
 
     override suspend fun client(tenantId: String, uid: String) = attempt {
         ClientMapper.fromMap(uid, gateway.getClient(tenantId, uid))
@@ -107,7 +104,7 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
     override suspend fun updateClient(
         tenantId: String,
         uid: String,
-        change: (ClientRecord) -> BookingResult<ClientRecord>,
+        change: (ClientRecord) -> BookingResult<ClientRecord>
     ): BookingResult<ClientRecord> {
         var outcome: BookingResult<ClientRecord> = AppResult.Failure(BookingFailure.NotYours)
         val written = attempt {
@@ -131,7 +128,7 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
                 id = tenantId,
                 name = t["name"] as? String ?: "",
                 zone = (t["timezone"] as? String)?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: DEFAULT_ZONE,
-                shareCode = t["shareCode"] as? String,
+                shareCode = t["shareCode"] as? String
             )
         }
     }
@@ -154,7 +151,7 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
                 is GatewayError.Network -> BookingFailure.NoConnection
                 is GatewayError.PermissionDenied -> onDenied ?: BookingFailure.Unknown(e.cause?.message)
                 else -> BookingFailure.Unknown(e.cause?.message)
-            },
+            }
         )
     }
 }

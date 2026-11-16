@@ -44,7 +44,7 @@ fun AgendaRoute(onBack: () -> Unit, onAddWalkIn: () -> Unit, viewModel: AgendaVi
 fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: () -> Unit, onAddWalkIn: () -> Unit = {}) {
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.booking_back)) }
@@ -72,13 +72,13 @@ fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: (
         Text(
             pluralStringResource(R.plurals.agenda_count, s.total, s.total) + " · " +
                 stringResource(R.string.agenda_summary, s.completed, s.noShows, s.earned.label, s.expected.label),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         state.failure?.let { Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error) }
         state.penaltyNotice?.let { n ->
             Text(
                 pluralStringResource(R.plurals.agenda_penalty_notice, n.cancelledFuture, n.cancelledFuture),
-                color = MaterialTheme.colorScheme.error,
+                color = MaterialTheme.colorScheme.error
             )
             if (state.hasPendingCancellations) {
                 Text(stringResource(R.string.agenda_penalty_pending, n.failedToCancel), color = MaterialTheme.colorScheme.error)
@@ -88,7 +88,15 @@ fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: (
             Text(stringResource(R.string.agenda_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         state.appointments.forEach {
-            AgendaCard(it, state.busyId == it.id, state.canComplete(it), state.canNoShow(it), state.canCancel(it), state.canUndo(it), onIntent)
+            AgendaCard(
+                it,
+                state.busyId == it.id,
+                state.canComplete(it),
+                state.canNoShow(it),
+                state.canCancel(it),
+                state.canUndo(it),
+                onIntent
+            )
         }
     }
 }
@@ -101,21 +109,21 @@ private fun AgendaCard(
     canNoShow: Boolean,
     canCancel: Boolean,
     canUndo: Boolean,
-    onIntent: (AgendaIntent) -> Unit,
+    onIntent: (AgendaIntent) -> Unit
 ) {
     Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
         Column(Modifier.padding(16.dp)) {
             val who = if (a.isFromDeletedAccount) stringResource(R.string.agenda_deleted_account) else a.clientName
             Text(
                 "${TimeRange.label(a.startMinute)}–${TimeRange.label(a.endMinute)} · $who",
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleSmall
             )
             Text("${a.serviceName} · ${a.barberName} · ${a.price.label}", color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (a.isWalkIn) {
                 Text(
                     listOfNotNull(stringResource(R.string.agenda_walkin_tag), a.clientPhone).joinToString(" · "),
                     color = MaterialTheme.colorScheme.tertiary,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
             when (a.status) {
@@ -137,6 +145,7 @@ private fun AgendaCard(
                         }
                     }
                 }
+
                 AppointmentStatus.COMPLETED, AppointmentStatus.NO_SHOW -> Row(verticalAlignment = Alignment.CenterVertically) {
                     if (a.status == AppointmentStatus.COMPLETED) {
                         Text(stringResource(R.string.agenda_status_completed), color = MaterialTheme.colorScheme.primary)
@@ -150,7 +159,11 @@ private fun AgendaCard(
                         }
                     }
                 }
-                AppointmentStatus.CANCELLED -> Text(stringResource(R.string.booking_cancelled), color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                AppointmentStatus.CANCELLED -> Text(
+                    stringResource(R.string.booking_cancelled),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
     }

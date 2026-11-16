@@ -49,6 +49,7 @@ fun LoginRoute(onOpenRegister: () -> Unit, viewModel: LoginViewModel = koinViewM
     CollectEffects(viewModel.effects) { effect ->
         when (effect) {
             LoginEffect.OpenRegister -> onOpenRegister()
+
             LoginEffect.PasswordResetSent ->
                 scope.launch { snackbar.showSnackbar(context.getString(R.string.auth_reset_sent)) }
         }
@@ -70,18 +71,18 @@ fun LoginScreen(state: LoginState, onIntent: (LoginIntent) -> Unit) {
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 24.dp, vertical = 32.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(48.dp))
         Text(
             stringResource(R.string.auth_app_name),
             style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
             stringResource(R.string.auth_tagline),
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(40.dp))
         BarberTextField(
@@ -90,7 +91,7 @@ fun LoginScreen(state: LoginState, onIntent: (LoginIntent) -> Unit) {
             label = stringResource(R.string.auth_email),
             keyboardType = KeyboardType.Email,
             enabled = !state.isLoading,
-            error = state.fieldErrors.textFor(FieldError.EMAIL_INVALID),
+            error = state.fieldErrors.textFor(FieldError.EMAIL_INVALID)
         )
         Spacer(Modifier.height(12.dp))
         BarberTextField(
@@ -99,11 +100,11 @@ fun LoginScreen(state: LoginState, onIntent: (LoginIntent) -> Unit) {
             label = stringResource(R.string.auth_password),
             isPassword = true,
             enabled = !state.isLoading,
-            error = state.fieldErrors.textFor(FieldError.PASSWORD_EMPTY),
+            error = state.fieldErrors.textFor(FieldError.PASSWORD_EMPTY)
         )
         TextButton(
             onClick = { onIntent(LoginIntent.ForgotPassword) },
-            modifier = Modifier.align(Alignment.End),
+            modifier = Modifier.align(Alignment.End)
         ) { Text(stringResource(R.string.auth_forgot_password)) }
         state.failure?.let {
             Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error)
@@ -113,7 +114,7 @@ fun LoginScreen(state: LoginState, onIntent: (LoginIntent) -> Unit) {
         BarberButton(
             text = stringResource(R.string.auth_sign_in),
             onClick = { onIntent(LoginIntent.Submit) },
-            isLoading = state.isLoading,
+            isLoading = state.isLoading
         )
         Spacer(Modifier.height(8.dp))
         TextButton(onClick = { onIntent(LoginIntent.GoToRegister) }) {

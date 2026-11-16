@@ -26,6 +26,7 @@ import com.barberia.feature.catalog.domain.usecase.UpdateServiceUseCase
 import com.barberia.feature.catalog.presentation.CatalogDialog.BarberForm
 import com.barberia.feature.catalog.presentation.CatalogDialog.Schedule
 import com.barberia.feature.catalog.presentation.CatalogDialog.ServiceForm
+import java.time.DayOfWeek
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -38,12 +39,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.DayOfWeek
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CatalogViewModelTest {
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-11-16T16:00:00Z"), java.time.ZoneOffset.UTC)
@@ -65,12 +66,15 @@ class CatalogViewModelTest {
             SetBarberActiveUseCase(catalogRepo, editor),
             SetBarberScheduleUseCase(catalogRepo, editor),
             com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase(
-                invites, catalogRepo, clock, java.util.Random(1),
+                invites,
+                catalogRepo,
+                clock,
+                java.util.Random(1)
             ),
             com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase(catalogRepo, editor, clock),
             com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase(catalogRepo, editor),
             com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase(invites),
-            clock,
+            clock
         )
     }
 
@@ -164,7 +168,7 @@ class CatalogViewModelTest {
         catalogRepo.stored.value = Catalog(
             emptyList(),
             listOf(Barber("b", "Luis", schedule = WeeklySchedule(mapOf(DayOfWeek.MONDAY to listOf(monday))))),
-            1,
+            1
         )
         val vm = vm()
         vm.onIntent(CatalogIntent.OpenSchedule("b"))
@@ -185,7 +189,7 @@ class CatalogViewModelTest {
         vm.onIntent(CatalogIntent.SaveDialog)
         assertEquals(
             mapOf(DayOfWeek.TUESDAY to listOf(TimeRange.of("09:00", "17:30"))),
-            catalogRepo.stored.value.barbers.single().schedule.days,
+            catalogRepo.stored.value.barbers.single().schedule.days
         )
         assertNull(vm.state.value.dialog)
     }
@@ -195,7 +199,7 @@ class CatalogViewModelTest {
         catalogRepo.stored.value = Catalog(
             emptyList(),
             listOf(Barber("b", "Luis", schedule = WeeklySchedule(mapOf(DayOfWeek.MONDAY to split)))),
-            1,
+            1
         )
         val vm = vm()
         vm.onIntent(CatalogIntent.OpenSchedule("b"))
@@ -203,7 +207,7 @@ class CatalogViewModelTest {
         vm.onIntent(CatalogIntent.SaveDialog)
         assertEquals(
             listOf(TimeRange.of("09:00", "14:00"), TimeRange.of("16:00", "20:00")),
-            catalogRepo.stored.value.barbers.single().schedule.days[DayOfWeek.MONDAY],
+            catalogRepo.stored.value.barbers.single().schedule.days[DayOfWeek.MONDAY]
         )
     }
 
@@ -301,7 +305,7 @@ class CatalogViewModelTest {
         vm.onIntent(CatalogIntent.SaveDialog)
         assertEquals(
             listOf(com.barberia.feature.catalog.domain.model.TimeOff(today, TimeRange.of("17:00", "20:00"))),
-            catalogRepo.stored.value.barbers[0].timeOff,
+            catalogRepo.stored.value.barbers[0].timeOff
         )
     }
 

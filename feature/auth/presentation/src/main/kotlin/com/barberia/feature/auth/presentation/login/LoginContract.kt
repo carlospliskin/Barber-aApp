@@ -12,7 +12,7 @@ data class LoginState(
     val password: String = "",
     val isLoading: Boolean = false,
     val fieldErrors: Set<FieldError> = emptySet(),
-    val failure: AuthFailure? = null,
+    val failure: AuthFailure? = null
 ) : UiState
 
 sealed interface LoginIntent : UiIntent {
@@ -43,13 +43,18 @@ sealed interface LoginMutation {
 fun LoginState.reduce(m: LoginMutation): LoginState = when (m) {
     is LoginMutation.EmailChanged ->
         copy(email = m.value, fieldErrors = fieldErrors - FieldError.EMAIL_INVALID, failure = null)
+
     is LoginMutation.PasswordChanged ->
         copy(password = m.value, fieldErrors = fieldErrors - FieldError.PASSWORD_EMPTY, failure = null)
+
     LoginMutation.Started -> copy(isLoading = true, fieldErrors = emptySet(), failure = null)
+
     LoginMutation.Succeeded -> copy(isLoading = false, password = "")
+
     is LoginMutation.Failed -> {
         val (fields, general) = m.failure.splitValidation()
         copy(isLoading = false, fieldErrors = fields, failure = general)
     }
+
     LoginMutation.FailureDismissed -> copy(failure = null)
 }

@@ -10,8 +10,7 @@ object ShortCodes {
     const val LENGTH = 6
     private const val ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
 
-    fun generate(random: Random = Random()): String =
-        (1..LENGTH).map { ALPHABET[random.nextInt(ALPHABET.length)] }.joinToString("")
+    fun generate(random: Random = Random()): String = (1..LENGTH).map { ALPHABET[random.nextInt(ALPHABET.length)] }.joinToString("")
 
     /** " abc-234 " → "ABC234"; null si no es un código válido. */
     fun normalize(raw: String): String? {

@@ -25,7 +25,7 @@ data class FirebaseConfig(
     /** Solo release envía fallos (debug/QA no ensucian los reportes). */
     val crashReports: Boolean = false,
     /** Instala App Check (Play Integrity en release). Null con el emulador: no lo exige. */
-    val appCheckInstaller: ((FirebaseApp) -> Unit)? = null,
+    val appCheckInstaller: ((FirebaseApp) -> Unit)? = null
 ) {
     val usesEmulator: Boolean get() = emulatorHost != null
 }

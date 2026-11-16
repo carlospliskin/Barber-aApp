@@ -16,15 +16,11 @@ import kotlinx.coroutines.flow.map
 
 internal class FirestoreCatalogRepository(private val gateway: CatalogGateway) : CatalogRepository {
 
-    override fun observe(tenantId: String): Flow<Catalog> =
-        gateway.observe(tenantId)
-            .map { CatalogMapper.fromMap(it) ?: Catalog.empty() }
-            .catch { e -> throw if (e is GatewayError) CatalogException(e.toFailure()) else e } // G2
+    override fun observe(tenantId: String): Flow<Catalog> = gateway.observe(tenantId)
+        .map { CatalogMapper.fromMap(it) ?: Catalog.empty() }
+        .catch { e -> throw if (e is GatewayError) CatalogException(e.toFailure()) else e } // G2
 
-    override suspend fun edit(
-        tenantId: String,
-        change: (Catalog) -> CatalogResult<Catalog>,
-    ): CatalogResult<Catalog> {
+    override suspend fun edit(tenantId: String, change: (Catalog) -> CatalogResult<Catalog>): CatalogResult<Catalog> {
         // La transacción puede reintentarse: el último intento es el que cuenta.
         var outcome: CatalogResult<Catalog> = AppResult.Failure(CatalogFailure.Unknown())
         return try {

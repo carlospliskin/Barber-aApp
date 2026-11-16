@@ -27,7 +27,7 @@ class CatalogUseCasesTest {
 
         assertEquals(
             AppResult.Failure(CatalogFailure.Validation(setOf(CatalogError.NAME_DUPLICATED))),
-            result,
+            result
         )
         assertEquals(3, repo.stored.value.version) // no se guardó nada
     }
@@ -44,7 +44,7 @@ class CatalogUseCasesTest {
         val repo = FakeCatalogRepository().apply { failure = CatalogFailure.NoConnection }
         assertEquals(
             AppResult.Failure(CatalogFailure.NoConnection),
-            AddServiceUseCase(repo, editor)("t1", ServiceDraft("Corte", 30, Money(0))),
+            AddServiceUseCase(repo, editor)("t1", ServiceDraft("Corte", 30, Money(0)))
         )
     }
 }

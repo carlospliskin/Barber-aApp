@@ -78,7 +78,7 @@ Encontrados revisando el código ya implementado.
 | Q1 | ✅ | M | **0 tests instrumentados.** | Ver «Resueltos». |
 | Q1-b | P2 | M | Los tests instrumentados **no corren en el CI** (necesitan un emulador Android + Firebase). | Job con `reactivecircus/android-emulator-runner` y `firebase emulators:exec`; ~10 min por corrida (minutos de Actions). |
 | Q2 | P1 | M | **Las pruebas de punta a punta no están en el repo.** Se hicieron con un script local de adb. | Versionarlas con Maestro (YAML legible) o Compose UI Test; correrlas en CI con un emulador. |
-| Q3 | P2 | S | **detekt / ktlint** no corren en CI. | Agregar el plugin al `build-logic` y el paso al CI. |
+| Q3 | ✅ · parcial | S | **ktlint** corre en el CI (kotlinter 5.7.0, reglas en `.editorconfig`). **detekt** espera versión estable para Kotlin 2.4 (hoy solo 2.0.0-alpha). | Retomar detekt cuando salga 2.0 estable. |
 | Q4 | P2 | M | Sin tests de UI (Compose) ni capturas de referencia. | Compose UI Test para formularios críticos (login, reserva). |
 | Q5 | P2 | M | Accesibilidad revisada solo en puntos sueltos (botón flotante, etiquetas de estado). | Revisión completa: contraste, tamaños táctiles, TalkBack en cada pantalla. |
 | Q6 | P3 | S | La revisión de versiones n/n-1 es manual. | Script que compare el catálogo de versiones con Maven, o Renovate con política "n-1". |

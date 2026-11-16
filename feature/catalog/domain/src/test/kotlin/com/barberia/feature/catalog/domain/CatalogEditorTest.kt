@@ -1,6 +1,7 @@
 package com.barberia.feature.catalog.domain
 
 import com.barberia.core.common.AppResult
+import com.barberia.feature.catalog.domain.editor.CatalogEditor
 import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.CatalogError
@@ -10,12 +11,11 @@ import com.barberia.feature.catalog.domain.model.Service
 import com.barberia.feature.catalog.domain.model.ServiceDraft
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
-import com.barberia.feature.catalog.domain.editor.CatalogEditor
+import java.time.DayOfWeek
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.DayOfWeek
 
 class CatalogEditorTest {
 
@@ -23,8 +23,7 @@ class CatalogEditorTest {
     private val editor = CatalogEditor { "id-${++nextId}" }
     private val empty = Catalog.empty()
 
-    private fun draft(name: String = "Corte", minutes: Int = 30, pesos: Long = 150) =
-        ServiceDraft(name, minutes, Money.pesos(pesos))
+    private fun draft(name: String = "Corte", minutes: Int = 30, pesos: Long = 150) = ServiceDraft(name, minutes, Money.pesos(pesos))
 
     private fun <T> AppResult<CatalogFailure, T>.ok(): T = (this as AppResult.Success).value
     private fun <T> AppResult<CatalogFailure, T>.errors(): Set<CatalogError> =
@@ -68,7 +67,7 @@ class CatalogEditorTest {
     @Test fun `editar un servicio que no existe`() {
         assertEquals(
             AppResult.Failure(CatalogFailure.NotFound),
-            editor.updateService(empty, "nada", draft()),
+            editor.updateService(empty, "nada", draft())
         )
     }
 
@@ -140,7 +139,7 @@ class CatalogEditorTest {
     @Test fun `C5 rangos que se enciman en el mismo dia`() {
         val c = editor.addBarber(empty, "Luis").ok()
         val overlap = WeeklySchedule(
-            mapOf(DayOfWeek.MONDAY to listOf(TimeRange.of("10:00", "14:00"), TimeRange.of("13:30", "18:00"))),
+            mapOf(DayOfWeek.MONDAY to listOf(TimeRange.of("10:00", "14:00"), TimeRange.of("13:30", "18:00")))
         )
         assertEquals(setOf(CatalogError.SCHEDULE_OVERLAP), editor.setSchedule(c, "id-1", overlap).errors())
     }
@@ -148,7 +147,7 @@ class CatalogEditorTest {
     @Test fun `C5 turno partido con descanso es valido y se ordena`() {
         val c = editor.addBarber(empty, "Luis").ok()
         val split = WeeklySchedule(
-            mapOf(DayOfWeek.MONDAY to listOf(TimeRange.of("16:00", "20:00"), TimeRange.of("10:00", "14:00"))),
+            mapOf(DayOfWeek.MONDAY to listOf(TimeRange.of("16:00", "20:00"), TimeRange.of("10:00", "14:00")))
         )
         val saved = editor.setSchedule(c, "id-1", split).ok().barbers.single().schedule
         assertEquals(listOf(TimeRange.of("10:00", "14:00"), TimeRange.of("16:00", "20:00")), saved.days[DayOfWeek.MONDAY])

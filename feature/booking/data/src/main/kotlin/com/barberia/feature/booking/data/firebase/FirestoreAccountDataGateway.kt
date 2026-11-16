@@ -22,7 +22,7 @@ internal class FirestoreAccountDataGateway(private val db: FirebaseFirestore) : 
         ids.forEach { id ->
             batch.update(
                 db.collection("tenants").document(tenantId).collection("appointments").document(id),
-                mapOf("clientUid" to null, "clientName" to "", "updatedAt" to FieldValue.serverTimestamp()),
+                mapOf("clientUid" to null, "clientName" to "", "updatedAt" to FieldValue.serverTimestamp())
             )
         }
         batch.commit().await()

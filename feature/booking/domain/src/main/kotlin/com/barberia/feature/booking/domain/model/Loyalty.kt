@@ -4,11 +4,7 @@ import java.time.Duration
 import java.time.Instant
 
 /** Reglas de lealtad y penalización (deben coincidir con firestore.rules: 10, 3, 14). */
-data class LoyaltyPolicy(
-    val visitsPerReward: Int = 10,
-    val noShowsForPenalty: Int = 3,
-    val penaltyDays: Long = 14,
-)
+data class LoyaltyPolicy(val visitsPerReward: Int = 10, val noShowsForPenalty: Int = 3, val penaltyDays: Long = 14)
 
 /** Ficha del cliente en una barbería: `tenants/{t}/clients/{uid}`. */
 data class ClientRecord(
@@ -17,7 +13,7 @@ data class ClientRecord(
     val completed: Int,
     val noShows: Int,
     val rewardsUsed: Int,
-    val penaltyUntil: Instant?,
+    val penaltyUntil: Instant?
 ) {
     fun availableRewards(p: LoyaltyPolicy): Int = completed / p.visitsPerReward - rewardsUsed
 

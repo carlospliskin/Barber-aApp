@@ -5,8 +5,8 @@ import com.barberia.feature.catalog.data.gateway.InviteGateway
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import kotlinx.coroutines.tasks.await
 import java.time.Instant
+import kotlinx.coroutines.tasks.await
 
 internal class FirestoreInviteGateway(private val db: FirebaseFirestore) : InviteGateway {
     private fun ref(code: String) = db.collection("staffInvites").document(code)

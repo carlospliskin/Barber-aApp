@@ -13,8 +13,11 @@ class RedeemRewardUseCase(private val bookings: BookingRepository, private val l
     /** P4: canjea un premio si el cliente tiene alguno disponible. */
     suspend operator fun invoke(tenantId: String, clientUid: String): BookingResult<Unit> {
         val r = bookings.updateClient(tenantId, clientUid) { c ->
-            if (c.availableRewards(loyalty) <= 0) AppResult.Failure(BookingFailure.NoRewardAvailable)
-            else AppResult.Success(c.copy(rewardsUsed = c.rewardsUsed + 1))
+            if (c.availableRewards(loyalty) <= 0) {
+                AppResult.Failure(BookingFailure.NoRewardAvailable)
+            } else {
+                AppResult.Success(c.copy(rewardsUsed = c.rewardsUsed + 1))
+            }
         }
         return if (r is AppResult.Failure) r else AppResult.Success(Unit)
     }
@@ -30,10 +33,9 @@ class ForgivePenaltyUseCase(private val bookings: BookingRepository) {
 
 class ObserveClientsUseCase(private val bookings: BookingRepository) {
     /** P5: lista del dueño, penalizados primero y luego por visitas. */
-    operator fun invoke(tenantId: String): Flow<List<ClientRecord>> =
-        bookings.observeClients(tenantId).map { list ->
-            list.sortedWith(compareByDescending<ClientRecord> { it.penaltyUntil != null }.thenByDescending { it.completed })
-        }
+    operator fun invoke(tenantId: String): Flow<List<ClientRecord>> = bookings.observeClients(tenantId).map { list ->
+        list.sortedWith(compareByDescending<ClientRecord> { it.penaltyUntil != null }.thenByDescending { it.completed })
+    }
 }
 
 class ObserveMyLoyaltyUseCase(private val bookings: BookingRepository) {

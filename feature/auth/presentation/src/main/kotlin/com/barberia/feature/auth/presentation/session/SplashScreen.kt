@@ -25,12 +25,12 @@ fun SplashScreen(offline: Boolean = false, onRetry: () -> Unit = {}, onSignOut: 
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(24.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             stringResource(R.string.auth_app_name),
             style = MaterialTheme.typography.displaySmall,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.primary
         )
         Spacer(Modifier.height(32.dp))
         if (offline) {

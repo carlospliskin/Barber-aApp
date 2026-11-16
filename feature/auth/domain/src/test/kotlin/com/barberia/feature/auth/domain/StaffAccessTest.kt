@@ -27,8 +27,14 @@ class StaffAccessTest {
 
     @Test fun `dueño y cliente no gastan lecturas`() = runTest {
         val auth = FakeAuthRepository()
-        assertEquals(AppResult.Success(StaffAccess.ACTIVE), CheckStaffAccessUseCase(auth, FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER))))())
-        assertEquals(AppResult.Success(StaffAccess.ACTIVE), CheckStaffAccessUseCase(auth, FakeSessionRepository(SessionState.SignedIn(user())))())
+        assertEquals(
+            AppResult.Success(StaffAccess.ACTIVE),
+            CheckStaffAccessUseCase(auth, FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER))))()
+        )
+        assertEquals(
+            AppResult.Success(StaffAccess.ACTIVE),
+            CheckStaffAccessUseCase(auth, FakeSessionRepository(SessionState.SignedIn(user())))()
+        )
         assertTrue(auth.calls.isEmpty())
     }
 

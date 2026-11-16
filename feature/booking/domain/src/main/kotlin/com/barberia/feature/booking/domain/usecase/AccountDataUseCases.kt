@@ -26,7 +26,7 @@ class EraseUserDataUseCase(
     private val reminders: ReminderScheduler,
     private val joined: JoinedBarbershopStore,
     private val policy: BookingPolicy,
-    private val clock: Clock,
+    private val clock: Clock
 ) {
     suspend operator fun invoke(uid: String, ownedTenantId: String?): BookingResult<Unit> {
         ownedTenantId?.let { data.deleteBarbershop(it).onFailure { f -> return f } }

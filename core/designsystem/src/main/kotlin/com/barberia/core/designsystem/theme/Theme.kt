@@ -22,7 +22,7 @@ private val BarberColorScheme = darkColorScheme(
     outline = BarberColors.Mist,
     outlineVariant = BarberColors.Smoke,
     error = BarberColors.Error,
-    onError = BarberColors.White,
+    onError = BarberColors.White
 )
 
 /** Tema único de la app (siempre oscuro, como el diseño original). */

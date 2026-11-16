@@ -11,25 +11,24 @@ import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.ClientRecord
 import com.barberia.feature.catalog.domain.model.Money
+import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.Instant
-import java.time.LocalDate
 
 class BookingDataTest {
     private val cita = Appointment(
         id = "a1", tenantId = "t", clientUid = "cli", clientName = "Ana", barberId = "b1", barberName = "Luis",
         serviceId = "s1", serviceName = "Corte", price = Money(15_000), date = LocalDate.of(2026, 11, 20),
         startMinute = 600, endMinute = 615, status = AppointmentStatus.BOOKED,
-        startsAt = Instant.parse("2026-11-20T16:00:00Z"),
+        startsAt = Instant.parse("2026-11-20T16:00:00Z")
     )
 
     // ── Mapper ────────────────────────────────────────────────────────────────
-    @Test fun `ida y vuelta`() =
-        assertEquals(cita, AppointmentMapper.fromMap("a1", "t", AppointmentMapper.toMap(cita)))
+    @Test fun `ida y vuelta`() = assertEquals(cita, AppointmentMapper.fromMap("a1", "t", AppointmentMapper.toMap(cita)))
 
     @Test fun `el documento lleva los bloques y el dia que exigen las reglas`() {
         val m = AppointmentMapper.toMap(cita)
@@ -49,8 +48,7 @@ class BookingDataTest {
     @Test fun `N1 una cita de cliente no manda telefono (las reglas no lo esperan)`() =
         assertEquals(false, "clientPhone" in AppointmentMapper.toMap(cita))
 
-    @Test fun `documento corrupto se descarta`() =
-        assertEquals(null, AppointmentMapper.fromMap("x", "t", mapOf("status" to "BOOKED")))
+    @Test fun `documento corrupto se descarta`() = assertEquals(null, AppointmentMapper.fromMap("x", "t", mapOf("status" to "BOOKED")))
 
     // ── Repositorio ───────────────────────────────────────────────────────────
     private class FakeGateway : BookingGateway {
@@ -63,8 +61,13 @@ class BookingDataTest {
         override suspend fun activeAppointments(tenantId: String, clientUid: String) = active
         var newClient: Map<String, Any?>? = null
         override suspend fun book(
-            tenantId: String, apptId: String, appointment: Map<String, Any?>, dayId: String, keys: Set<String>,
-            clientUid: String?, newClient: Map<String, Any?>?,
+            tenantId: String,
+            apptId: String,
+            appointment: Map<String, Any?>,
+            dayId: String,
+            keys: Set<String>,
+            clientUid: String?,
+            newClient: Map<String, Any?>?
         ) {
             bookError?.let { throw it }
             this.newClient = newClient
@@ -75,7 +78,11 @@ class BookingDataTest {
         var lastFrom: String? = null
         var tenant: Map<String, Any?>? = null
         val codes = mutableMapOf("ABC234" to "t")
-        override fun observeUpcoming(tenantId: String, clientUid: String, fromDate: String): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
+        override fun observeUpcoming(
+            tenantId: String,
+            clientUid: String,
+            fromDate: String
+        ): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
             lastFrom = fromDate
             dayError?.let { e -> return kotlinx.coroutines.flow.flow { throw e } }
             return live
@@ -85,7 +92,11 @@ class BookingDataTest {
         var dayQuery: Triple<String, String, String?>? = null
         var dayError: GatewayError? = null
         var status: Pair<String, String>? = null
-        override fun observeDay(tenantId: String, date: String, barberId: String?): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
+        override fun observeDay(
+            tenantId: String,
+            date: String,
+            barberId: String?
+        ): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
             dayQuery = Triple(tenantId, date, barberId)
             dayError?.let { e -> return kotlinx.coroutines.flow.flow { throw e } }
             return live
@@ -93,8 +104,11 @@ class BookingDataTest {
         var client: Map<String, Any?>? = null
         var clientWritten: Map<String, Any?>? = null
         override suspend fun setStatus(
-            tenantId: String, apptId: String, status: String, clientUid: String?,
-            updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?,
+            tenantId: String,
+            apptId: String,
+            status: String,
+            clientUid: String?,
+            updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?
         ) {
             this.status = apptId to status
             clientWritten = updateClient?.invoke(client)
@@ -135,8 +149,15 @@ class BookingDataTest {
     @Test fun `F7-6 al reservar se manda la ficha nueva en ceros ligada a la cita`() = runTest {
         repo.book(cita)
         assertEquals(
-            mapOf("name" to "Ana", "completed" to 0L, "noShows" to 0L, "rewardsUsed" to 0L, "penaltyUntil" to null, "lastAppointmentId" to "a1"),
-            gw.newClient,
+            mapOf(
+                "name" to "Ana",
+                "completed" to 0L,
+                "noShows" to 0L,
+                "rewardsUsed" to 0L,
+                "penaltyUntil" to null,
+                "lastAppointmentId" to "a1"
+            ),
+            gw.newClient
         )
     }
 
@@ -218,21 +239,41 @@ class BookingDataTest {
         assertEquals("a1" to "COMPLETED", gw.status)
         assertEquals(
             mapOf(
-                "name" to "Ana", "completed" to 1L, "noShows" to 0L, "rewardsUsed" to 0L,
-                "penaltyUntil" to null, "lastAppointmentId" to "a1",
+                "name" to "Ana",
+                "completed" to 1L,
+                "noShows" to 0L,
+                "rewardsUsed" to 0L,
+                "penaltyUntil" to null,
+                "lastAppointmentId" to "a1"
             ),
-            gw.clientWritten,
+            gw.clientWritten
         )
     }
 
     @Test fun `ficha ida y vuelta con penalizacion`() = runTest {
         val until = Instant.parse("2026-12-01T00:00:00Z")
-        gw.client = mapOf("name" to "Ana", "completed" to 3L, "noShows" to 3L, "rewardsUsed" to 0L, "penaltyUntil" to until, "lastAppointmentId" to "a9")
+        gw.client =
+            mapOf(
+                "name" to "Ana",
+                "completed" to 3L,
+                "noShows" to 3L,
+                "rewardsUsed" to 0L,
+                "penaltyUntil" to until,
+                "lastAppointmentId" to "a9"
+            )
         assertEquals(AppResult.Success(ClientRecord("cli", "Ana", 3, 3, 0, until)), repo.client("t", "cli"))
     }
 
     @Test fun `P5 cambiar la ficha conserva lastAppointmentId (lo exige la regla)`() = runTest {
-        gw.client = mapOf("name" to "Ana", "completed" to 10L, "noShows" to 0L, "rewardsUsed" to 0L, "penaltyUntil" to null, "lastAppointmentId" to "a9")
+        gw.client =
+            mapOf(
+                "name" to "Ana",
+                "completed" to 10L,
+                "noShows" to 0L,
+                "rewardsUsed" to 0L,
+                "penaltyUntil" to null,
+                "lastAppointmentId" to "a9"
+            )
         repo.updateClient("t", "cli") { AppResult.Success(it.copy(rewardsUsed = 1)) }
         assertEquals("a9", gw.clientWritten!!["lastAppointmentId"])
         assertEquals(1L, gw.clientWritten!!["rewardsUsed"])
@@ -241,8 +282,10 @@ class BookingDataTest {
     @Test fun `R6 datos de la barberia, con zona por defecto si viene mal`() = runTest {
         gw.tenant = mapOf("name" to "Gold", "timezone" to "Marte/Olimpo", "shareCode" to "ABC234")
         assertEquals(
-            AppResult.Success(com.barberia.feature.booking.domain.model.Barbershop("t", "Gold", java.time.ZoneId.of("America/Mexico_City"), "ABC234")),
-            repo.barbershop("t"),
+            AppResult.Success(
+                com.barberia.feature.booking.domain.model.Barbershop("t", "Gold", java.time.ZoneId.of("America/Mexico_City"), "ABC234")
+            ),
+            repo.barbershop("t")
         )
         gw.tenant = null
         assertEquals(AppResult.Success(null), repo.barbershop("t"))

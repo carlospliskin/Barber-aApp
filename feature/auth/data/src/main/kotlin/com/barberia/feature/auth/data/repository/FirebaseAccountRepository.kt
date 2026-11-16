@@ -1,8 +1,8 @@
 package com.barberia.feature.auth.data.repository
 
 import com.barberia.core.common.AppResult
-import com.barberia.feature.auth.data.gateway.AuthGateway
 import com.barberia.core.firebase.GatewayError
+import com.barberia.feature.auth.data.gateway.AuthGateway
 import com.barberia.feature.auth.data.gateway.ModeStore
 import com.barberia.feature.auth.data.gateway.ProfileGateway
 import com.barberia.feature.auth.data.gateway.ProfileRecord
@@ -11,8 +11,8 @@ import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.auth.domain.model.AuthFailure
 import com.barberia.feature.auth.domain.model.AuthUser
 import com.barberia.feature.auth.domain.model.SessionState
-import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.model.StaffAccess
+import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.repository.AuthRepository
 import com.barberia.feature.auth.domain.repository.AuthResult
 import com.barberia.feature.auth.domain.repository.ClientRegistration
@@ -39,8 +39,9 @@ internal class FirebaseAccountRepository(
     private val auth: AuthGateway,
     private val profiles: ProfileGateway,
     private val modes: ModeStore,
-    scope: CoroutineScope,
-) : AuthRepository, SessionRepository {
+    scope: CoroutineScope
+) : AuthRepository,
+    SessionRepository {
 
     private val refreshes = MutableStateFlow(0)
 
@@ -87,7 +88,7 @@ internal class FirebaseAccountRepository(
             profiles.createOwner(
                 uid,
                 ProfileRecord(registration.ownerName, registration.email, registration.phone, uid, StaffRole.OWNER.name),
-                TenantRecord(registration.businessName, ownerUid = uid, timezone = DEFAULT_TIMEZONE),
+                TenantRecord(registration.businessName, ownerUid = uid, timezone = DEFAULT_TIMEZONE)
             )
         }
     }
@@ -204,13 +205,7 @@ internal class FirebaseAccountRepository(
     }
 }
 
-internal fun toUser(
-    uid: String,
-    email: String?,
-    authName: String?,
-    verified: Boolean?,
-    profile: ProfileRecord?,
-): AuthUser {
+internal fun toUser(uid: String, email: String?, authName: String?, verified: Boolean?, profile: ProfileRecord?): AuthUser {
     val mail = profile?.email ?: email.orEmpty()
     return AuthUser(
         uid = uid,
@@ -220,7 +215,7 @@ internal fun toUser(
         phone = profile?.phone,
         staffTenantId = profile?.staffTenantId,
         staffRole = StaffRole.entries.find { it.name == profile?.staffRole },
-        staffBarberId = profile?.staffBarberId,
+        staffBarberId = profile?.staffBarberId
     )
 }
 

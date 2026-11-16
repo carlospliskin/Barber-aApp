@@ -1,9 +1,9 @@
 package com.barberia.feature.auth.data
 
 import com.barberia.core.common.AppResult
+import com.barberia.core.firebase.GatewayError
 import com.barberia.feature.auth.data.gateway.AccountInfo
 import com.barberia.feature.auth.data.gateway.AuthGateway
-import com.barberia.core.firebase.GatewayError
 import com.barberia.feature.auth.data.gateway.ModeStore
 import com.barberia.feature.auth.data.gateway.ProfileGateway
 import com.barberia.feature.auth.data.gateway.ProfileRecord
@@ -19,9 +19,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -52,7 +52,9 @@ class FirebaseAccountRepositoryTest {
             uid.value = "u1"
             return "u1"
         }
-        override suspend fun sendEmailVerification() { calls += "verify" }
+        override suspend fun sendEmailVerification() {
+            calls += "verify"
+        }
         var serverVerified = false
         override suspend fun reload(): Boolean {
             calls += "reload"
@@ -118,7 +120,9 @@ class FirebaseAccountRepositoryTest {
 
     private class FakeModeStore : ModeStore {
         override val mode = MutableStateFlow<String?>(null)
-        override suspend fun save(mode: String?) { this.mode.value = mode }
+        override suspend fun save(mode: String?) {
+            this.mode.value = mode
+        }
     }
 
     private val auth = FakeAuth()
@@ -191,7 +195,7 @@ class FirebaseAccountRepositoryTest {
             GatewayError.EmailInUse() to AuthFailure.EmailAlreadyInUse,
             GatewayError.WeakPassword() to AuthFailure.WeakPassword,
             GatewayError.Network() to AuthFailure.NoConnection,
-            GatewayError.TooManyRequests() to AuthFailure.TooManyRequests,
+            GatewayError.TooManyRequests() to AuthFailure.TooManyRequests
         )
         val repo = repo()
         cases.forEach { (error, expected) ->

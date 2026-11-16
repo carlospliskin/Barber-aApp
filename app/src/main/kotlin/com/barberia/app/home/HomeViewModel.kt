@@ -11,7 +11,7 @@ data class HomeState(
     val loaded: Boolean = false,
     val displayName: String = "",
     val email: String = "",
-    val emailVerified: Boolean = false,
+    val emailVerified: Boolean = false
 ) : UiState
 
 sealed interface HomeIntent : UiIntent {
@@ -21,15 +21,17 @@ sealed interface HomeIntent : UiIntent {
 sealed interface HomeEffect : UiEffect
 
 /** Home provisional hasta portar feature:home-owner / home-client. Cerrar sesión navega solo (por la sesión). */
-class HomeViewModel(
-    observeUser: ObserveCurrentUserUseCase,
-    private val signOut: SignOutUseCase,
-) : MviViewModel<HomeState, HomeIntent, HomeEffect>(HomeState()) {
+class HomeViewModel(observeUser: ObserveCurrentUserUseCase, private val signOut: SignOutUseCase) :
+    MviViewModel<HomeState, HomeIntent, HomeEffect>(HomeState()) {
 
     init {
         launchInScope {
             observeUser().collect { u ->
-                if (u != null) setState { copy(loaded = true, displayName = u.displayName, email = u.email, emailVerified = u.emailVerified) }
+                if (u !=
+                    null
+                ) {
+                    setState { copy(loaded = true, displayName = u.displayName, email = u.email, emailVerified = u.emailVerified) }
+                }
             }
         }
     }

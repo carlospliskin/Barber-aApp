@@ -19,11 +19,11 @@ import com.barberia.feature.booking.domain.model.shouldNotify
 import com.barberia.feature.booking.domain.repository.BookingRepository
 import com.barberia.feature.booking.domain.repository.ReminderScheduler
 import com.barberia.feature.catalog.domain.model.TimeRange
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.TimeUnit
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /** Programa un trabajo único por cita: volver a programar la misma cita lo reemplaza (R3, sin duplicados). */
 internal class WorkManagerReminderScheduler(private val context: Context) : ReminderScheduler {
@@ -55,7 +55,8 @@ internal class WorkManagerReminderScheduler(private val context: Context) : Remi
  * vigente (la canceló el personal o una penalización), no se avisa.
  */
 internal class ReminderWorker(context: Context, params: WorkerParameters) :
-    CoroutineWorker(context, params), KoinComponent {
+    CoroutineWorker(context, params),
+    KoinComponent {
 
     private val bookings: BookingRepository by inject()
 
@@ -70,7 +71,7 @@ internal class ReminderWorker(context: Context, params: WorkerParameters) :
         notify(
             id,
             applicationContext.getString(R.string.reminder_title, TimeRange.label(appointment.startMinute)),
-            applicationContext.getString(R.string.reminder_text, appointment.serviceName, appointment.barberName),
+            applicationContext.getString(R.string.reminder_text, appointment.serviceName, appointment.barberName)
         )
         return Result.success()
     }
@@ -80,11 +81,20 @@ internal class ReminderWorker(context: Context, params: WorkerParameters) :
         if (!nm.areNotificationsEnabled()) return // R4: sin permiso no se avisa (y no truena)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             applicationContext.getSystemService(NotificationManager::class.java).createNotificationChannel(
-                NotificationChannel(CHANNEL, applicationContext.getString(R.string.reminder_channel), NotificationManager.IMPORTANCE_DEFAULT),
+                NotificationChannel(
+                    CHANNEL,
+                    applicationContext.getString(R.string.reminder_channel),
+                    NotificationManager.IMPORTANCE_DEFAULT
+                )
             )
         }
         val open = applicationContext.packageManager.getLaunchIntentForPackage(applicationContext.packageName)?.let {
-            PendingIntent.getActivity(applicationContext, id.hashCode(), it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            PendingIntent.getActivity(
+                applicationContext,
+                id.hashCode(),
+                it,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
         }
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_reminder)

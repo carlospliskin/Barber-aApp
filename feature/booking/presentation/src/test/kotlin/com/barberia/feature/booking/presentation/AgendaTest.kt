@@ -29,6 +29,10 @@ import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
 import com.barberia.feature.catalog.domain.testing.FakeInviteRepository
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
 import com.barberia.feature.catalog.domain.usecase.RedeemBarberInviteUseCase
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -41,15 +45,13 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgendaTest {
     private val main = UnconfinedTestDispatcher()
+
     @Before fun setUp() = Dispatchers.setMain(main)
+
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val zone = ZoneId.of("America/Mexico_City")
@@ -60,7 +62,7 @@ class AgendaTest {
 
     private fun appt(id: String, barber: String, startMin: Int, startsAt: String) = Appointment(
         id, "t1", "cli", "Ana", barber, barber, "s1", "Corte", Money(15_000), monday, startMin, startMin + 30,
-        AppointmentStatus.BOOKED, Instant.parse(startsAt),
+        AppointmentStatus.BOOKED, Instant.parse(startsAt)
     )
 
     init {
@@ -72,7 +74,7 @@ class AgendaTest {
 
     private fun vm(role: StaffRole, barberId: String? = null, clock: Clock = this.clock) = AgendaViewModel(
         ObserveCurrentUserUseCase(
-            FakeSessionRepository(SessionState.SignedIn(user(role).copy(staffTenantId = "t1", staffBarberId = barberId))),
+            FakeSessionRepository(SessionState.SignedIn(user(role).copy(staffTenantId = "t1", staffBarberId = barberId)))
         ),
         GetBarbershopUseCase(bookings),
         ObserveCatalogUseCase(catalog),
@@ -80,8 +82,12 @@ class AgendaTest {
         MarkCompletedUseCase(bookings, clock),
         MarkNoShowUseCase(bookings, clock),
         CancelByStaffUseCase(bookings, clock),
-        com.barberia.feature.booking.domain.usecase.UndoMarkUseCase(bookings, com.barberia.feature.booking.domain.model.LoyaltyPolicy(), clock),
-        clock,
+        com.barberia.feature.booking.domain.usecase.UndoMarkUseCase(
+            bookings,
+            com.barberia.feature.booking.domain.model.LoyaltyPolicy(),
+            clock
+        ),
+        clock
     )
 
     @Test fun `A2 el duenio ve a todos y filtra por barbero`() {
@@ -155,7 +161,8 @@ class AgendaTest {
 
     @Test fun `F7-2 deshacer el no-show que penalizo quita el aviso de penalizacion`() {
         bookings.serverNow = Instant.parse("2026-11-16T16:55:00Z")
-        bookings.clients["cli"] = com.barberia.feature.booking.domain.model.ClientRecord("cli", "Ana", 0, noShows = 2, rewardsUsed = 0, penaltyUntil = null)
+        bookings.clients["cli"] =
+            com.barberia.feature.booking.domain.model.ClientRecord("cli", "Ana", 0, noShows = 2, rewardsUsed = 0, penaltyUntil = null)
         val vm = vm(StaffRole.OWNER)
         vm.onIntent(AgendaIntent.NoShow("a1"))
         assertTrue(vm.state.value.penaltyNotice?.penalized == true)
@@ -229,7 +236,12 @@ class AgendaTest {
 
     @Test fun `A9 aceptar invitacion refresca la sesion para que aparezca el modo barbero`() {
         val session = FakeSessionRepository(SessionState.SignedIn(user()))
-        val vm = RedeemInviteViewModel(ObserveCurrentUserUseCase(session), RedeemBarberInviteUseCase(invites, FakeCatalogRepository(Catalog(emptyList(), listOf(Barber("b1", "Luis")), 1)), clock), RetrySessionUseCase(session))
+        val vm =
+            RedeemInviteViewModel(
+                ObserveCurrentUserUseCase(session),
+                RedeemBarberInviteUseCase(invites, FakeCatalogRepository(Catalog(emptyList(), listOf(Barber("b1", "Luis")), 1)), clock),
+                RetrySessionUseCase(session)
+            )
         vm.onIntent(RedeemInviteIntent.CodeChanged("mvk234"))
         vm.onIntent(RedeemInviteIntent.Redeem)
         assertEquals("Luis", vm.state.value.joinedAs)
@@ -238,7 +250,12 @@ class AgendaTest {
 
     @Test fun `A8 invitacion invalida se muestra`() {
         val session = FakeSessionRepository(SessionState.SignedIn(user()))
-        val vm = RedeemInviteViewModel(ObserveCurrentUserUseCase(session), RedeemBarberInviteUseCase(invites, FakeCatalogRepository(Catalog(emptyList(), listOf(Barber("b1", "Luis")), 1)), clock), RetrySessionUseCase(session))
+        val vm =
+            RedeemInviteViewModel(
+                ObserveCurrentUserUseCase(session),
+                RedeemBarberInviteUseCase(invites, FakeCatalogRepository(Catalog(emptyList(), listOf(Barber("b1", "Luis")), 1)), clock),
+                RetrySessionUseCase(session)
+            )
         vm.onIntent(RedeemInviteIntent.CodeChanged("ZZZ999"))
         vm.onIntent(RedeemInviteIntent.Redeem)
         assertEquals(CatalogFailure.InviteInvalid, vm.state.value.failure)

@@ -20,7 +20,7 @@ data class DayDraft(
     val enabled: Boolean = false,
     val start: String = "10:00",
     val end: String = "19:00",
-    val extra: List<TimeRange> = emptyList(),
+    val extra: List<TimeRange> = emptyList()
 )
 
 /** Formularios abiertos. Guardan texto tal cual se escribe; se convierte al guardar (C12). */
@@ -32,21 +32,18 @@ sealed interface CatalogDialog {
         val name: String = "",
         val duration: String = "30",
         val price: String = "",
-        override val errors: Set<CatalogError> = emptySet(),
+        override val errors: Set<CatalogError> = emptySet()
     ) : CatalogDialog
 
-    data class BarberForm(
-        val editingId: String? = null,
-        val name: String = "",
-        override val errors: Set<CatalogError> = emptySet(),
-    ) : CatalogDialog
+    data class BarberForm(val editingId: String? = null, val name: String = "", override val errors: Set<CatalogError> = emptySet()) :
+        CatalogDialog
 
     /** A1: código para mandarle al barbero. */
     data class Invite(
         val barberName: String,
         val code: String,
         val expiresAt: java.time.Instant,
-        override val errors: Set<CatalogError> = emptySet(),
+        override val errors: Set<CatalogError> = emptySet()
     ) : CatalogDialog
 
     /**
@@ -57,7 +54,7 @@ sealed interface CatalogDialog {
         val barberId: String,
         val barberName: String,
         val revoked: Int? = null,
-        override val errors: Set<CatalogError> = emptySet(),
+        override val errors: Set<CatalogError> = emptySet()
     ) : CatalogDialog
 
     /** N2: día libre de un barbero, o de todos si [barberId] es null (día festivo). Fecha "dd/MM/aaaa". */
@@ -68,14 +65,14 @@ sealed interface CatalogDialog {
         val wholeDay: Boolean = true,
         val start: String = "14:00",
         val end: String = "20:00",
-        override val errors: Set<CatalogError> = emptySet(),
+        override val errors: Set<CatalogError> = emptySet()
     ) : CatalogDialog
 
     data class Schedule(
         val barberId: String,
         val barberName: String,
         val days: Map<DayOfWeek, DayDraft>,
-        override val errors: Set<CatalogError> = emptySet(),
+        override val errors: Set<CatalogError> = emptySet()
     ) : CatalogDialog
 }
 
@@ -87,7 +84,7 @@ data class CatalogState(
     val tab: CatalogTab = CatalogTab.SERVICES,
     val dialog: CatalogDialog? = null,
     val isSaving: Boolean = false,
-    val failure: CatalogFailure? = null,
+    val failure: CatalogFailure? = null
 ) : UiState
 
 sealed interface CatalogIntent : UiIntent {

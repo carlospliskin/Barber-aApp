@@ -8,6 +8,9 @@ import com.barberia.core.firebase.testing.FirebaseEmulator.seed
 import com.barberia.feature.catalog.data.firebase.FirestoreInviteGateway
 import com.barberia.feature.catalog.data.repository.FirestoreInviteRepository
 import com.barberia.feature.catalog.domain.model.StaffInvite
+import java.time.Duration
+import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -15,9 +18,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.time.Duration
-import java.time.Instant
-import kotlin.time.Duration.Companion.seconds
 
 /** Q1 + A1/A16: invitar, aceptar, quitar acceso y volver con una invitación nueva, con el SDK y las reglas reales. */
 @RunWith(AndroidJUnit4::class)
@@ -30,8 +30,12 @@ class InviteEmulatorTest {
         StaffInvite(code, tenant, "b1", "Luis", Instant.now().plus(Duration.ofDays(7)), usedBy = null)
 
     private fun clientProfile(email: String) = mapOf(
-        "displayName" to "Luis", "email" to email, "phone" to null, "staffTenantId" to null, "staffRole" to null,
-        "createdAt" to Instant.now(),
+        "displayName" to "Luis",
+        "email" to email,
+        "phone" to null,
+        "staffTenantId" to null,
+        "staffRole" to null,
+        "createdAt" to Instant.now()
     )
 
     @Test fun invitar_aceptar_revocar_y_volver_con_invitacion_nueva() = runTest(timeout = 90.seconds) {

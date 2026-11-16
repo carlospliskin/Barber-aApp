@@ -54,7 +54,7 @@ fun RegisterScreen(state: RegisterState, onIntent: (RegisterIntent) -> Unit) {
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(stringResource(R.string.auth_register_title), style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(24.dp))
@@ -64,47 +64,60 @@ fun RegisterScreen(state: RegisterState, onIntent: (RegisterIntent) -> Unit) {
                     selected = state.type == type,
                     onClick = { onIntent(RegisterIntent.TypeChanged(type)) },
                     shape = SegmentedButtonDefaults.itemShape(i, AccountType.entries.size),
-                    enabled = enabled,
+                    enabled = enabled
                 ) {
                     Text(
                         stringResource(
-                            if (type == AccountType.CLIENT) R.string.auth_type_client else R.string.auth_type_owner,
-                        ),
+                            if (type == AccountType.CLIENT) R.string.auth_type_client else R.string.auth_type_owner
+                        )
                     )
                 }
             }
         }
         Spacer(Modifier.height(20.dp))
         BarberTextField(
-            state.name, { onIntent(RegisterIntent.NameChanged(it)) }, stringResource(R.string.auth_name),
-            enabled = enabled, error = state.fieldErrors.textFor(FieldError.NAME_REQUIRED),
+            state.name,
+            { onIntent(RegisterIntent.NameChanged(it)) },
+            stringResource(R.string.auth_name),
+            enabled = enabled,
+            error = state.fieldErrors.textFor(FieldError.NAME_REQUIRED)
         )
         if (state.type == AccountType.OWNER) {
             Spacer(Modifier.height(12.dp))
             BarberTextField(
-                state.businessName, { onIntent(RegisterIntent.BusinessNameChanged(it)) },
+                state.businessName,
+                { onIntent(RegisterIntent.BusinessNameChanged(it)) },
                 stringResource(R.string.auth_business_name),
-                enabled = enabled, error = state.fieldErrors.textFor(FieldError.BUSINESS_NAME_REQUIRED),
+                enabled = enabled,
+                error = state.fieldErrors.textFor(FieldError.BUSINESS_NAME_REQUIRED)
             )
         }
         Spacer(Modifier.height(12.dp))
         BarberTextField(
-            state.email, { onIntent(RegisterIntent.EmailChanged(it)) }, stringResource(R.string.auth_email),
-            keyboardType = KeyboardType.Email, enabled = enabled,
-            error = state.fieldErrors.textFor(FieldError.EMAIL_INVALID),
+            state.email,
+            { onIntent(RegisterIntent.EmailChanged(it)) },
+            stringResource(R.string.auth_email),
+            keyboardType = KeyboardType.Email,
+            enabled = enabled,
+            error = state.fieldErrors.textFor(FieldError.EMAIL_INVALID)
         )
         Spacer(Modifier.height(12.dp))
         BarberTextField(
-            state.phone, { onIntent(RegisterIntent.PhoneChanged(it)) },
+            state.phone,
+            { onIntent(RegisterIntent.PhoneChanged(it)) },
             stringResource(if (state.type == AccountType.OWNER) R.string.auth_phone_optional else R.string.auth_phone),
-            keyboardType = KeyboardType.Phone, enabled = enabled,
-            error = state.fieldErrors.textFor(FieldError.PHONE_INVALID),
+            keyboardType = KeyboardType.Phone,
+            enabled = enabled,
+            error = state.fieldErrors.textFor(FieldError.PHONE_INVALID)
         )
         Spacer(Modifier.height(12.dp))
         BarberTextField(
-            state.password, { onIntent(RegisterIntent.PasswordChanged(it)) }, stringResource(R.string.auth_password),
-            isPassword = true, enabled = enabled,
-            error = state.fieldErrors.textFor(FieldError.PASSWORD_TOO_SHORT),
+            state.password,
+            { onIntent(RegisterIntent.PasswordChanged(it)) },
+            stringResource(R.string.auth_password),
+            isPassword = true,
+            enabled = enabled,
+            error = state.fieldErrors.textFor(FieldError.PASSWORD_TOO_SHORT)
         )
         state.failure?.let {
             Spacer(Modifier.height(12.dp))

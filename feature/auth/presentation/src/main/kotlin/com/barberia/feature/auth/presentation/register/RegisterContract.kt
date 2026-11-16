@@ -17,7 +17,7 @@ data class RegisterState(
     val phone: String = "",
     val isLoading: Boolean = false,
     val fieldErrors: Set<FieldError> = emptySet(),
-    val failure: AuthFailure? = null,
+    val failure: AuthFailure? = null
 ) : UiState
 
 sealed interface RegisterIntent : UiIntent {

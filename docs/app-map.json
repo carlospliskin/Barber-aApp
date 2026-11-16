@@ -1140,14 +1140,6 @@
   ],
   "repositories": [
     {
-      "implementation": "FirebaseAccountRepository",
-      "implements": [
-        "AuthRepository",
-        "SessionRepository"
-      ],
-      "file": "feature/auth/data/src/main/kotlin/com/barberia/feature/auth/data/repository/FirebaseAccountRepository.kt"
-    },
-    {
       "implementation": "FirestoreAccountDataRepository",
       "implements": [
         "AccountDataRepository"

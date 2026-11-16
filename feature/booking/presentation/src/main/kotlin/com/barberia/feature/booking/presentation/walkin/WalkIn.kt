@@ -1,6 +1,5 @@
 package com.barberia.feature.booking.presentation.walkin
 
-import com.barberia.feature.booking.presentation.common.asBookingFailure
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -42,21 +41,22 @@ import com.barberia.feature.booking.domain.usecase.BookWalkInUseCase
 import com.barberia.feature.booking.domain.usecase.GetAvailableSlotsUseCase
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
 import com.barberia.feature.booking.presentation.R
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import com.barberia.feature.booking.presentation.common.messageRes
 import com.barberia.feature.booking.presentation.common.shortLabel
 import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.model.Service
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
+import java.time.Clock
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
-import java.time.Clock
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 // ── MVI ──────────────────────────────────────────────────────────────────────
 
@@ -77,10 +77,9 @@ data class WalkInState(
     val slotsLoading: Boolean = false,
     val selectedSlot: Int? = null,
     val isBooking: Boolean = false,
-    val failure: BookingFailure? = null,
+    val failure: BookingFailure? = null
 ) : UiState {
-    fun isSelectable(date: LocalDate) =
-        selectedBarberId == null || barbers.find { it.id == selectedBarberId }?.worksOn(date) == true
+    fun isSelectable(date: LocalDate) = selectedBarberId == null || barbers.find { it.id == selectedBarberId }?.worksOn(date) == true
 
     val canConfirm: Boolean get() = selectedSlot != null && name.isNotBlank() && !isBooking
 }
@@ -106,7 +105,7 @@ class WalkInViewModel(
     private val observeCatalog: ObserveCatalogUseCase,
     private val getSlots: GetAvailableSlotsUseCase,
     private val book: BookWalkInUseCase,
-    private val clock: Clock,
+    private val clock: Clock
 ) : MviViewModel<WalkInState, WalkInIntent, WalkInEffect>(WalkInState()) {
 
     init {
@@ -121,9 +120,12 @@ class WalkInViewModel(
                     val isOwner = role == StaffRole.OWNER
                     setState {
                         copy(
-                            tenantId = tenantId, zone = zone, canChooseBarber = isOwner,
+                            tenantId = tenantId,
+                            zone = zone,
+                            canChooseBarber = isOwner,
                             selectedBarberId = if (isOwner) null else barberId,
-                            dates = (0 until DAYS_SHOWN).map { today.plusDays(it.toLong()) }, selectedDate = today,
+                            dates = (0 until DAYS_SHOWN).map { today.plusDays(it.toLong()) },
+                            selectedDate = today
                         )
                     }
                     observeCatalog(tenantId)
@@ -172,8 +174,14 @@ class WalkInViewModel(
         val s = currentState
         if (!s.canConfirm) return
         val req = WalkInRequest(
-            s.tenantId ?: return, s.zone ?: return, s.name, s.phone.ifBlank { null },
-            s.selectedBarberId ?: return, s.selectedServiceId ?: return, s.selectedDate ?: return, s.selectedSlot ?: return,
+            s.tenantId ?: return,
+            s.zone ?: return,
+            s.name,
+            s.phone.ifBlank { null },
+            s.selectedBarberId ?: return,
+            s.selectedServiceId ?: return,
+            s.selectedDate ?: return,
+            s.selectedSlot ?: return
         )
         setState { copy(isBooking = true, failure = null) }
         when (val r = book(req)) {
@@ -181,6 +189,7 @@ class WalkInViewModel(
                 setState { copy(isBooking = false) }
                 sendEffect(WalkInEffect.Booked)
             }
+
             is AppResult.Failure -> {
                 setState { copy(isBooking = false, failure = r.error, selectedSlot = null) }
                 if (r.error == BookingFailure.SlotTaken || r.error == BookingFailure.SlotUnavailable) loadSlots()
@@ -208,7 +217,7 @@ fun WalkInRoute(onDone: () -> Unit, onBack: () -> Unit, viewModel: WalkInViewMod
 fun WalkInScreen(state: WalkInState, onIntent: (WalkInIntent) -> Unit, onBack: () -> Unit) {
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.booking_back)) }
@@ -217,13 +226,17 @@ fun WalkInScreen(state: WalkInState, onIntent: (WalkInIntent) -> Unit, onBack: (
         Text(stringResource(R.string.walkin_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
         BarberTextField(state.name, { onIntent(WalkInIntent.NameChanged(it)) }, stringResource(R.string.walkin_name))
         BarberTextField(
-            state.phone, { onIntent(WalkInIntent.PhoneChanged(it)) }, stringResource(R.string.walkin_phone),
-            keyboardType = KeyboardType.Phone,
+            state.phone,
+            { onIntent(WalkInIntent.PhoneChanged(it)) },
+            stringResource(R.string.walkin_phone),
+            keyboardType = KeyboardType.Phone
         )
         Text(stringResource(R.string.booking_step_service), style = MaterialTheme.typography.titleMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             state.services.forEach { s ->
-                BarberChip("${s.name} · ${s.durationMinutes} min", s.id == state.selectedServiceId, { onIntent(WalkInIntent.SelectService(s.id)) })
+                BarberChip("${s.name} · ${s.durationMinutes} min", s.id == state.selectedServiceId, {
+                    onIntent(WalkInIntent.SelectService(s.id))
+                })
             }
         }
         if (state.canChooseBarber) {
@@ -237,14 +250,18 @@ fun WalkInScreen(state: WalkInState, onIntent: (WalkInIntent) -> Unit, onBack: (
         Text(stringResource(R.string.booking_step_day), style = MaterialTheme.typography.titleMedium)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(state.dates) { d ->
-                BarberChip(d.shortLabel(), d == state.selectedDate, { onIntent(WalkInIntent.SelectDate(d)) }, enabled = state.isSelectable(d))
+                BarberChip(d.shortLabel(), d == state.selectedDate, {
+                    onIntent(WalkInIntent.SelectDate(d))
+                }, enabled = state.isSelectable(d))
             }
         }
         if (state.selectedServiceId != null && state.selectedBarberId != null) {
             Text(stringResource(R.string.booking_step_time), style = MaterialTheme.typography.titleMedium)
             when {
                 state.slotsLoading -> CircularProgressIndicator()
+
                 state.slots.isEmpty() -> Text(stringResource(R.string.booking_no_slots), color = MaterialTheme.colorScheme.onSurfaceVariant)
+
                 else -> FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     state.slots.forEach { m ->
                         BarberChip(TimeRange.label(m), m == state.selectedSlot, { onIntent(WalkInIntent.SelectSlot(m)) })
@@ -260,7 +277,7 @@ fun WalkInScreen(state: WalkInState, onIntent: (WalkInIntent) -> Unit, onBack: (
                 stringResource(R.string.walkin_confirm, date.shortLabel(), TimeRange.label(slot)),
                 { onIntent(WalkInIntent.Confirm) },
                 isLoading = state.isBooking,
-                enabled = state.canConfirm,
+                enabled = state.canConfirm
             )
         }
     }

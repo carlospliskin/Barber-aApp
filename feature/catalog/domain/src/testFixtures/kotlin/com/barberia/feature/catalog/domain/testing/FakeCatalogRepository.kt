@@ -17,8 +17,7 @@ class FakeCatalogRepository(initial: Catalog = Catalog.empty()) : CatalogReposit
     var edits = 0
     var observeFailure: CatalogFailure? = null
 
-    override fun observe(tenantId: String): Flow<Catalog> =
-        observeFailure?.let { f -> flow { throw CatalogException(f) } } ?: stored
+    override fun observe(tenantId: String): Flow<Catalog> = observeFailure?.let { f -> flow { throw CatalogException(f) } } ?: stored
 
     override suspend fun edit(tenantId: String, change: (Catalog) -> CatalogResult<Catalog>): CatalogResult<Catalog> {
         failure?.let { return AppResult.Failure(it) }
@@ -29,6 +28,7 @@ class FakeCatalogRepository(initial: Catalog = Catalog.empty()) : CatalogReposit
                 stored.value = saved
                 AppResult.Success(saved)
             }
+
             is AppResult.Failure -> r
         }
     }

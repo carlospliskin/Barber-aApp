@@ -24,7 +24,7 @@ internal interface BookingGateway {
         dayId: String,
         keys: Set<String>,
         clientUid: String?,
-        newClient: Map<String, Any?>?,
+        newClient: Map<String, Any?>?
     )
 
     /** Batch: cita CANCELLED + quitar sus bloques del día. */
@@ -45,7 +45,7 @@ internal interface BookingGateway {
         apptId: String,
         status: String,
         clientUid: String?,
-        updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?,
+        updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?
     )
 
     suspend fun getAppointment(tenantId: String, id: String): Map<String, Any?>?

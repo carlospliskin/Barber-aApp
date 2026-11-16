@@ -50,8 +50,11 @@ suspend fun <T> firebaseCall(block: suspend () -> T): T = try {
 
 fun FirebaseFirestoreException.toGatewayError(): GatewayError = when (code) {
     FirebaseFirestoreException.Code.UNAVAILABLE, FirebaseFirestoreException.Code.DEADLINE_EXCEEDED -> GatewayError.Network(this)
+
     FirebaseFirestoreException.Code.PERMISSION_DENIED, FirebaseFirestoreException.Code.UNAUTHENTICATED ->
         GatewayError.PermissionDenied(this)
+
     FirebaseFirestoreException.Code.RESOURCE_EXHAUSTED -> GatewayError.TooManyRequests(this)
+
     else -> GatewayError.Other(this)
 }

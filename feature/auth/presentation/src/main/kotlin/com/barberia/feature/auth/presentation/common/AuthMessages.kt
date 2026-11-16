@@ -20,14 +20,23 @@ fun FieldError.messageRes(): Int = when (this) {
 
 @StringRes
 fun AuthFailure.messageRes(): Int = when (this) {
-    is AuthFailure.Validation -> R.string.auth_error_unknown // se muestran por campo, no aquí
+    is AuthFailure.Validation -> R.string.auth_error_unknown
+
+    // se muestran por campo, no aquí
     AuthFailure.InvalidCredentials -> R.string.auth_error_credentials
+
     AuthFailure.EmailAlreadyInUse -> R.string.auth_error_email_in_use
+
     AuthFailure.WeakPassword -> R.string.auth_error_weak_password
+
     AuthFailure.NoConnection -> R.string.auth_error_no_connection
+
     AuthFailure.TooManyRequests -> R.string.auth_error_too_many
+
     AuthFailure.NotSignedIn -> R.string.auth_error_not_signed_in
+
     AuthFailure.ModeNotAllowed -> R.string.auth_error_mode
+
     is AuthFailure.Unknown -> R.string.auth_error_unknown
 }
 

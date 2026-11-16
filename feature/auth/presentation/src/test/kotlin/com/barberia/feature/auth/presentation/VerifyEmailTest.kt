@@ -10,15 +10,15 @@ import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.auth.domain.usecase.ResendVerificationEmailUseCase
 import com.barberia.feature.auth.presentation.verify.VerifyEmailIntent
 import com.barberia.feature.auth.presentation.verify.VerifyEmailViewModel
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneOffset
 
 class VerifyEmailTest {
     @get:Rule val main = MainDispatcherRule()
@@ -35,7 +35,7 @@ class VerifyEmailTest {
         ObserveCurrentUserUseCase(session),
         ResendVerificationEmailUseCase(auth),
         CheckEmailVerifiedUseCase(auth),
-        clock,
+        clock
     )
 
     @Test fun `A14 reenviar y no volver a reenviar antes de 60 segundos`() {

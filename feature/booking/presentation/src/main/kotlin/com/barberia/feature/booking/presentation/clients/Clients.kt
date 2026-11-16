@@ -1,6 +1,5 @@
 package com.barberia.feature.booking.presentation.clients
 
-import com.barberia.feature.booking.presentation.common.asBookingFailure
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,7 +36,13 @@ import com.barberia.feature.booking.domain.usecase.ForgivePenaltyUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveClientsUseCase
 import com.barberia.feature.booking.domain.usecase.RedeemRewardUseCase
 import com.barberia.feature.booking.presentation.R
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import com.barberia.feature.booking.presentation.common.messageRes
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -45,11 +50,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 data class ClientsState(
     val tenantId: String? = null,
@@ -57,7 +57,7 @@ data class ClientsState(
     val busyUid: String? = null,
     val failure: BookingFailure? = null,
     val now: Instant = Instant.EPOCH,
-    val loyalty: LoyaltyPolicy = LoyaltyPolicy(),
+    val loyalty: LoyaltyPolicy = LoyaltyPolicy()
 ) : UiState {
     fun isPenalized(c: ClientRecord) = c.isPenalized(now)
     fun rewards(c: ClientRecord) = c.availableRewards(loyalty)
@@ -79,7 +79,7 @@ class ClientsViewModel(
     private val redeem: RedeemRewardUseCase,
     private val forgive: ForgivePenaltyUseCase,
     loyalty: LoyaltyPolicy,
-    private val clock: Clock,
+    private val clock: Clock
 ) : MviViewModel<ClientsState, ClientsIntent, ClientsEffect>(ClientsState(loyalty = loyalty)) {
 
     init {
@@ -121,7 +121,7 @@ fun ClientsRoute(onBack: () -> Unit, viewModel: ClientsViewModel = koinViewModel
     val state by viewModel.state.collectAsStateWithLifecycle()
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.booking_back)) }
@@ -138,10 +138,13 @@ fun ClientsRoute(onBack: () -> Unit, viewModel: ClientsViewModel = koinViewModel
                     Text(c.name, style = MaterialTheme.typography.titleSmall)
                     Text(
                         stringResource(R.string.clients_line, c.completed, c.noShows, state.rewards(c)),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (state.isPenalized(c)) {
-                        Text(stringResource(R.string.clients_penalized, c.penaltyUntil!!.dayLabel()), color = MaterialTheme.colorScheme.error)
+                        Text(
+                            stringResource(R.string.clients_penalized, c.penaltyUntil!!.dayLabel()),
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                     Row {
                         if (state.rewards(c) > 0) {

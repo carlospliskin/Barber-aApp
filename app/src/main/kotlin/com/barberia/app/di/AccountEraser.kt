@@ -9,11 +9,10 @@ import com.barberia.feature.booking.domain.usecase.EraseUserDataUseCase
 
 /** A7: auth pide borrar los datos del usuario; booking sabe dónde están. Solo `app` conoce a los dos. */
 class BookingUserDataEraser(private val erase: EraseUserDataUseCase) : UserDataEraser {
-    override suspend fun erase(uid: String, ownedTenantId: String?): AuthResult<Unit> =
-        when (val r = erase.invoke(uid, ownedTenantId)) {
-            is AppResult.Success -> r
-            is AppResult.Failure -> AppResult.Failure(r.error.toAuthFailure())
-        }
+    override suspend fun erase(uid: String, ownedTenantId: String?): AuthResult<Unit> = when (val r = erase.invoke(uid, ownedTenantId)) {
+        is AppResult.Success -> r
+        is AppResult.Failure -> AppResult.Failure(r.error.toAuthFailure())
+    }
 }
 
 internal fun BookingFailure.toAuthFailure(): AuthFailure = when (this) {

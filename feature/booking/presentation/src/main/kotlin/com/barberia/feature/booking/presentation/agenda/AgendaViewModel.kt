@@ -10,22 +10,27 @@ import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
-import com.barberia.feature.booking.presentation.common.asBookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
-import com.barberia.feature.booking.domain.usecase.UndoMarkUseCase
 import com.barberia.feature.booking.domain.usecase.DaySummary
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
 import com.barberia.feature.booking.domain.usecase.MarkNoShowUseCase
 import com.barberia.feature.booking.domain.usecase.NoShowOutcome
 import com.barberia.feature.booking.domain.usecase.ObserveAgendaUseCase
+import com.barberia.feature.booking.domain.usecase.UndoMarkUseCase
 import com.barberia.feature.booking.domain.usecase.summarize
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -33,11 +38,6 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 data class AgendaState(
     val tenantId: String? = null,
@@ -55,20 +55,20 @@ data class AgendaState(
     /** F7-3: resultado del último no-show que penalizó (para avisar cuántas citas se cancelaron). */
     val penaltyNotice: NoShowOutcome? = null,
     /** Momento en que se calculó la vista; decide qué acciones se ofrecen (U7). */
-    val now: Instant = Instant.EPOCH,
+    val now: Instant = Instant.EPOCH
 ) : UiState {
     /** X2: quedaron citas futuras del penalizado sin cancelar (p. ej. sin red). */
     val hasPendingCancellations: Boolean get() = (penaltyNotice?.failedToCancel ?: 0) > 0
 
     fun canComplete(a: Appointment) = a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt)
+
     /** W4: cancelar solo antes de la hora. */
     fun canCancel(a: Appointment) = a.status == AppointmentStatus.BOOKED && now.isBefore(a.startsAt)
 
     /** F7-2: solo el dueño (el que filtra) y dentro de 15 min. */
     fun canUndo(a: Appointment) = canFilter && a.canUndo(now)
 
-    fun canNoShow(a: Appointment) =
-        a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt.plus(MarkNoShowUseCase.NO_SHOW_GRACE))
+    fun canNoShow(a: Appointment) = a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt.plus(MarkNoShowUseCase.NO_SHOW_GRACE))
 }
 
 sealed interface AgendaIntent : UiIntent {
@@ -97,7 +97,7 @@ class AgendaViewModel(
     private val noShow: MarkNoShowUseCase,
     private val cancel: CancelByStaffUseCase,
     private val undo: UndoMarkUseCase,
-    private val clock: Clock,
+    private val clock: Clock
 ) : MviViewModel<AgendaState, AgendaIntent, AgendaEffect>(AgendaState()) {
 
     private var zone: ZoneId = ZoneId.of("America/Mexico_City")
@@ -137,15 +137,23 @@ class AgendaViewModel(
                     // A16: si se pierde el acceso no se dejan a la vista las citas que quedaron en caché.
                     val f = e.asBookingFailure()
                     setState {
-                        copy(failure = f, noAccess = f == BookingFailure.NoAccess, appointments = emptyList(), summary = summarize(emptyList()))
+                        copy(
+                            failure = f,
+                            noAccess = f == BookingFailure.NoAccess,
+                            appointments = emptyList(),
+                            summary = summarize(emptyList())
+                        )
                     }
                 }
             }
                 .collect { list ->
                     setState {
                         copy(
-                            appointments = list, summary = summarize(list), now = clock.instant(), noAccess = false,
-                            failure = failure.takeUnless { it == BookingFailure.NoConnection || it == BookingFailure.NoAccess },
+                            appointments = list,
+                            summary = summarize(list),
+                            now = clock.instant(),
+                            noAccess = false,
+                            failure = failure.takeUnless { it == BookingFailure.NoConnection || it == BookingFailure.NoAccess }
                         )
                     }
                 }
@@ -155,29 +163,40 @@ class AgendaViewModel(
     override suspend fun handleIntent(intent: AgendaIntent) {
         when (intent) {
             AgendaIntent.PreviousDay -> moveTo { it.minusDays(1) }
+
             AgendaIntent.NextDay -> moveTo { it.plusDays(1) }
+
             AgendaIntent.Today -> moveTo { today() }
+
             is AgendaIntent.FilterBarber -> if (currentState.canFilter) {
                 setState { copy(barberFilter = intent.barberId) }
                 query.value = query.value?.copy(barberId = intent.barberId)
             }
+
             is AgendaIntent.Complete -> act(intent.id) { complete(it) }
+
             is AgendaIntent.NoShow -> act(intent.id) { a ->
                 when (val r = noShow(a)) {
                     is AppResult.Success -> {
                         if (r.value.penalized) setState { copy(penaltyNotice = r.value) }
                         AppResult.Success(Unit)
                     }
+
                     is AppResult.Failure -> r
                 }
             }
+
             is AgendaIntent.Cancel -> act(intent.id) { cancel(it) }
-            is AgendaIntent.Undo -> if (currentState.canFilter) act(intent.id) { a ->
-                undo(a).also { r ->
-                    // si se deshizo el no-show que penalizó, el aviso de penalización ya no es cierto
-                    if (r is AppResult.Success && a.status == AppointmentStatus.NO_SHOW) setState { copy(penaltyNotice = null) }
+
+            is AgendaIntent.Undo -> if (currentState.canFilter) {
+                act(intent.id) { a ->
+                    undo(a).also { r ->
+                        // si se deshizo el no-show que penalizó, el aviso de penalización ya no es cierto
+                        if (r is AppResult.Success && a.status == AppointmentStatus.NO_SHOW) setState { copy(penaltyNotice = null) }
+                    }
                 }
             }
+
             AgendaIntent.DismissFailure -> setState { copy(failure = null, penaltyNotice = null) }
         }
     }

@@ -4,14 +4,14 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import com.barberia.app.di.appModule
 import com.barberia.app.di.authDomainModule
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.barberia.feature.auth.data.di.authDataModule
 import com.barberia.feature.auth.presentation.di.authPresentationModule
 import com.barberia.feature.booking.data.di.bookingDataModule
 import com.barberia.feature.booking.presentation.bookingPresentationModule
 import com.barberia.feature.catalog.data.di.catalogDataModule
 import com.barberia.feature.catalog.presentation.catalogPresentationModule
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -35,16 +35,18 @@ class KoinGraphTest {
                 catalogDataModule,
                 catalogPresentationModule,
                 bookingDataModule,
-                bookingPresentationModule,
+                bookingPresentationModule
             )
-        }.verify(extraTypes = listOf(
+        }.verify(
+            extraTypes = listOf(
                 Context::class,
                 SavedStateHandle::class,
                 CoroutineScope::class,
                 // Los provee core:firebase con las fábricas del SDK (no se revisan aquí).
                 FirebaseAuth::class,
                 FirebaseFirestore::class,
-                com.barberia.core.firebase.CachePurge::class,
-            ),)
+                com.barberia.core.firebase.CachePurge::class
+            )
+        )
     }
 }

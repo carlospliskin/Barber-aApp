@@ -6,5 +6,4 @@ import com.barberia.feature.auth.domain.model.FieldError
 
 /** Primer error de los campos indicados, ya como texto. */
 @Composable
-fun Set<FieldError>.textFor(vararg fields: FieldError): String? =
-    fields.firstOrNull { it in this }?.let { stringResource(it.messageRes()) }
+fun Set<FieldError>.textFor(vararg fields: FieldError): String? = fields.firstOrNull { it in this }?.let { stringResource(it.messageRes()) }

@@ -1,7 +1,7 @@
 package com.barberia.feature.auth.data.firebase
 
-import com.barberia.core.firebase.firebaseCall
 import com.barberia.core.firebase.CachePurge
+import com.barberia.core.firebase.firebaseCall
 import com.barberia.feature.auth.data.gateway.ProfileGateway
 import com.barberia.feature.auth.data.gateway.ProfileRecord
 import com.barberia.feature.auth.data.gateway.TenantRecord
@@ -13,10 +13,7 @@ import kotlinx.coroutines.tasks.await
  * `users/{uid}` y `tenants/{ownerUid}`.
  * `get()` usa el servidor y, sin red, la caché local (las lecturas de caché no se cobran).
  */
-internal class FirestoreProfileGateway(
-    private val db: FirebaseFirestore,
-    private val purge: CachePurge,
-) : ProfileGateway {
+internal class FirestoreProfileGateway(private val db: FirebaseFirestore, private val purge: CachePurge) : ProfileGateway {
 
     override suspend fun fetch(uid: String): ProfileRecord? = firebaseCall {
         val doc = db.collection(USERS).document(uid).get().await()
@@ -27,7 +24,7 @@ internal class FirestoreProfileGateway(
             phone = doc.getString("phone"),
             staffTenantId = doc.getString("staffTenantId"),
             staffRole = doc.getString("staffRole"),
-            staffBarberId = doc.getString("staffBarberId"),
+            staffBarberId = doc.getString("staffBarberId")
         )
     }
 
@@ -40,8 +37,8 @@ internal class FirestoreProfileGateway(
                     "name" to tenant.name,
                     "ownerUid" to tenant.ownerUid,
                     "timezone" to tenant.timezone,
-                    "createdAt" to FieldValue.serverTimestamp(),
-                ),
+                    "createdAt" to FieldValue.serverTimestamp()
+                )
             )
             .commit()
             .await()
@@ -68,7 +65,7 @@ internal class FirestoreProfileGateway(
 
     override suspend fun leaveStaff(uid: String) = firebaseCall {
         db.collection(USERS).document(uid).update(
-            mapOf("staffTenantId" to null, "staffRole" to null, "staffBarberId" to null, "staffInviteCode" to null),
+            mapOf("staffTenantId" to null, "staffRole" to null, "staffBarberId" to null, "staffInviteCode" to null)
         ).await()
         purge.request() // A16-f: la agenda que vio como barbero no se queda en el teléfono
         Unit
@@ -80,7 +77,7 @@ internal class FirestoreProfileGateway(
         "phone" to phone,
         "staffTenantId" to staffTenantId,
         "staffRole" to staffRole,
-        "createdAt" to FieldValue.serverTimestamp(),
+        "createdAt" to FieldValue.serverTimestamp()
     )
 
     private companion object {

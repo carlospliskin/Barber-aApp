@@ -4,8 +4,8 @@ import com.barberia.core.common.AppResult
 import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.auth.domain.model.AuthUser
 import com.barberia.feature.auth.domain.model.SessionState
-import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.model.StaffAccess
+import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.repository.AuthRepository
 import com.barberia.feature.auth.domain.repository.AuthResult
 import com.barberia.feature.auth.domain.repository.ClientRegistration
@@ -19,7 +19,7 @@ fun user(role: StaffRole? = null, name: String = "Ana Pérez") = AuthUser(
     email = "ana@mail.com",
     displayName = name,
     staffTenantId = role?.let { "uid-1" },
-    staffRole = role,
+    staffRole = role
 )
 
 class FakeAuthRepository(var result: AuthResult<Unit> = AppResult.Success(Unit)) : AuthRepository {
@@ -75,6 +75,7 @@ class FakeAuthRepository(var result: AuthResult<Unit> = AppResult.Success(Unit))
         calls += "staffAccess:$tenantId"
         return AppResult.Success(access)
     }
+
     /** Para comprobar el orden respecto a la sesión (p. ej. que el modo se borre después). */
     var onCall: (String) -> Unit = {}
     override suspend fun leaveStaff(): AuthResult<Unit> {
@@ -92,10 +93,7 @@ class FakeUserDataEraser(var result: AuthResult<Unit> = AppResult.Success(Unit))
     }
 }
 
-class FakeSessionRepository(
-    initial: SessionState = SessionState.SignedOut,
-    mode: AppMode? = null,
-) : SessionRepository {
+class FakeSessionRepository(initial: SessionState = SessionState.SignedOut, mode: AppMode? = null) : SessionRepository {
     val sessionFlow = MutableStateFlow(initial)
     val modeFlow = MutableStateFlow(mode)
     val calls = mutableListOf<String>()

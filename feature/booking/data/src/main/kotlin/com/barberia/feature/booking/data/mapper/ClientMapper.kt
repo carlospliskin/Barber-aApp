@@ -11,7 +11,7 @@ internal object ClientMapper {
         "noShows" to c.noShows.toLong(),
         "rewardsUsed" to c.rewardsUsed.toLong(),
         "penaltyUntil" to c.penaltyUntil,
-        "lastAppointmentId" to lastAppointmentId,
+        "lastAppointmentId" to lastAppointmentId
     )
 
     fun fromMap(uid: String, m: Map<String, Any?>?): ClientRecord? {
@@ -22,7 +22,7 @@ internal object ClientMapper {
             completed = (m["completed"] as? Number)?.toInt() ?: 0,
             noShows = (m["noShows"] as? Number)?.toInt() ?: 0,
             rewardsUsed = (m["rewardsUsed"] as? Number)?.toInt() ?: 0,
-            penaltyUntil = m["penaltyUntil"] as? Instant,
+            penaltyUntil = m["penaltyUntil"] as? Instant
         )
     }
 }

@@ -11,14 +11,14 @@ import com.barberia.feature.booking.domain.usecase.MarkNoShowUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveAgendaUseCase
 import com.barberia.feature.booking.domain.usecase.summarize
 import com.barberia.feature.catalog.domain.model.Money
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Test
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Test
 
 class AgendaUseCasesTest {
     private val monday = LocalDate.of(2026, 11, 16)
@@ -49,7 +49,7 @@ class AgendaUseCasesTest {
         assertEquals(AppResult.Failure(BookingFailure.TooEarly), MarkNoShowUseCase(repo, clockAt("2026-11-16T16:09:00Z"))(a))
         assertEquals(
             AppResult.Success(com.barberia.feature.booking.domain.usecase.NoShowOutcome(false, 0, 0)),
-            MarkNoShowUseCase(repo, clockAt("2026-11-16T16:10:00Z"))(a),
+            MarkNoShowUseCase(repo, clockAt("2026-11-16T16:10:00Z"))(a)
         )
     }
 
@@ -64,7 +64,7 @@ class AgendaUseCasesTest {
         val a = appt("a1")
         assertEquals(
             AppResult.Failure(BookingFailure.CancelTooLate),
-            CancelByStaffUseCase(repo, clockAt("2026-11-16T16:00:00Z"))(a),
+            CancelByStaffUseCase(repo, clockAt("2026-11-16T16:00:00Z"))(a)
         )
     }
 
@@ -81,8 +81,8 @@ class AgendaUseCasesTest {
                 appt("a", cents = 15_000),
                 appt("b", status = AppointmentStatus.COMPLETED, cents = 20_000),
                 appt("c", status = AppointmentStatus.NO_SHOW),
-                appt("d", status = AppointmentStatus.CANCELLED),
-            ),
+                appt("d", status = AppointmentStatus.CANCELLED)
+            )
         )
         assertEquals(3, s.total) // las canceladas no cuentan
         assertEquals(1, s.pending)

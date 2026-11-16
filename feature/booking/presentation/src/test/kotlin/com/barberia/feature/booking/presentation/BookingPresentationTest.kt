@@ -1,5 +1,6 @@
 package com.barberia.feature.booking.presentation
 
+import app.cash.turbine.test
 import com.barberia.feature.auth.domain.model.SessionState
 import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.testing.FakeSessionRepository
@@ -33,7 +34,12 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
-import app.cash.turbine.test
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -47,16 +53,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.util.Random
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookingPresentationTest {
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val zone = ZoneId.of("America/Mexico_City")
@@ -69,7 +70,10 @@ class BookingPresentationTest {
     private val corte = Service("s1", "Corte", 30, Money(15_000))
     private val barba = Service("s2", "Barba", 60, Money(9_000))
     private val catalog = FakeCatalogRepository(Catalog(listOf(corte, barba), listOf(luis), 1))
-    private val bookings = FakeBookingRepository().apply { barbershops["t1"] = gold; shareCodes["ABC234"] = "t1" }
+    private val bookings = FakeBookingRepository().apply {
+        barbershops["t1"] = gold
+        shareCodes["ABC234"] = "t1"
+    }
     private val store = FakeJoinedStore()
     private val session = FakeSessionRepository(SessionState.SignedIn(user()))
     private var n = 0
@@ -85,7 +89,7 @@ class BookingPresentationTest {
         clock,
         com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase(reminders, clock),
         com.barberia.feature.booking.domain.usecase.CancelReminderUseCase(reminders),
-        policy,
+        policy
     )
 
     private fun booking() = BookingViewModel(
@@ -95,7 +99,7 @@ class BookingPresentationTest {
         GetAvailableSlotsUseCase(catalog, bookings, policy, clock),
         BookAppointmentUseCase(catalog, bookings, policy, clock) { "cita-${++n}" },
         policy,
-        clock,
+        clock
     )
 
     // ── Home del cliente ──────────────────────────────────────────────────────
@@ -120,10 +124,12 @@ class BookingPresentationTest {
         val vm = clientHome()
         assertEquals(BookingFailure.NoConnection, vm.state.value.failure)
         bookings.agendaError = null
-        bookings.book(com.barberia.feature.booking.domain.model.Appointment(
-            "x1", "t1", "uid-1", "Ana", "b1", "Luis", "s1", "Corte", Money(100), monday.plusDays(1), 600, 630,
-            com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED, clock.instant().plusSeconds(86_400),
-        ))
+        bookings.book(
+            com.barberia.feature.booking.domain.model.Appointment(
+                "x1", "t1", "uid-1", "Ana", "b1", "Luis", "s1", "Corte", Money(100), monday.plusDays(1), 600, 630,
+                com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED, clock.instant().plusSeconds(86_400)
+            )
+        )
         store.save("uid-1", null)
         store.save("uid-1", "t1")
         assertEquals(listOf("x1"), vm.state.value.appointments.map { it.id })
@@ -140,7 +146,7 @@ class BookingPresentationTest {
         val start = { h: Long -> clock.instant().plusSeconds(h * 3600) }
         val appt = com.barberia.feature.booking.domain.model.Appointment(
             "a1", "t1", "uid-1", "Ana", "b1", "Luis", "s1", "Corte", Money(100), monday, 600, 630,
-            com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED, start(3),
+            com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED, start(3)
         )
         val state = clientHome().state.value
         assertTrue(state.canCancel(appt))
@@ -173,7 +179,6 @@ class BookingPresentationTest {
         vm.onIntent(ClientHomeIntent.Cancel("cita-1"))
         assertEquals(AppointmentStatus.CANCELLED, bookings.created.single().status)
     }
-
 
     // ── Reservar ──────────────────────────────────────────────────────────────
     @Test fun `solo ofrece servicios y barberos reservables y 14 dias desde hoy en la zona de la barberia`() {
@@ -230,7 +235,7 @@ class BookingPresentationTest {
         // Otro cliente gana 10:00 justo antes de confirmar
         kotlinx.coroutines.runBlocking {
             BookAppointmentUseCase(catalog, bookings, policy, clock) { "otra" }(
-                com.barberia.feature.booking.domain.model.BookingRequest("t1", zone, "otro", "Beto", "b1", "s1", monday, 600),
+                com.barberia.feature.booking.domain.model.BookingRequest("t1", zone, "otro", "Beto", "b1", "s1", monday, 600)
             )
         }
         vm.onIntent(BookingIntent.Confirm)
@@ -250,7 +255,7 @@ class BookingPresentationTest {
 
     @Test fun `N2 un dia libre completo del barbero no se puede elegir`() {
         catalog.stored.value = catalog.stored.value.copy(
-            barbers = listOf(luis.copy(timeOff = listOf(com.barberia.feature.catalog.domain.model.TimeOff(monday.plusDays(7))))),
+            barbers = listOf(luis.copy(timeOff = listOf(com.barberia.feature.catalog.domain.model.TimeOff(monday.plusDays(7)))))
         )
         store.saved["uid-1"] = "t1"
         val vm = booking()
@@ -290,7 +295,7 @@ class BookingPresentationTest {
     // ── Código del dueño ──────────────────────────────────────────────────────
     @Test fun `X1 sin correo verificado no intenta crear el codigo y lo crea al verificar`() {
         val owner = FakeSessionRepository(
-            SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1", emailVerified = false)),
+            SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1", emailVerified = false))
         )
         val vm = ShareCodeViewModel(ObserveCurrentUserUseCase(owner), EnsureShareCodeUseCase(bookings, Random(3)))
         assertEquals(0, bookings.claims) // no se gasta una escritura que las reglas rechazarían
@@ -301,7 +306,8 @@ class BookingPresentationTest {
     }
 
     @Test fun `R7 el duenio ve su codigo para compartir`() {
-        val owner = FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1", emailVerified = true)))
+        val owner =
+            FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1", emailVerified = true)))
         val vm = ShareCodeViewModel(ObserveCurrentUserUseCase(owner), EnsureShareCodeUseCase(bookings, Random(3)))
         assertEquals(bookings.barbershops["t1"]?.shareCode, vm.state.value.code)
         assertEquals(6, vm.state.value.code?.length)

@@ -9,11 +9,11 @@ import com.barberia.feature.booking.domain.model.ClientRecord
 import com.barberia.feature.booking.domain.model.LoyaltyPolicy
 import com.barberia.feature.booking.domain.repository.BookingRepository
 import com.barberia.feature.catalog.domain.model.Money
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class GetBarbershopUseCase(private val bookings: BookingRepository) {
     suspend operator fun invoke(tenantId: String) = bookings.barbershop(tenantId)
@@ -26,13 +26,16 @@ class ObserveAgendaUseCase(private val bookings: BookingRepository) {
 }
 
 class MarkCompletedUseCase(private val bookings: BookingRepository, private val clock: Clock) {
-    suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> =
-        markStatus(
-            bookings, appointment, AppointmentStatus.COMPLETED, earliest = appointment.startsAt, clock,
-            updateClient = appointment.clientUid?.let { uid ->
-                { c: ClientRecord? -> (c ?: ClientRecord.new(uid, appointment.clientName)).afterCompleted() } // P3
-            },
-        )
+    suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> = markStatus(
+        bookings,
+        appointment,
+        AppointmentStatus.COMPLETED,
+        earliest = appointment.startsAt,
+        clock,
+        updateClient = appointment.clientUid?.let { uid ->
+            { c: ClientRecord? -> (c ?: ClientRecord.new(uid, appointment.clientName)).afterCompleted() } // P3
+        }
+    )
 }
 
 /** Resultado de marcar un no-show: si penalizó y cuántas citas futuras canceló (F7-3). */
@@ -41,7 +44,7 @@ data class NoShowOutcome(val penalized: Boolean, val cancelledFuture: Int, val f
 class MarkNoShowUseCase(
     private val bookings: BookingRepository,
     private val clock: Clock,
-    private val loyalty: LoyaltyPolicy = LoyaltyPolicy(),
+    private val loyalty: LoyaltyPolicy = LoyaltyPolicy()
 ) {
     suspend operator fun invoke(appointment: Appointment): BookingResult<NoShowOutcome> {
         val now = clock.instant()
@@ -49,15 +52,18 @@ class MarkNoShowUseCase(
         var after: ClientRecord? = null
         val uid = appointment.clientUid
         val marked = markStatus(
-            bookings, appointment, AppointmentStatus.NO_SHOW,
-            earliest = appointment.startsAt.plus(NO_SHOW_GRACE), clock,
+            bookings,
+            appointment,
+            AppointmentStatus.NO_SHOW,
+            earliest = appointment.startsAt.plus(NO_SHOW_GRACE),
+            clock,
             // N1: sin cuenta no hay ficha ni penalización
             updateClient = uid?.let {
                 { c: ClientRecord? ->
                     before = c
                     (c ?: ClientRecord.new(uid, appointment.clientName)).afterNoShow(now, loyalty).also { after = it } // P1
                 }
-            },
+            }
         )
         if (marked is AppResult.Failure) return marked
         if (uid == null) return AppResult.Success(NoShowOutcome(penalized = false, cancelledFuture = 0, failedToCancel = 0))
@@ -74,8 +80,8 @@ class MarkNoShowUseCase(
             NoShowOutcome(
                 penalized = true,
                 cancelledFuture = results.count { it is AppResult.Success },
-                failedToCancel = results.count { it is AppResult.Failure },
-            ),
+                failedToCancel = results.count { it is AppResult.Failure }
+            )
         )
     }
 
@@ -103,7 +109,7 @@ private suspend fun markStatus(
     status: AppointmentStatus,
     earliest: java.time.Instant,
     clock: Clock,
-    updateClient: ((ClientRecord?) -> ClientRecord)?,
+    updateClient: ((ClientRecord?) -> ClientRecord)?
 ): BookingResult<Unit> {
     if (appointment.status != AppointmentStatus.BOOKED) return AppResult.Failure(BookingFailure.AlreadyClosed) // A6
     if (clock.instant().isBefore(earliest)) return AppResult.Failure(BookingFailure.TooEarly) // A4
@@ -119,7 +125,7 @@ data class DaySummary(
     /** Ingresos de las completadas. */
     val earned: Money,
     /** Completadas + pendientes (lo que se espera cobrar si todos llegan). */
-    val expected: Money,
+    val expected: Money
 )
 
 fun summarize(appointments: List<Appointment>): DaySummary {
@@ -132,7 +138,7 @@ fun summarize(appointments: List<Appointment>): DaySummary {
         completed = completed.size,
         noShows = active.count { it.status == AppointmentStatus.NO_SHOW },
         earned = Money(completed.sumOf { it.price.cents }),
-        expected = Money((completed + pending).sumOf { it.price.cents }),
+        expected = Money((completed + pending).sumOf { it.price.cents })
     )
 }
 
@@ -141,11 +147,7 @@ fun summarize(appointments: List<Appointment>): DaySummary {
  * pantalla solo se lo ofrece a él) y dentro de 15 min. La cita vuelve a BOOKED y la ficha se corrige
  * en la misma transacción. Las citas que una penalización canceló (F7-3) no se restauran.
  */
-class UndoMarkUseCase(
-    private val bookings: BookingRepository,
-    private val policy: LoyaltyPolicy,
-    private val clock: Clock,
-) {
+class UndoMarkUseCase(private val bookings: BookingRepository, private val policy: LoyaltyPolicy, private val clock: Clock) {
     suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> {
         val status = appointment.status
         if (status != AppointmentStatus.COMPLETED && status != AppointmentStatus.NO_SHOW) {
@@ -168,6 +170,7 @@ class UndoMarkUseCase(
         return when (val r = bookings.setStatus(appointment, AppointmentStatus.BOOKED, update)) {
             // Reloj del teléfono adelantado: el servidor ya cerró el plazo.
             is AppResult.Failure -> if (r.error == BookingFailure.TooEarly) AppResult.Failure(BookingFailure.UndoExpired) else r
+
             is AppResult.Success -> r
         }
     }

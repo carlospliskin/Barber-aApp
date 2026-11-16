@@ -7,9 +7,9 @@ import com.barberia.feature.catalog.domain.model.ServiceDraft
 import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.repository.CatalogRepository
-import kotlinx.coroutines.flow.Flow
 import java.time.Clock
 import java.time.LocalDate
+import kotlinx.coroutines.flow.Flow
 
 // Cada caso de uso aplica una regla del editor dentro de la transacción del repositorio.
 
@@ -33,8 +33,7 @@ class SetServiceActiveUseCase(private val repo: CatalogRepository, private val e
 }
 
 class AddBarberUseCase(private val repo: CatalogRepository, private val editor: CatalogEditor) {
-    suspend operator fun invoke(tenantId: String, name: String): CatalogResult<Catalog> =
-        repo.edit(tenantId) { editor.addBarber(it, name) }
+    suspend operator fun invoke(tenantId: String, name: String): CatalogResult<Catalog> = repo.edit(tenantId) { editor.addBarber(it, name) }
 }
 
 class RenameBarberUseCase(private val repo: CatalogRepository, private val editor: CatalogEditor) {

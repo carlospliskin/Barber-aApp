@@ -10,15 +10,15 @@ import com.barberia.feature.booking.domain.usecase.JoinBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveMyAppointmentsUseCase
 import com.barberia.feature.booking.domain.usecase.ShareCodes
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
+import java.util.Random
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
-import java.time.Clock
-import java.time.Instant
-import java.time.ZoneId
-import java.util.Random
 
 class BarbershopUseCasesTest {
     private val repo = FakeBookingRepository()
@@ -53,11 +53,20 @@ class BarbershopUseCasesTest {
         repo.activeOverride = 1
         assertEquals(
             AppResult.Failure(BookingFailure.HasActiveAppointments),
-            com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase(repo, store)("ana", "t1", java.time.LocalDate.of(2026, 11, 16)),
+            com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase(
+                repo,
+                store
+            )("ana", "t1", java.time.LocalDate.of(2026, 11, 16))
         )
         assertEquals("t1", store.saved["ana"])
         repo.activeOverride = 0
-        assertEquals(AppResult.Success(Unit), com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase(repo, store)("ana", "t1", java.time.LocalDate.of(2026, 11, 16)))
+        assertEquals(
+            AppResult.Success(Unit),
+            com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase(
+                repo,
+                store
+            )("ana", "t1", java.time.LocalDate.of(2026, 11, 16))
+        )
         assertEquals(null, store.saved["ana"])
     }
 

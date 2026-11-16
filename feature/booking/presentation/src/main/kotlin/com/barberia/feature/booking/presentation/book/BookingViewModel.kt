@@ -1,6 +1,5 @@
 package com.barberia.feature.booking.presentation.book
 
-import com.barberia.feature.booking.presentation.common.asBookingFailure
 import com.barberia.core.common.AppResult
 import com.barberia.core.mvi.MviViewModel
 import com.barberia.core.mvi.UiEffect
@@ -14,19 +13,20 @@ import com.barberia.feature.booking.domain.model.BookingRequest
 import com.barberia.feature.booking.domain.usecase.BookAppointmentUseCase
 import com.barberia.feature.booking.domain.usecase.GetAvailableSlotsUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCase
+import com.barberia.feature.booking.presentation.common.asBookingFailure
 import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.model.Service
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.LocalDate
+import java.time.LocalDateTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 data class BookingState(
     val shop: Barbershop? = null,
@@ -42,7 +42,7 @@ data class BookingState(
     val slotsLoading: Boolean = false,
     val selectedSlot: Int? = null,
     val isBooking: Boolean = false,
-    val failure: BookingFailure? = null,
+    val failure: BookingFailure? = null
 ) : UiState {
     val selectedService: Service? get() = services.find { it.id == selectedServiceId }
 
@@ -51,8 +51,7 @@ data class BookingState(
         get() = barbers.find { it.id == selectedBarberId }?.schedule?.days?.keys.orEmpty()
 
     /** U2 + N2: ni días que no trabaja ni días libres completos. */
-    fun isSelectable(date: LocalDate) =
-        selectedBarberId == null || barbers.find { it.id == selectedBarberId }?.worksOn(date) == true
+    fun isSelectable(date: LocalDate) = selectedBarberId == null || barbers.find { it.id == selectedBarberId }?.worksOn(date) == true
     val canConfirm: Boolean get() = selectedSlot != null && !isBooking
 }
 
@@ -77,7 +76,7 @@ class BookingViewModel(
     private val getSlots: GetAvailableSlotsUseCase,
     private val book: BookAppointmentUseCase,
     private val policy: BookingPolicy,
-    private val clock: Clock,
+    private val clock: Clock
 ) : MviViewModel<BookingState, BookingIntent, BookingEffect>(BookingState()) {
 
     init {
@@ -104,13 +103,18 @@ class BookingViewModel(
         when (intent) {
             // B16: cualquier cambio de servicio, barbero o día invalida la hora elegida.
             is BookingIntent.SelectService -> select { copy(selectedServiceId = intent.id) }
+
             is BookingIntent.SelectBarber -> select {
                 val next = copy(selectedBarberId = intent.id)
                 next.copy(selectedDate = selectedDate?.takeIf { next.isSelectable(it) })
             }
+
             is BookingIntent.SelectDate -> if (currentState.isSelectable(intent.date)) select { copy(selectedDate = intent.date) }
+
             is BookingIntent.SelectSlot -> setState { copy(selectedSlot = intent.minute.takeIf { it in slots }) }
+
             BookingIntent.DismissFailure -> setState { copy(failure = null) }
+
             BookingIntent.Confirm -> confirm()
         }
     }
@@ -143,13 +147,23 @@ class BookingViewModel(
         val uid = s.clientUid ?: return
         setState { copy(isBooking = true, failure = null) }
         val r = book(
-            BookingRequest(shop.id, shop.zone, uid, s.clientName, s.selectedBarberId!!, s.selectedServiceId!!, s.selectedDate!!, s.selectedSlot!!),
+            BookingRequest(
+                shop.id,
+                shop.zone,
+                uid,
+                s.clientName,
+                s.selectedBarberId!!,
+                s.selectedServiceId!!,
+                s.selectedDate!!,
+                s.selectedSlot!!
+            )
         )
         when (r) {
             is AppResult.Success -> {
                 setState { copy(isBooking = false, selectedSlot = null) }
                 sendEffect(BookingEffect.Booked)
             }
+
             is AppResult.Failure -> {
                 setState { copy(isBooking = false, failure = r.error, selectedSlot = null) }
                 if (r.error == BookingFailure.SlotTaken || r.error == BookingFailure.SlotUnavailable) loadSlots() // B15

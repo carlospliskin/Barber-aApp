@@ -21,23 +21,34 @@ import com.barberia.feature.auth.presentation.session.SessionViewModel
 import com.barberia.feature.auth.presentation.session.SplashScreen
 import com.barberia.feature.booking.presentation.agenda.AgendaRoute
 import com.barberia.feature.booking.presentation.book.BookingRoute
-import com.barberia.feature.booking.presentation.walkin.WalkInRoute
 import com.barberia.feature.booking.presentation.clients.ClientsRoute
+import com.barberia.feature.booking.presentation.walkin.WalkInRoute
 import com.barberia.feature.catalog.presentation.CatalogRoute
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 
 @Serializable data object SplashDest
+
 @Serializable data object OfflineDest
+
 @Serializable data object LoginDest
+
 @Serializable data object RegisterDest
+
 @Serializable data object ModeSelectionDest
+
 @Serializable data class HomeDest(val mode: AppMode)
+
 @Serializable data object CatalogDest
+
 @Serializable data object BookingDest
+
 @Serializable data object AgendaDest
+
 @Serializable data object WalkInDest
+
 @Serializable data object ClientsDest
+
 @Serializable data object DeleteAccountDest
 
 /**
@@ -45,10 +56,7 @@ import org.koin.androidx.compose.koinViewModel
  * restaurada tras la muerte del proceso) se navega y se limpia el back stack.
  */
 @Composable
-fun BarberiaNavHost(
-    navController: NavHostController = rememberNavController(),
-    session: SessionViewModel = koinViewModel(),
-) {
+fun BarberiaNavHost(navController: NavHostController = rememberNavController(), session: SessionViewModel = koinViewModel()) {
     val state by session.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.destination) {
@@ -61,7 +69,7 @@ fun BarberiaNavHost(
             SplashScreen(
                 offline = true,
                 onRetry = { session.onIntent(SessionIntent.Retry) },
-                onSignOut = { session.onIntent(SessionIntent.SignOut) },
+                onSignOut = { session.onIntent(SessionIntent.SignOut) }
             )
         }
         composable<LoginDest> { LoginRoute(onOpenRegister = { navController.navigate(RegisterDest) }) }
@@ -74,7 +82,7 @@ fun BarberiaNavHost(
                 onBook = { navController.navigate(BookingDest) },
                 onOpenAgenda = { navController.navigate(AgendaDest) },
                 onOpenClients = { navController.navigate(ClientsDest) },
-                onDeleteAccount = { navController.navigate(DeleteAccountDest) },
+                onDeleteAccount = { navController.navigate(DeleteAccountDest) }
             )
         }
         composable<DeleteAccountDest> { DeleteAccountRoute(onBack = { navController.popBackStack() }) }

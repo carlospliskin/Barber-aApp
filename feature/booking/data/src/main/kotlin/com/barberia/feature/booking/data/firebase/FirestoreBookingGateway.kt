@@ -8,11 +8,11 @@ import com.barberia.feature.booking.data.gateway.SlotTakenException
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import java.time.Instant
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
-import java.time.Instant
 
 /**
  * Costos (plan Spark):
@@ -43,7 +43,7 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         dayId: String,
         keys: Set<String>,
         clientUid: String?,
-        newClient: Map<String, Any?>?,
+        newClient: Map<String, Any?>?
     ) {
         unwrapSlotTaken {
             firebaseCall {
@@ -52,7 +52,9 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
                 db.runTransaction { tx ->
                     // N1: una cita sin cuenta no tiene ficha (ni lectura extra)
                     val clientRef = clientUid?.let { tenantRef(tenantId).collection("clients").document(it) }
-                    val hasClient = clientRef == null || tx.get(clientRef).exists() // lecturas antes que escrituras
+                    val hasClient = clientRef == null || tx.get(clientRef).exists()
+
+                    // lecturas antes que escrituras
                     @Suppress("UNCHECKED_CAST")
                     val booked = (tx.get(dayRef).get("booked") as? Map<String, Any?>).orEmpty()
                     if (keys.any { it in booked }) throw SlotTakenException()
@@ -62,8 +64,8 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
                         mapOf(
                             "booked" to booked + keys.associateWith { apptId },
                             "lastOp" to apptId,
-                            "updatedAt" to FieldValue.serverTimestamp(),
-                        ),
+                            "updatedAt" to FieldValue.serverTimestamp()
+                        )
                     )
                     if (!hasClient && clientRef != null && newClient != null) {
                         tx.set(clientRef, newClient + ("updatedAt" to FieldValue.serverTimestamp()))
@@ -78,22 +80,18 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
             val batch = db.batch()
             batch.update(
                 tenantRef(tenantId).collection("appointments").document(apptId),
-                mapOf("status" to "CANCELLED", "updatedAt" to FieldValue.serverTimestamp()),
+                mapOf("status" to "CANCELLED", "updatedAt" to FieldValue.serverTimestamp())
             )
             batch.update(
                 tenantRef(tenantId).collection("days").document(dayId),
                 keys.associate { "booked.$it" to FieldValue.delete() } +
-                    mapOf("lastOp" to apptId, "updatedAt" to FieldValue.serverTimestamp()),
+                    mapOf("lastOp" to apptId, "updatedAt" to FieldValue.serverTimestamp())
             )
             batch.commit().await()
         }
     }
 
-    override fun observeUpcoming(
-        tenantId: String,
-        clientUid: String,
-        fromDate: String,
-    ): Flow<List<Pair<String, Map<String, Any?>>>> =
+    override fun observeUpcoming(tenantId: String, clientUid: String, fromDate: String): Flow<List<Pair<String, Map<String, Any?>>>> =
         callbackFlow {
             // R4: solo de hoy en adelante, ordenadas. Índice compuesto en firebase/firestore.indexes.json.
             val registration = tenantRef(tenantId).collection("appointments")
@@ -112,11 +110,7 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
             awaitClose { registration.remove() }
         }
 
-    override fun observeDay(
-        tenantId: String,
-        date: String,
-        barberId: String?,
-    ): Flow<List<Pair<String, Map<String, Any?>>>> = callbackFlow {
+    override fun observeDay(tenantId: String, date: String, barberId: String?): Flow<List<Pair<String, Map<String, Any?>>>> = callbackFlow {
         var q = tenantRef(tenantId).collection("appointments").whereEqualTo("date", date)
         if (barberId != null) q = q.whereEqualTo("barberId", barberId) // las reglas exigen este filtro al barbero
         val registration = q.addSnapshotListener { snapshot, error ->
@@ -134,7 +128,7 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         apptId: String,
         status: String,
         clientUid: String?,
-        updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?,
+        updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?
     ) {
         firebaseCall {
             val apptRef = tenantRef(tenantId).collection("appointments").document(apptId)

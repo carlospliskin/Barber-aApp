@@ -37,7 +37,7 @@ class LoginTest {
 
     @Test fun `un fallo de validacion va a los campos, no al mensaje general`() {
         val r = LoginState(isLoading = true).reduce(
-            LoginMutation.Failed(AuthFailure.Validation(setOf(FieldError.EMAIL_INVALID))),
+            LoginMutation.Failed(AuthFailure.Validation(setOf(FieldError.EMAIL_INVALID)))
         )
         assertFalse(r.isLoading)
         assertEquals(setOf(FieldError.EMAIL_INVALID), r.fieldErrors)

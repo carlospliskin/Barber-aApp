@@ -51,21 +51,11 @@ interface SessionRepository {
     val selectedMode: Flow<AppMode?>
     fun currentUser(): AuthUser?
     suspend fun saveMode(mode: AppMode?)
+
     /** Vuelve a leer el perfil (después de registrarse o tras un error de red). */
     fun refresh()
 }
 
-data class OwnerRegistration(
-    val email: String,
-    val password: String,
-    val ownerName: String,
-    val businessName: String,
-    val phone: String?,
-)
+data class OwnerRegistration(val email: String, val password: String, val ownerName: String, val businessName: String, val phone: String?)
 
-data class ClientRegistration(
-    val email: String,
-    val password: String,
-    val name: String,
-    val phone: String,
-)
+data class ClientRegistration(val email: String, val password: String, val name: String, val phone: String)

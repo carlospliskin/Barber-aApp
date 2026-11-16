@@ -9,12 +9,12 @@ import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.catalog.domain.model.Money
+import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.Instant
-import java.time.LocalDate
 
 /** A7: borrar y anonimizar en lotes que respeten el límite de 500 escrituras por batch de Firestore. */
 class AccountDataTest {
@@ -25,7 +25,9 @@ class AccountDataTest {
         val batches = mutableListOf<List<String>>()
         var error: GatewayError? = null
 
-        private fun under(prefix: String) = docs.filterKeys { it.startsWith(prefix) && it.removePrefix(prefix).count { c -> c == '/' } == 0 }
+        private fun under(prefix: String) = docs.filterKeys {
+            it.startsWith(prefix) && it.removePrefix(prefix).count { c -> c == '/' } == 0
+        }
 
         override suspend fun appointmentsOfClient(uid: String, limit: Int) = docs
             .filter { (path, m) -> path.contains("/appointments/") && m["clientUid"] == uid }
@@ -35,7 +37,10 @@ class AccountDataTest {
 
         override suspend fun anonymize(tenantId: String, ids: List<String>) {
             batches += ids
-            ids.forEach { id -> docs["tenants/$tenantId/appointments/$id"] = docs.getValue("tenants/$tenantId/appointments/$id") + mapOf("clientUid" to null, "clientName" to "") }
+            ids.forEach { id ->
+                docs["tenants/$tenantId/appointments/$id"] =
+                    docs.getValue("tenants/$tenantId/appointments/$id") + mapOf("clientUid" to null, "clientName" to "")
+            }
         }
 
         override suspend fun tenantAppointments(tenantId: String, limit: Int) =
@@ -47,8 +52,7 @@ class AccountDataTest {
         override suspend fun inviteCodes(tenantId: String) =
             under("staffInvites/").filterValues { it["tenantId"] == tenantId }.keys.map { it.substringAfterLast('/') }
 
-        override suspend fun revokedIds(tenantId: String) =
-            under("tenants/$tenantId/revoked/").keys.map { it.substringAfterLast('/') }
+        override suspend fun revokedIds(tenantId: String) = under("tenants/$tenantId/revoked/").keys.map { it.substringAfterLast('/') }
 
         override suspend fun shareCodeOf(tenantId: String) = docs["tenants/$tenantId"]?.get("shareCode") as String?
 
@@ -64,7 +68,7 @@ class AccountDataTest {
 
     private fun cita(id: String, tenant: String = "t1", uid: String? = "cli", day: Int = 20) = Appointment(
         id, tenant, uid, "Ana", "b1", "Luis", "s1", "Corte", Money(100), LocalDate.of(2026, 11, day),
-        600, 615, AppointmentStatus.COMPLETED, Instant.parse("2026-11-${day}T16:00:00Z"),
+        600, 615, AppointmentStatus.COMPLETED, Instant.parse("2026-11-${day}T16:00:00Z")
     )
 
     private fun put(a: Appointment) {
@@ -72,13 +76,16 @@ class AccountDataTest {
     }
 
     @Test fun `encuentra las citas del cliente en todas las barberias`() = runTest {
-        put(cita("a1", "t1")); put(cita("a2", "t2")); put(cita("x", "t1", uid = "otro"))
+        put(cita("a1", "t1"))
+        put(cita("a2", "t2"))
+        put(cita("x", "t1", uid = "otro"))
         val r = repo.myAppointments("cli", 10) as AppResult.Success
         assertEquals(setOf("t1" to "a1", "t2" to "a2"), r.value.map { it.tenantId to it.id }.toSet())
     }
 
     @Test fun `anonimiza por barberia`() = runTest {
-        put(cita("a1", "t1")); put(cita("a2", "t2"))
+        put(cita("a1", "t1"))
+        put(cita("a2", "t2"))
         val citas = (repo.myAppointments("cli", 10) as AppResult.Success).value
         assertEquals(AppResult.Success(Unit), repo.anonymize(citas))
         assertEquals(AppResult.Success(emptyList<Appointment>()), repo.myAppointments("cli", 10))

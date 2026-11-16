@@ -5,11 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -20,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.barberia.core.common.AppResult
@@ -46,7 +46,7 @@ data class DeleteAccountState(
     val understood: Boolean = false,
     val deleting: Boolean = false,
     val fieldErrors: Set<FieldError> = emptySet(),
-    val failure: AuthFailure? = null,
+    val failure: AuthFailure? = null
 ) : UiState {
     val canConfirm: Boolean get() = understood && !deleting
 }
@@ -60,10 +60,8 @@ sealed interface DeleteAccountIntent : UiIntent {
 sealed interface DeleteAccountEffect : UiEffect
 
 /** A7: al terminar, la sesión se cierra sola y la navegación vuelve al login. */
-class DeleteAccountViewModel(
-    observeUser: ObserveCurrentUserUseCase,
-    private val deleteAccount: DeleteAccountUseCase,
-) : MviViewModel<DeleteAccountState, DeleteAccountIntent, DeleteAccountEffect>(DeleteAccountState()) {
+class DeleteAccountViewModel(observeUser: ObserveCurrentUserUseCase, private val deleteAccount: DeleteAccountUseCase) :
+    MviViewModel<DeleteAccountState, DeleteAccountIntent, DeleteAccountEffect>(DeleteAccountState()) {
 
     init {
         launchInScope {
@@ -77,7 +75,9 @@ class DeleteAccountViewModel(
         when (intent) {
             is DeleteAccountIntent.PasswordChanged ->
                 setState { copy(password = intent.value, fieldErrors = emptySet(), failure = null) }
+
             DeleteAccountIntent.UnderstoodToggled -> setState { copy(understood = !understood) }
+
             DeleteAccountIntent.Confirm -> confirm()
         }
     }
@@ -89,6 +89,7 @@ class DeleteAccountViewModel(
         setState {
             when (r) {
                 is AppResult.Success -> copy(deleting = false, password = "")
+
                 is AppResult.Failure -> {
                     val (fields, general) = r.error.splitValidation()
                     copy(deleting = false, fieldErrors = fields, failure = general)
@@ -108,7 +109,7 @@ fun DeleteAccountRoute(onBack: () -> Unit, viewModel: DeleteAccountViewModel = k
 fun DeleteAccountScreen(state: DeleteAccountState, onIntent: (DeleteAccountIntent) -> Unit, onBack: () -> Unit) {
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(stringResource(R.string.delete_account_title), style = MaterialTheme.typography.headlineMedium)
         Text(stringResource(R.string.delete_account_what, state.email))
@@ -122,22 +123,27 @@ fun DeleteAccountScreen(state: DeleteAccountState, onIntent: (DeleteAccountInten
                 value = state.understood,
                 enabled = !state.deleting,
                 role = Role.Checkbox,
-                onValueChange = { onIntent(DeleteAccountIntent.UnderstoodToggled) },
+                onValueChange = { onIntent(DeleteAccountIntent.UnderstoodToggled) }
             ),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(checked = state.understood, onCheckedChange = null)
             Text(stringResource(R.string.delete_account_understood))
         }
         BarberTextField(
-            state.password, { onIntent(DeleteAccountIntent.PasswordChanged(it)) },
-            stringResource(R.string.delete_account_password), isPassword = true, enabled = !state.deleting,
-            error = state.fieldErrors.firstOrNull()?.let { stringResource(it.messageRes()) },
+            state.password,
+            { onIntent(DeleteAccountIntent.PasswordChanged(it)) },
+            stringResource(R.string.delete_account_password),
+            isPassword = true,
+            enabled = !state.deleting,
+            error = state.fieldErrors.firstOrNull()?.let { stringResource(it.messageRes()) }
         )
         state.failure?.let { Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error) }
         BarberButton(
-            stringResource(R.string.delete_account_confirm), { onIntent(DeleteAccountIntent.Confirm) },
-            enabled = state.canConfirm, isLoading = state.deleting,
+            stringResource(R.string.delete_account_confirm),
+            { onIntent(DeleteAccountIntent.Confirm) },
+            enabled = state.canConfirm,
+            isLoading = state.deleting
         )
         if (state.deleting) Text(stringResource(R.string.delete_account_wait), color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(onClick = onBack, enabled = !state.deleting) { Text(stringResource(R.string.delete_account_cancel)) }

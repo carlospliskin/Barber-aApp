@@ -21,7 +21,7 @@ fun BarberTextField(
     isPassword: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Text,
     enabled: Boolean = true,
-    error: String? = null,
+    error: String? = null
 ) {
     OutlinedTextField(
         value = value,
@@ -34,6 +34,6 @@ fun BarberTextField(
         shape = RoundedCornerShape(14.dp),
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else keyboardType),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth()
     )
 }

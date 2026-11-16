@@ -6,10 +6,10 @@ import com.barberia.feature.catalog.data.gateway.InviteGateway
 import com.barberia.feature.catalog.data.repository.FirestoreInviteRepository
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.StaffInvite
+import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.time.Instant
 
 class InviteDataTest {
     private val invite = StaffInvite("MVK234", "t1", "b1", "Luis", Instant.parse("2026-11-23T16:00:00Z"), usedBy = null)
@@ -50,10 +50,14 @@ class InviteDataTest {
         repo.redeem(invite, "tono")
         assertEquals(
             mapOf(
-                "staffTenantId" to "t1", "staffRole" to "BARBER", "staffBarberId" to "b1",
-                "staffInviteCode" to "MVK234", "uid" to "tono", "code" to "MVK234",
+                "staffTenantId" to "t1",
+                "staffRole" to "BARBER",
+                "staffBarberId" to "b1",
+                "staffInviteCode" to "MVK234",
+                "uid" to "tono",
+                "code" to "MVK234"
             ),
-            gw.redeemed,
+            gw.redeemed
         )
     }
 

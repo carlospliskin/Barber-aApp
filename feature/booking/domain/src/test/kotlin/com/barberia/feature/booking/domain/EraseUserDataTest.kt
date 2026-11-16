@@ -11,16 +11,16 @@ import com.barberia.feature.booking.domain.testing.FakeJoinedStore
 import com.barberia.feature.booking.domain.testing.FakeReminderScheduler
 import com.barberia.feature.booking.domain.usecase.EraseUserDataUseCase
 import com.barberia.feature.catalog.domain.model.Money
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.Clock
-import java.time.Duration
-import java.time.Instant
-import java.time.ZoneId
 
 /** A7: lo que un usuario deja en las barberías se borra o se anonimiza al eliminar su cuenta. */
 class EraseUserDataTest {
@@ -33,12 +33,18 @@ class EraseUserDataTest {
     private val erase = EraseUserDataUseCase(bookings, data, reminders, joined, BookingPolicy(), clock)
 
     private var minute = 0
-    private fun appt(id: String, tenant: String, inHours: Long, status: AppointmentStatus = AppointmentStatus.BOOKED, uid: String = "cli"): Appointment {
+    private fun appt(
+        id: String,
+        tenant: String,
+        inHours: Long,
+        status: AppointmentStatus = AppointmentStatus.BOOKED,
+        uid: String = "cli"
+    ): Appointment {
         val start = now.plus(Duration.ofHours(inHours))
         minute += 30
         return Appointment(
             id, tenant, uid, "Ana", "b1", "Luis", "s1", "Corte", Money(100),
-            start.atZone(ZoneId.of("UTC")).toLocalDate(), minute, minute + 30, status, start,
+            start.atZone(ZoneId.of("UTC")).toLocalDate(), minute, minute + 30, status, start
         )
     }
 
@@ -85,7 +91,9 @@ class EraseUserDataTest {
     }
 
     @Test fun `recorre todas las paginas`() = runTest {
-        repeat(EraseUserDataUseCase.PAGE_SIZE + 5) { bookings.book(appt("v$it", "t1", inHours = -48L - it, status = AppointmentStatus.COMPLETED)) }
+        repeat(EraseUserDataUseCase.PAGE_SIZE + 5) {
+            bookings.book(appt("v$it", "t1", inHours = -48L - it, status = AppointmentStatus.COMPLETED))
+        }
         assertEquals(AppResult.Success(Unit), erase("cli", null))
         assertEquals(EraseUserDataUseCase.PAGE_SIZE + 5, data.anonymized.size)
         assertEquals(3, data.pagesRequested) // 2 con citas + 1 vacía

@@ -23,6 +23,11 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
+import java.time.Clock
+import java.time.DayOfWeek
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -36,16 +41,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.time.Clock
-import java.time.DayOfWeek
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
 
 /** N1: pantalla "Agendar cliente" del personal. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class WalkInPresentationTest {
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val zone = ZoneId.of("America/Mexico_City")
@@ -54,20 +55,24 @@ class WalkInPresentationTest {
     private val policy = BookingPolicy()
     private val week = WeeklySchedule(mapOf(DayOfWeek.MONDAY to listOf(TimeRange.of("10:00", "12:00"))))
     private val catalog = FakeCatalogRepository(
-        Catalog(listOf(Service("s1", "Corte", 30, Money(15_000))), listOf(Barber("b1", "Luis", schedule = week), Barber("b2", "Pepe", schedule = week)), 1),
+        Catalog(
+            listOf(Service("s1", "Corte", 30, Money(15_000))),
+            listOf(Barber("b1", "Luis", schedule = week), Barber("b2", "Pepe", schedule = week)),
+            1
+        )
     )
     private val bookings = FakeBookingRepository().apply { barbershops["t1"] = Barbershop("t1", "Gold", zone, null) }
     private var n = 0
 
     private fun vm(role: StaffRole, barberId: String? = null) = WalkInViewModel(
         ObserveCurrentUserUseCase(
-            FakeSessionRepository(SessionState.SignedIn(user(role).copy(staffTenantId = "t1", staffBarberId = barberId))),
+            FakeSessionRepository(SessionState.SignedIn(user(role).copy(staffTenantId = "t1", staffBarberId = barberId)))
         ),
         GetBarbershopUseCase(bookings),
         ObserveCatalogUseCase(catalog),
         GetAvailableSlotsUseCase(catalog, bookings, policy, clock),
         BookWalkInUseCase(catalog, bookings, policy, clock) { "w-${++n}" },
-        clock,
+        clock
     )
 
     @Test fun `N1 el barbero agenda solo en su agenda y empieza en hoy`() {
@@ -127,7 +132,7 @@ class WalkInPresentationTest {
         vm.onIntent(WalkInIntent.SelectSlot(600))
         kotlinx.coroutines.runBlocking {
             BookWalkInUseCase(catalog, bookings, policy, clock) { "otra" }(
-                com.barberia.feature.booking.domain.model.WalkInRequest("t1", zone, "Otro", null, "b1", "s1", monday, 600),
+                com.barberia.feature.booking.domain.model.WalkInRequest("t1", zone, "Otro", null, "b1", "s1", monday, 600)
             )
         }
         vm.onIntent(WalkInIntent.Confirm)

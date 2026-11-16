@@ -14,6 +14,7 @@ import com.barberia.feature.auth.domain.model.SessionState
 import com.barberia.feature.auth.domain.model.StaffRole
 import com.barberia.feature.auth.domain.repository.ClientRegistration
 import com.barberia.feature.auth.domain.repository.OwnerRegistration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -26,19 +27,22 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import kotlin.time.Duration.Companion.seconds
 
 /** Q1: cuenta real (Auth + perfil + barbería) contra el emulador con las reglas reales. */
 @RunWith(AndroidJUnit4::class)
 class AccountEmulatorTest {
     private class MemoryModes : ModeStore {
         override val mode = MutableStateFlow<String?>(null)
-        override suspend fun save(mode: String?) { this.mode.value = mode }
+        override suspend fun save(mode: String?) {
+            this.mode.value = mode
+        }
     }
     private class MemoryFlag : PurgeFlag {
         var value = false
         override fun get() = value
-        override fun set(value: Boolean) { this.value = value }
+        override fun set(value: Boolean) {
+            this.value = value
+        }
     }
 
     private val flag = MemoryFlag()
@@ -48,7 +52,7 @@ class AccountEmulatorTest {
         FirebaseAuthGateway(FirebaseEmulator.auth, purge),
         FirestoreProfileGateway(FirebaseEmulator.db, purge),
         MemoryModes(),
-        CoroutineScope(SupervisorJob() + Dispatchers.Default),
+        CoroutineScope(SupervisorJob() + Dispatchers.Default)
     )
 
     @Before fun reset() = FirebaseEmulator.reset()
@@ -64,7 +68,7 @@ class AccountEmulatorTest {
         assertEquals(StaffRole.OWNER, user.staffRole)
     }
 
-    @Test fun A7_eliminar_cuenta_borra_perfil_y_cuenta_y_pide_limpiar_cache() = runTest(timeout = 60.seconds) {
+    @Test fun a7_eliminar_cuenta_borra_perfil_y_cuenta_y_pide_limpiar_cache() = runTest(timeout = 60.seconds) {
         val repo = repo()
         repo.registerClient(ClientRegistration("ana@test.com", "secret123", "Ana", "5511112222"))
         val uid = FirebaseEmulator.auth.currentUser!!.uid

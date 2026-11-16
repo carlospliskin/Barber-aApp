@@ -11,7 +11,7 @@ import java.time.LocalDate
 internal object AppointmentMapper {
 
     fun toMap(a: Appointment): Map<String, Any?> = listOfNotNull(
-        a.clientPhone?.let { "clientPhone" to it }, // N1: solo citas sin cuenta
+        a.clientPhone?.let { "clientPhone" to it } // N1: solo citas sin cuenta
     ).toMap() + mapOf(
         "clientUid" to a.clientUid,
         "clientName" to a.clientName,
@@ -26,7 +26,7 @@ internal object AppointmentMapper {
         "startsAt" to a.startsAt,
         "status" to a.status.name,
         "slotKeys" to a.slots.sorted().map { it.toString() },
-        "dayId" to dayId(a.barberId, a.date),
+        "dayId" to dayId(a.barberId, a.date)
     )
 
     fun fromMap(id: String, tenantId: String, m: Map<String, Any?>): Appointment? = runCatching {
@@ -46,7 +46,7 @@ internal object AppointmentMapper {
             status = AppointmentStatus.valueOf(m["status"] as String),
             startsAt = m["startsAt"] as Instant,
             clientPhone = m["clientPhone"] as? String,
-            markedAt = m["updatedAt"] as? Instant, // F7-2 (la pone el servidor)
+            markedAt = m["updatedAt"] as? Instant // F7-2 (la pone el servidor)
         )
     }.getOrNull()
 

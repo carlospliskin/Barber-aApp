@@ -30,6 +30,8 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v6
+      - name: Estilo (ktlint)
+        run: ./gradlew lintKotlin
       - name: Tests (dominio, datos, ViewModels, grafo de Koin)
         run: ./gradlew test --stacktrace
       - name: Build debug y QA (QA = release con R8)

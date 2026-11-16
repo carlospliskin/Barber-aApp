@@ -18,18 +18,19 @@ import com.barberia.feature.catalog.domain.model.Service
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 class BookingUseCasesTest {
     private val zone = ZoneId.of("America/Mexico_City")
+
     // Lunes 16-nov-2026 08:00 en CDMX = 14:00 UTC
     private val clock = Clock.fixed(Instant.parse("2026-11-16T14:00:00Z"), ZoneId.of("UTC"))
     private val monday = LocalDate.of(2026, 11, 16)
@@ -46,7 +47,14 @@ class BookingUseCasesTest {
 
     @Test fun `B6 la hora de la barberia manda, no la del telefono`() = runTest {
         // En UTC ya son las 14:00, pero en CDMX son las 08:00: 10:00 sigue disponible
-        val slots = (GetAvailableSlotsUseCase(catalogRepo, bookings, policy, clock)("t1", zone, "b1", "s1", monday) as AppResult.Success).value
+        val slots = (
+            GetAvailableSlotsUseCase(
+                catalogRepo,
+                bookings,
+                policy,
+                clock
+            )("t1", zone, "b1", "s1", monday) as AppResult.Success
+            ).value
         assertEquals("10:00", TimeRange.label(slots.first()))
     }
 
@@ -58,9 +66,9 @@ class BookingUseCasesTest {
                 barberName = "Luis", serviceId = "s1", serviceName = "Corte", price = Money(15_000),
                 date = monday, startMinute = 600, endMinute = 630, status = AppointmentStatus.BOOKED,
                 // B10: 10:00 en CDMX = 16:00 UTC; las reglas lo usan para el límite de cancelación
-                startsAt = Instant.parse("2026-11-16T16:00:00Z"),
+                startsAt = Instant.parse("2026-11-16T16:00:00Z")
             ),
-            r.value,
+            r.value
         )
         assertEquals((600 until 630 step 5).toSet(), bookings.day("b1", monday).keys)
     }
@@ -99,7 +107,7 @@ class BookingUseCasesTest {
         val late = Clock.offset(clock, java.time.Duration.ofMinutes(1))
         assertEquals(
             AppResult.Failure(BookingFailure.CancelTooLate),
-            CancelAppointmentUseCase(bookings, policy, late)(cita, zone, byUid = "cliente-1"),
+            CancelAppointmentUseCase(bookings, policy, late)(cita, zone, byUid = "cliente-1")
         )
     }
 
@@ -107,7 +115,7 @@ class BookingUseCasesTest {
         val cita = (book(request("10:00")) as AppResult.Success).value
         assertEquals(
             AppResult.Failure(BookingFailure.NotYours),
-            CancelAppointmentUseCase(bookings, policy, clock)(cita, zone, byUid = "intruso"),
+            CancelAppointmentUseCase(bookings, policy, clock)(cita, zone, byUid = "intruso")
         )
     }
 

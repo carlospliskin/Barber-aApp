@@ -18,23 +18,24 @@ import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
-import kotlinx.coroutines.test.runTest
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
 
 /** N1: el personal agenda a un cliente que llama o llega al local (sin cuenta en la app). */
 class WalkInTest {
     private val zone = ZoneId.of("America/Mexico_City")
     private val monday = LocalDate.of(2026, 11, 16)
     private fun clockAt(local: String) = Clock.fixed(
-        monday.atTime(java.time.LocalTime.parse(local)).atZone(zone).toInstant(), ZoneId.of("UTC"),
+        monday.atTime(java.time.LocalTime.parse(local)).atZone(zone).toInstant(),
+        ZoneId.of("UTC")
     )
     private val policy = BookingPolicy()
 
@@ -65,9 +66,23 @@ class WalkInTest {
     }
 
     @Test fun `N1 los horarios del personal incluyen el turno actual`() = runTest {
-        val slots = (GetAvailableSlotsUseCase(catalogRepo, bookings, policy, clockAt("10:07"))("t1", zone, "b1", "s1", monday, forStaff = true) as AppResult.Success).value
+        val slots = (
+            GetAvailableSlotsUseCase(
+                catalogRepo,
+                bookings,
+                policy,
+                clockAt("10:07")
+            )("t1", zone, "b1", "s1", monday, forStaff = true) as AppResult.Success
+            ).value
         assertEquals("10:00", TimeRange.label(slots.first()))
-        val client = (GetAvailableSlotsUseCase(catalogRepo, bookings, policy, clockAt("10:07"))("t1", zone, "b1", "s1", monday) as AppResult.Success).value
+        val client = (
+            GetAvailableSlotsUseCase(
+                catalogRepo,
+                bookings,
+                policy,
+                clockAt("10:07")
+            )("t1", zone, "b1", "s1", monday) as AppResult.Success
+            ).value
         assertEquals("10:45", TimeRange.label(client.first())) // al cliente: 30 min de anticipación
     }
 

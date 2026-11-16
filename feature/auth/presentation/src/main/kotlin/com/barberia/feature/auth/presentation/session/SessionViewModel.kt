@@ -14,6 +14,7 @@ data class SessionUiState(val destination: SessionDestination? = null) : UiState
 
 sealed interface SessionIntent : UiIntent {
     data object Retry : SessionIntent
+
     /** H3: desde "sin conexión" también se puede salir. */
     data object SignOut : SessionIntent
 }
@@ -27,7 +28,7 @@ sealed interface SessionEffect : UiEffect
 class SessionViewModel(
     observeDestination: ObserveSessionDestinationUseCase,
     private val retry: RetrySessionUseCase,
-    private val signOut: SignOutUseCase,
+    private val signOut: SignOutUseCase
 ) : MviViewModel<SessionUiState, SessionIntent, SessionEffect>(SessionUiState()) {
 
     init {

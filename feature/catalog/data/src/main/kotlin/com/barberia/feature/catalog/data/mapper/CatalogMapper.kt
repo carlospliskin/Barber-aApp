@@ -24,7 +24,7 @@ internal object CatalogMapper {
                 "name" to it.name,
                 "durationMinutes" to it.durationMinutes.toLong(),
                 "priceCents" to it.price.cents,
-                "active" to it.active,
+                "active" to it.active
             )
         },
         "barbers" to c.barbers.map { b ->
@@ -44,9 +44,9 @@ internal object CatalogMapper {
                             put("end", it.endMinute.toLong())
                         }
                     }
-                },
+                }
             )
-        },
+        }
     )
 
     fun fromMap(raw: Map<String, Any?>?): Catalog? {
@@ -54,7 +54,7 @@ internal object CatalogMapper {
         return Catalog(
             services = raw.list("services").mapNotNull(::service),
             barbers = raw.list("barbers").mapNotNull(::barber),
-            version = (raw["version"] as? Number)?.toLong() ?: 0,
+            version = (raw["version"] as? Number)?.toLong() ?: 0
         )
     }
 
@@ -65,7 +65,7 @@ internal object CatalogMapper {
             name = m["name"] as? String ?: return null,
             durationMinutes = (m["durationMinutes"] as? Number)?.toInt() ?: return null,
             price = Money((m["priceCents"] as? Number)?.toLong() ?: return null),
-            active = m["active"] as? Boolean ?: true,
+            active = m["active"] as? Boolean ?: true
         )
     }
 
@@ -76,7 +76,7 @@ internal object CatalogMapper {
             name = m["name"] as? String ?: return null,
             active = m["active"] as? Boolean ?: true,
             schedule = schedule(m["schedule"]),
-            timeOff = (m["timeOff"] as? List<*>).orEmpty().mapNotNull(::timeOff),
+            timeOff = (m["timeOff"] as? List<*>).orEmpty().mapNotNull(::timeOff)
         )
     }
 

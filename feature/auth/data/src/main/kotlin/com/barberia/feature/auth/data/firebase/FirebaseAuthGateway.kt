@@ -1,9 +1,9 @@
 package com.barberia.feature.auth.data.firebase
 
-import com.barberia.feature.auth.data.gateway.AccountInfo
+import com.barberia.core.firebase.CachePurge
 import com.barberia.core.firebase.GatewayError
 import com.barberia.core.firebase.firebaseCall
-import com.barberia.core.firebase.CachePurge
+import com.barberia.feature.auth.data.gateway.AccountInfo
 import com.barberia.feature.auth.data.gateway.AuthGateway
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -13,10 +13,7 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.tasks.await
 
-internal class FirebaseAuthGateway(
-    private val auth: FirebaseAuth,
-    private val purge: CachePurge,
-) : AuthGateway {
+internal class FirebaseAuthGateway(private val auth: FirebaseAuth, private val purge: CachePurge) : AuthGateway {
 
     override val uidChanges: Flow<String?> = callbackFlow {
         val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser?.uid) }

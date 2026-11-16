@@ -8,7 +8,7 @@
 
 | Módulos | Pantallas | Casos de uso | Repositorios | Rutas en Firestore | Tests Kotlin | Tests de reglas |
 |---|---|---|---|---|---|---|
-| 15 | 12 | 49 | 5 | 10 | 341 | 147 |
+| 15 | 12 | 49 | 4 | 10 | 341 | 147 |
 
 ## 1. Módulos y dependencias
 
@@ -220,7 +220,6 @@ para escribir una prueba de interfaz.
 
 | Implementación | Implementa | Archivo |
 |---|---|---|
-| `FirebaseAccountRepository` | AuthRepository, SessionRepository | [FirebaseAccountRepository.kt](../feature/auth/data/src/main/kotlin/com/barberia/feature/auth/data/repository/FirebaseAccountRepository.kt) |
 | `FirestoreAccountDataRepository` | AccountDataRepository | [FirestoreAccountDataRepository.kt](../feature/booking/data/src/main/kotlin/com/barberia/feature/booking/data/repository/FirestoreAccountDataRepository.kt) |
 | `FirestoreBookingRepository` | BookingRepository | [FirestoreBookingRepository.kt](../feature/booking/data/src/main/kotlin/com/barberia/feature/booking/data/repository/FirestoreBookingRepository.kt) |
 | `FirestoreCatalogRepository` | CatalogRepository | [FirestoreCatalogRepository.kt](../feature/catalog/data/src/main/kotlin/com/barberia/feature/catalog/data/repository/FirestoreCatalogRepository.kt) |

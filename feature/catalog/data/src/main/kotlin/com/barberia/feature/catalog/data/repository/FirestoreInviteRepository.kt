@@ -7,8 +7,8 @@ import com.barberia.feature.catalog.domain.editor.CatalogResult
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.StaffInvite
 import com.barberia.feature.catalog.domain.repository.InviteRepository
-import kotlinx.coroutines.CancellationException
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 
 internal class FirestoreInviteRepository(private val gateway: InviteGateway) : InviteRepository {
 
@@ -20,8 +20,8 @@ internal class FirestoreInviteRepository(private val gateway: InviteGateway) : I
                 "barberId" to invite.barberId,
                 "barberName" to invite.barberName,
                 "expiresAt" to invite.expiresAt,
-                "usedBy" to null,
-            ),
+                "usedBy" to null
+            )
         )
     }
 
@@ -34,7 +34,7 @@ internal class FirestoreInviteRepository(private val gateway: InviteGateway) : I
                     barberId = m["barberId"] as String,
                     barberName = m["barberName"] as? String ?: "",
                     expiresAt = m["expiresAt"] as Instant,
-                    usedBy = m["usedBy"] as? String,
+                    usedBy = m["usedBy"] as? String
                 )
             }.getOrNull()
         }
@@ -49,8 +49,8 @@ internal class FirestoreInviteRepository(private val gateway: InviteGateway) : I
                 "staffTenantId" to invite.tenantId,
                 "staffRole" to "BARBER",
                 "staffBarberId" to invite.barberId,
-                "staffInviteCode" to invite.code,
-            ),
+                "staffInviteCode" to invite.code
+            )
         )
     }
 
@@ -72,7 +72,7 @@ internal class FirestoreInviteRepository(private val gateway: InviteGateway) : I
                 is GatewayError.Network -> CatalogFailure.NoConnection
                 is GatewayError.PermissionDenied -> onDenied ?: CatalogFailure.NotOwner
                 else -> CatalogFailure.Unknown(e.cause?.message)
-            },
+            }
         )
     }
 }

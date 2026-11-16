@@ -5,6 +5,7 @@ sealed interface SessionState {
     data object Loading : SessionState
     data object SignedOut : SessionState
     data class SignedIn(val user: AuthUser) : SessionState
+
     /** Hay sesión pero no se pudo leer el perfil (sin red y sin caché). Se puede reintentar. */
     data object Unavailable : SessionState
 }
@@ -19,8 +20,12 @@ enum class SessionDestination { Login, ModeSelection, OwnerHome, BarberHome, Cli
  */
 fun resolveDestination(state: SessionState, mode: AppMode?): SessionDestination? = when (state) {
     SessionState.Loading -> null
-    SessionState.Unavailable -> SessionDestination.Offline // H2: se ve desde cualquier pantalla
+
+    SessionState.Unavailable -> SessionDestination.Offline
+
+    // H2: se ve desde cualquier pantalla
     SessionState.SignedOut -> SessionDestination.Login
+
     is SessionState.SignedIn -> {
         val modes = state.user.availableModes
         when {

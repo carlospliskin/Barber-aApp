@@ -28,11 +28,7 @@ import com.barberia.feature.auth.presentation.R
 import com.barberia.feature.auth.presentation.common.messageRes
 import org.koin.androidx.compose.koinViewModel
 
-data class StaffAccessState(
-    val access: StaffAccess? = null,
-    val leaving: Boolean = false,
-    val failure: AuthFailure? = null,
-) : UiState
+data class StaffAccessState(val access: StaffAccess? = null, val leaving: Boolean = false, val failure: AuthFailure? = null) : UiState
 
 sealed interface StaffAccessIntent : UiIntent {
     data object Leave : StaffAccessIntent
@@ -41,10 +37,8 @@ sealed interface StaffAccessIntent : UiIntent {
 sealed interface StaffAccessEffect : UiEffect
 
 /** A7-b/A16: al abrir el home de barbero revisa (2 lecturas) si la barbería existe y si sigue con acceso. */
-class StaffAccessViewModel(
-    private val check: CheckStaffAccessUseCase,
-    private val leave: LeaveStaffUseCase,
-) : MviViewModel<StaffAccessState, StaffAccessIntent, StaffAccessEffect>(StaffAccessState()) {
+class StaffAccessViewModel(private val check: CheckStaffAccessUseCase, private val leave: LeaveStaffUseCase) :
+    MviViewModel<StaffAccessState, StaffAccessIntent, StaffAccessEffect>(StaffAccessState()) {
 
     init {
         launchInScope {
@@ -78,7 +72,9 @@ fun StaffAccessCard(modifier: Modifier = Modifier, viewModel: StaffAccessViewMod
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(message), color = MaterialTheme.colorScheme.onErrorContainer)
             s.failure?.let { Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error) }
-            BarberButton(stringResource(R.string.staff_access_leave), { viewModel.onIntent(StaffAccessIntent.Leave) }, isLoading = s.leaving)
+            BarberButton(stringResource(R.string.staff_access_leave), {
+                viewModel.onIntent(StaffAccessIntent.Leave)
+            }, isLoading = s.leaving)
         }
     }
 }

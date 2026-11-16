@@ -28,7 +28,7 @@ class SessionAndModeTest {
     private fun sessionVm(repo: FakeSessionRepository) = SessionViewModel(
         ObserveSessionDestinationUseCase(repo),
         RetrySessionUseCase(repo),
-        com.barberia.feature.auth.domain.usecase.SignOutUseCase(auth, repo),
+        com.barberia.feature.auth.domain.usecase.SignOutUseCase(auth, repo)
     )
 
     @Test fun `la sesion decide el destino y lo actualiza sola (hueco 1)`() {

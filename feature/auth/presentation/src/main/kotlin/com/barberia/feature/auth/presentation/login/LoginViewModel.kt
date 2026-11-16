@@ -5,10 +5,8 @@ import com.barberia.core.mvi.MviViewModel
 import com.barberia.feature.auth.domain.usecase.SendPasswordResetUseCase
 import com.barberia.feature.auth.domain.usecase.SignInUseCase
 
-class LoginViewModel(
-    private val signIn: SignInUseCase,
-    private val sendPasswordReset: SendPasswordResetUseCase,
-) : MviViewModel<LoginState, LoginIntent, LoginEffect>(LoginState()) {
+class LoginViewModel(private val signIn: SignInUseCase, private val sendPasswordReset: SendPasswordResetUseCase) :
+    MviViewModel<LoginState, LoginIntent, LoginEffect>(LoginState()) {
 
     override suspend fun handleIntent(intent: LoginIntent) {
         when (intent) {

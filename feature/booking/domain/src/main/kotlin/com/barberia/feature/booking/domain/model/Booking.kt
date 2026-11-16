@@ -14,7 +14,7 @@ data class BookingPolicy(
     val maxActivePerClient: Int = 2,
     val cancelHoursBefore: Long = 2,
     /** N1: el personal puede agendar en el turno que ya empezó hace hasta estos minutos (cliente que llega). */
-    val staffLateStartMinutes: Int = 14,
+    val staffLateStartMinutes: Int = 14
 ) {
     /** N1: para el personal no hay anticipación mínima; se acepta el turno actual. */
     fun forStaff(): BookingPolicy = copy(minNoticeMinutes = -staffLateStartMinutes)
@@ -46,7 +46,7 @@ data class Appointment(
     /** N1: teléfono (solo dígitos) del cliente sin cuenta, para avisarle. */
     val clientPhone: String? = null,
     /** F7-2: cuándo se marcó atendida/no-show (hora del servidor, `updatedAt`). */
-    val markedAt: Instant? = null,
+    val markedAt: Instant? = null
 ) {
     val slots: Set<Int> get() = slotKeys(startMinute, endMinute - startMinute)
 
@@ -67,12 +67,7 @@ data class Appointment(
 }
 
 /** Datos públicos de la barbería que necesita el cliente (R6). */
-data class Barbershop(
-    val id: String,
-    val name: String,
-    val zone: ZoneId,
-    val shareCode: String?,
-)
+data class Barbershop(val id: String, val name: String, val zone: ZoneId, val shareCode: String?)
 
 data class BookingRequest(
     val tenantId: String,
@@ -83,7 +78,7 @@ data class BookingRequest(
     val barberId: String,
     val serviceId: String,
     val date: LocalDate,
-    val startMinute: Int,
+    val startMinute: Int
 )
 
 /** N1: cita que agenda el personal para un cliente sin cuenta. */
@@ -95,7 +90,7 @@ data class WalkInRequest(
     val barberId: String,
     val serviceId: String,
     val date: LocalDate,
-    val startMinute: Int,
+    val startMinute: Int
 )
 
 sealed interface BookingFailure {
@@ -110,18 +105,24 @@ sealed interface BookingFailure {
     data object InvalidCode : BookingFailure
     data object HasActiveAppointments : BookingFailure
     data object TooEarly : BookingFailure
+
     /** P2: penalizado por no-shows hasta [until]. */
     data class Penalized(val until: Instant) : BookingFailure
     data object NoRewardAvailable : BookingFailure
+
     /** N1: nombre vacío o teléfono inválido. */
     data object InvalidClient : BookingFailure
     data object NoConnection : BookingFailure
+
     /** A16: sin permiso (le quitaron el acceso o la barbería ya no existe). */
     data object NoAccess : BookingFailure
+
     /** A7-c: la barbería guardada ya no existe (se borró). */
     data object ShopGone : BookingFailure
+
     /** F7-2: pasaron los 15 minutos para deshacer. */
     data object UndoExpired : BookingFailure
+
     /** F7-2: ya canjeó un premio contando esa visita. */
     data object RewardAlreadyUsed : BookingFailure
     data class Unknown(val detail: String? = null) : BookingFailure

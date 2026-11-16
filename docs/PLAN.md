@@ -236,7 +236,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] CI (GitHub Actions): tests, build debug + QA y reglas en emulador.
 - [x] Verificación del grafo de Koin (`KoinGraphTest`), comprobada quitando un registro a propósito.
 - [x] Build release con R8 probado en ejecución mediante el build type `qa`.
-- [ ] detekt/ktlint en CI.
+- [x] ktlint en CI (Q3). detekt espera versión estable para Kotlin 2.4.
 - [x] Tests instrumentados de los gateways reales contra el emulador (Q1).
 
 ## Versiones (revisión 2026-11-15)
@@ -261,5 +261,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 | OkHttp | 5.5.1 | 5.5.1 | n |
 | Turbine | 1.2.1 | 1.2.1 | n |
 | JUnit | 4.13.2 | 4.13.2 | n |
+| kotlinter (ktlint 1.8) | 5.7.0 | 5.7.0 | n |
+| configure-pages · upload-pages-artifact · deploy-pages | v6 · v5 · v5 | iguales | n |
 
 Cómo revisarlas: `maven-metadata.xml` de Google Maven y Maven Central, ignorando alpha/beta/rc.

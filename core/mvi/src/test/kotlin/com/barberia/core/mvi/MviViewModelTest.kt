@@ -32,8 +32,11 @@ class MviViewModelTest {
                     intent.gate.await()
                     setState { copy(log = log + intent.id) }
                 }
+
                 is I.Fast -> setState { copy(log = log + intent.id) }
+
                 I.Ping -> sendEffect(Pong)
+
                 I.Boom -> error("falla inesperada")
             }
         }
@@ -47,6 +50,7 @@ class MviViewModelTest {
     }
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
     @After fun tearDown() = Dispatchers.resetMain()
 
     @Test fun `los intents se procesan en el orden en que llegan`() = runTest {

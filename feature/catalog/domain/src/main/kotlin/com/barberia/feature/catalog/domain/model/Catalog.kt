@@ -18,13 +18,7 @@ value class Money(val cents: Long) {
     }
 }
 
-data class Service(
-    val id: String,
-    val name: String,
-    val durationMinutes: Int,
-    val price: Money,
-    val active: Boolean = true,
-)
+data class Service(val id: String, val name: String, val durationMinutes: Int, val price: Money, val active: Boolean = true)
 
 /** Lo que el dueño escribe en el formulario de servicio. */
 data class ServiceDraft(val name: String, val durationMinutes: Int, val price: Money)
@@ -71,7 +65,7 @@ data class StaffInvite(
     val barberId: String,
     val barberName: String,
     val expiresAt: java.time.Instant,
-    val usedBy: String?,
+    val usedBy: String?
 )
 
 /**
@@ -91,7 +85,7 @@ data class Barber(
     val name: String,
     val active: Boolean = true,
     val schedule: WeeklySchedule = WeeklySchedule.EMPTY,
-    val timeOff: List<TimeOff> = emptyList(),
+    val timeOff: List<TimeOff> = emptyList()
 ) {
     /** U2 + N2: tiene horario ese día de la semana y no lo tiene libre completo. */
     fun worksOn(date: LocalDate): Boolean =
@@ -102,12 +96,9 @@ data class Barber(
  * Todo el catálogo de una barbería vive en UN documento: el cliente lo carga con una sola lectura.
  * [version] sube en cada guardado para detectar ediciones simultáneas (C9).
  */
-data class Catalog(
-    val services: List<Service>,
-    val barbers: List<Barber>,
-    val version: Long,
-) {
+data class Catalog(val services: List<Service>, val barbers: List<Barber>, val version: Long) {
     val bookableServices: List<Service> get() = services.filter { it.active }
+
     /** Un barbero se puede reservar si está activo y tiene al menos un horario. */
     val bookableBarbers: List<Barber> get() = barbers.filter { it.active && !it.schedule.isEmpty }
 
@@ -125,10 +116,12 @@ enum class CatalogError {
     TOO_MANY_ITEMS,
     SCHEDULE_RANGE_INVALID,
     SCHEDULE_OVERLAP,
+
     /** N2: no se bloquea una fecha que ya pasó. */
     TIME_OFF_PAST,
+
     /** Fecha mal escrita en el formulario. */
-    DATE_INVALID,
+    DATE_INVALID
 }
 
 /** Lleva un [CatalogFailure] por un Flow (los flujos solo pueden fallar con excepciones). */

@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         // La app siempre es oscura: iconos claros en las barras del sistema.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT)
         )
         setContent {
             BarberTheme {
