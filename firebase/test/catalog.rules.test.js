@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, deleteDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, deleteDoc, Timestamp } from "firebase/firestore";
 
 let env;
 before(async () => {
@@ -14,8 +14,8 @@ before(async () => {
 after(() => env.cleanup());
 beforeEach(() => env.clearFirestore());
 
-const owner = () => env.authenticatedContext("ana", { email: "ana@mail.com" }).firestore();
-const client = () => env.authenticatedContext("beto", { email: "beto@mail.com" }).firestore();
+const owner = () => env.authenticatedContext("ana", { email: "ana@mail.com", email_verified: true }).firestore();
+const client = () => env.authenticatedContext("beto", { email: "beto@mail.com", email_verified: true }).firestore();
 const anon = () => env.unauthenticatedContext().firestore();
 
 const service = (i) => ({ id: `s${i}`, name: `S${i}`, durationMinutes: 30, priceCents: 15000, active: true });
@@ -23,6 +23,22 @@ const catalog = (version, extra = {}) => ({
   version, services: [service(1)], barbers: [], updatedAt: serverTimestamp(), ...extra,
 });
 const seed = (data) => env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), "tenants/ana/catalog/main"), data));
+
+describe("A14 el dueño debe verificar su correo para operar", () => {
+  const unverified = () => env.authenticatedContext("ana", { email: "ana@mail.com", email_verified: false }).firestore();
+
+  test("sin verificar no escribe el catálogo", () =>
+    assertFails(setDoc(doc(unverified(), "tenants/ana/catalog/main"), catalog(1))));
+
+  test("sin verificar no crea el código de la barbería", () =>
+    assertFails(setDoc(doc(unverified(), "shareCodes/ABC234"), { tenantId: "ana", createdAt: serverTimestamp() })));
+
+  test("sin verificar no invita barberos", () =>
+    assertFails(setDoc(doc(unverified(), "staffInvites/TON234"), {
+      tenantId: "ana", barberId: "b3", barberName: "T", createdAt: serverTimestamp(),
+      expiresAt: Timestamp.fromMillis(Date.now() + 86_400_000), usedBy: null,
+    })));
+});
 
 describe("tenants/{t}/catalog/main", () => {
   test("el dueño crea su catálogo con versión 1", () =>

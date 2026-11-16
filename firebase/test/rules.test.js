@@ -23,8 +23,8 @@ before(async () => {
 after(() => env.cleanup());
 beforeEach(() => env.clearFirestore());
 
-const ana = () => env.authenticatedContext("ana", { email: "ana@mail.com" }).firestore();
-const beto = () => env.authenticatedContext("beto", { email: "beto@mail.com" }).firestore();
+const ana = () => env.authenticatedContext("ana", { email: "ana@mail.com", email_verified: true }).firestore();
+const beto = () => env.authenticatedContext("beto", { email: "beto@mail.com", email_verified: true }).firestore();
 const anon = () => env.unauthenticatedContext().firestore();
 
 const clientProfile = (email = "ana@mail.com") => ({

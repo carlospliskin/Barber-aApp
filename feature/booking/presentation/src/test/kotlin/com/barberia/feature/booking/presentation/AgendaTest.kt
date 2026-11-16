@@ -116,6 +116,18 @@ class AgendaTest {
         assertEquals(false, vm.state.value.canNoShow(a2))
     }
 
+    @Test fun `F7-3 al tercer no-show avisa cuantas citas futuras se cancelaron`() {
+        runBlocking {
+            bookings.clients["cli"] = com.barberia.feature.booking.domain.model.ClientRecord("cli", "Ana", 0, 2, 0, null)
+            bookings.book(appt("f1", "b2", 600, "2026-11-20T16:00:00Z").copy(date = monday.plusDays(4)))
+        }
+        val vm = vm(StaffRole.OWNER)
+        vm.onIntent(AgendaIntent.NoShow("a1"))
+        // a2 (hoy 12:00, con b2) y f1 (día 20): ambas futuras del mismo cliente, con cualquier barbero
+        assertEquals(2, vm.state.value.penaltyNotice?.cancelledFuture)
+        assertEquals(AppointmentStatus.CANCELLED, vm.state.value.appointments.first { it.id == "a2" }.status)
+    }
+
     @Test fun `A7 resumen y cambiar de dia`() {
         val vm = vm(StaffRole.OWNER)
         assertEquals(2, vm.state.value.summary.total)

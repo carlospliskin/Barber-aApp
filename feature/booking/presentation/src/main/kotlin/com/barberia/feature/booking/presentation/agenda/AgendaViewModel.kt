@@ -16,6 +16,7 @@ import com.barberia.feature.booking.domain.usecase.DaySummary
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
 import com.barberia.feature.booking.domain.usecase.MarkNoShowUseCase
+import com.barberia.feature.booking.domain.usecase.NoShowOutcome
 import com.barberia.feature.booking.domain.usecase.ObserveAgendaUseCase
 import com.barberia.feature.booking.domain.usecase.summarize
 import com.barberia.feature.catalog.domain.model.Barber
@@ -46,6 +47,8 @@ data class AgendaState(
     val summary: DaySummary = summarize(emptyList()),
     val busyId: String? = null,
     val failure: BookingFailure? = null,
+    /** F7-3: resultado del último no-show que penalizó (para avisar cuántas citas se cancelaron). */
+    val penaltyNotice: NoShowOutcome? = null,
     /** Momento en que se calculó la vista; decide qué acciones se ofrecen (U7). */
     val now: Instant = Instant.EPOCH,
 ) : UiState {
@@ -124,9 +127,17 @@ class AgendaViewModel(
                 query.value = query.value?.copy(barberId = intent.barberId)
             }
             is AgendaIntent.Complete -> act(intent.id) { complete(it) }
-            is AgendaIntent.NoShow -> act(intent.id) { noShow(it) }
+            is AgendaIntent.NoShow -> act(intent.id) { a ->
+                when (val r = noShow(a)) {
+                    is AppResult.Success -> {
+                        if (r.value.penalized) setState { copy(penaltyNotice = r.value) }
+                        AppResult.Success(Unit)
+                    }
+                    is AppResult.Failure -> r
+                }
+            }
             is AgendaIntent.Cancel -> act(intent.id) { cancel(it) }
-            AgendaIntent.DismissFailure -> setState { copy(failure = null) }
+            AgendaIntent.DismissFailure -> setState { copy(failure = null, penaltyNotice = null) }
         }
     }
 

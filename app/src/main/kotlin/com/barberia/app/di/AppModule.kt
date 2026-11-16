@@ -2,7 +2,9 @@ package com.barberia.app.di
 
 import com.barberia.app.home.HomeViewModel
 import com.barberia.feature.auth.data.di.ApplicationScope
+import com.barberia.feature.auth.domain.usecase.CheckEmailVerifiedUseCase
 import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
+import com.barberia.feature.auth.domain.usecase.ResendVerificationEmailUseCase
 import com.barberia.feature.auth.domain.usecase.ObserveSessionDestinationUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterClientUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterOwnerUseCase
@@ -35,4 +37,6 @@ val authDomainModule = module {
     factoryOf(::ObserveSessionDestinationUseCase)
     factoryOf(::ObserveCurrentUserUseCase)
     factoryOf(::RetrySessionUseCase)
+    factoryOf(::ResendVerificationEmailUseCase)
+    factoryOf(::CheckEmailVerifiedUseCase)
 }

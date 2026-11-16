@@ -44,14 +44,19 @@ class BookingDataTest {
     // ── Repositorio ───────────────────────────────────────────────────────────
     private class FakeGateway : BookingGateway {
         var day: Map<String, Any?>? = null
-        val active = mutableListOf<Map<String, Any?>>()
+        val active = mutableListOf<Pair<String, Map<String, Any?>>>()
         var bookError: Exception? = null
         val live = MutableStateFlow<List<Pair<String, Map<String, Any?>>>>(emptyList())
         var lastCancel: Set<String>? = null
         override suspend fun getDay(tenantId: String, dayId: String) = day
         override suspend fun activeAppointments(tenantId: String, clientUid: String) = active
-        override suspend fun book(tenantId: String, apptId: String, appointment: Map<String, Any?>, dayId: String, keys: Set<String>) {
+        var newClient: Map<String, Any?>? = null
+        override suspend fun book(
+            tenantId: String, apptId: String, appointment: Map<String, Any?>, dayId: String, keys: Set<String>,
+            clientUid: String, newClient: Map<String, Any?>,
+        ) {
             bookError?.let { throw it }
+            this.newClient = newClient
         }
         override suspend fun cancel(tenantId: String, apptId: String, dayId: String, keys: Set<String>) {
             lastCancel = keys
@@ -106,9 +111,17 @@ class BookingDataTest {
     }
 
     @Test fun `citas activas desde hoy (las viejas no cuentan)`() = runTest {
-        gw.active += AppointmentMapper.toMap(cita)
-        gw.active += AppointmentMapper.toMap(cita.copy(date = LocalDate.of(2026, 11, 1)))
+        gw.active += "a1" to AppointmentMapper.toMap(cita)
+        gw.active += "a0" to AppointmentMapper.toMap(cita.copy(date = LocalDate.of(2026, 11, 1)))
         assertEquals(AppResult.Success(1), repo.countActive("t", "cli", LocalDate.of(2026, 11, 16)))
+    }
+
+    @Test fun `F7-6 al reservar se manda la ficha nueva en ceros ligada a la cita`() = runTest {
+        repo.book(cita)
+        assertEquals(
+            mapOf("name" to "Ana", "completed" to 0L, "noShows" to 0L, "rewardsUsed" to 0L, "penaltyUntil" to null, "lastAppointmentId" to "a1"),
+            gw.newClient,
+        )
     }
 
     @Test fun `B3 si el gateway detecta choque es SlotTaken`() = runTest {

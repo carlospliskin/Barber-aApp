@@ -22,9 +22,22 @@ service cloud.firestore {
       return value == null || (value is string && value.size() <= max);
     }
 
+    // A14: el dueño verifica su correo antes de operar (Firebase lo pone en el token).
+    function emailVerified() {
+      return request.auth.token.get('email_verified', false) == true;
+    }
+
     // Perfil de quien hace la petición (1 lectura, se reutiliza dentro de la misma petición).
     function myProfile() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Dueño o cualquier barbero de la barbería.
+    function isStaffOfTenant(tenantId) {
+      return isSelf(tenantId)
+        || (signedIn()
+            && myProfile().get('staffRole', null) == 'BARBER'
+            && myProfile().get('staffTenantId', null) == tenantId);
     }
 
     // A2: barbero ligado a esta barbería y a este barbero del catálogo.
@@ -118,11 +131,11 @@ service cloud.firestore {
 
       allow get: if signedIn() && docId == 'main';
       allow list: if false;
-      allow create: if isSelf(tenantId) && docId == 'main'
+      allow create: if isSelf(tenantId) && emailVerified() && docId == 'main'
         && validCatalog(request.resource.data)
         && request.resource.data.version == 1;
       // C9: solo se guarda sobre la versión que se leyó (versión + 1).
-      allow update: if isSelf(tenantId)
+      allow update: if isSelf(tenantId) && emailVerified()
         && validCatalog(request.resource.data)
         && request.resource.data.version == resource.data.version + 1;
       allow delete: if false;
@@ -190,8 +203,18 @@ service cloud.firestore {
         return isSelf(tenantId) || isBarberOf(tenantId, data.barberId);
       }
 
+      // F7-3: cliente con penalización vigente (para cancelar sus citas futuras con cualquier barbero).
+      function clientPenalized(data) {
+        let client = /databases/$(database)/documents/tenants/$(tenantId)/clients/$(data.clientUid);
+        return exists(client)
+          && get(client).data.get('penaltyUntil', null) != null
+          && get(client).data.penaltyUntil > request.time;
+      }
+
       // A2/A3: cliente sus citas; dueño todas; barbero las suyas (la consulta debe filtrar por barberId).
-      allow get, list: if isMine() || isStaffFor(resource.data);
+      // F7-3: cualquier personal ve las de un cliente penalizado (la consulta filtra por clientUid).
+      allow get, list: if isMine() || isStaffFor(resource.data)
+        || (isStaffOfTenant(tenantId) && clientPenalized(resource.data));
       allow create: if signedIn() && validNew(request.resource.data);
       // Cancelar: el cliente hasta 2 h antes (B7); el dueño cuando sea. Se liberan los bloques en el mismo batch.
       allow update: if resource.data.status == 'BOOKED'
@@ -200,7 +223,8 @@ service cloud.firestore {
           // Cancelar (libera bloques en el mismo batch). Cliente hasta 2 h antes; personal cuando sea (A5).
           (request.resource.data.status == 'CANCELLED'
             // W4: el personal solo antes de la hora (después: atendida o no-show, para no esconder no-shows)
-            && ((isStaffFor(resource.data) && request.time < resource.data.startsAt)
+            && (((isStaffFor(resource.data) || (isStaffOfTenant(tenantId) && clientPenalized(resource.data)))
+                  && request.time < resource.data.startsAt)
                 || (isMine() && request.time < resource.data.startsAt - duration.value(2, 'h')))
             && dayAfter(resource.data).lastOp == apptId)
           ||
@@ -256,7 +280,7 @@ service cloud.firestore {
     match /shareCodes/{code} {
       allow get: if signedIn();
       allow list: if false;
-      allow create: if signedIn()
+      allow create: if signedIn() && emailVerified()
         && request.resource.data.keys().hasOnly(['tenantId', 'createdAt'])
         && request.resource.data.tenantId == request.auth.uid
         && request.resource.data.createdAt == request.time
@@ -312,16 +336,17 @@ service cloud.firestore {
             (after.status == 'NO_SHOW'
               && d.completed == prev('completed')
               && d.noShows == prev('noShows') + 1
-              // P1: penalización solo desde 3 no-shows y máximo 14 días (+5 min de reloj, A11)
+              // P1: penalización máximo 14 días (+5 min de reloj, A11)
               && (d.penaltyUntil == prevPenalty()
-                  || (d.noShows >= 3 && d.penaltyUntil is timestamp
+                  // F7-1: solo en múltiplos de 3 (3, 6, 9…)
+                  || (d.noShows % 3 == 0 && d.penaltyUntil is timestamp
                       && d.penaltyUntil <= request.time + duration.value(14, 'd') + duration.value(5, 'm'))))
           );
       }
 
-      // P4: canjear un premio (cada 10 visitas). Cualquier personal de la barbería.
+      // P4: canjear un premio (cada 10 visitas). F7-8: solo el dueño.
       function redeemsReward(d) {
-        return resource != null && isTenantStaff()
+        return resource != null && isSelf(tenantId)
           && d.completed == prev('completed') && d.noShows == prev('noShows') && d.penaltyUntil == prevPenalty()
           && d.rewardsUsed == prev('rewardsUsed') + 1
           && d.rewardsUsed * 10 <= d.completed;
@@ -334,9 +359,20 @@ service cloud.firestore {
           && d.noShows == 0 && d.penaltyUntil == null;
       }
 
+      // F7-6: el cliente crea su propia ficha (en ceros) en el mismo batch de su primera reserva.
+      function createdAtFirstBooking(d) {
+        return resource == null
+          && signedIn() && request.auth.uid == clientUid
+          && d.completed == 0 && d.noShows == 0 && d.rewardsUsed == 0 && d.penaltyUntil == null
+          && !exists(apptPath(d))
+          && getAfter(apptPath(d)).data.clientUid == clientUid
+          && getAfter(apptPath(d)).data.status == 'BOOKED';
+      }
+
       allow get: if (signedIn() && request.auth.uid == clientUid) || isTenantStaff();
       allow list: if isSelf(tenantId);
       allow create, update: if validShape(request.resource.data) && (
+        createdAtFirstBooking(request.resource.data) ||
         redeemsReward(request.resource.data)
         || forgives(request.resource.data)
         || (exists(apptPath(request.resource.data)) && marksAppointment(request.resource.data))
@@ -348,7 +384,7 @@ service cloud.firestore {
     match /staffInvites/{code} {
       allow get: if signedIn();
       allow list: if false;
-      allow create: if signedIn()
+      allow create: if signedIn() && emailVerified()
         && isSelf(request.resource.data.tenantId)
         && request.resource.data.keys().hasOnly(['tenantId', 'barberId', 'barberName', 'createdAt', 'expiresAt', 'usedBy'])
         && request.resource.data.usedBy == null

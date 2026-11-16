@@ -12,7 +12,7 @@ primero el test que demuestra el hueco, luego el arreglo. Al cerrarlo, se marca 
 **Esfuerzo:** S (≤ 2 h) · M (medio día a 1 día) · L (varios días).
 **Decisión:** el punto necesita que el dueño del producto elija una opción antes de programarlo.
 
-Estado a la fecha: 8 de 10 fases terminadas · 205 tests Kotlin · 93 pruebas de reglas · CI en verde.
+Estado a la fecha: 8 de 10 fases terminadas · CI en verde. ✅ = resuelto (ver «Resueltos» al final).
 
 ---
 
@@ -22,14 +22,14 @@ Encontrados revisando el código ya implementado.
 
 | ID | Prioridad | Esfuerzo | Hueco | Cómo resolverlo | Cómo probarlo |
 |---|---|---|---|---|---|
-| F7-1 | P1 | S | **Re-penalización inmediata.** Al terminar la penalización, `noShows` sigue en 3; el 4.º no-show vuelve a penalizar 14 días (`total >= 3` en `Loyalty.kt`). **Decisión:** ¿se cuenta desde cero después de cada penalización? | Opción A: penalizar cuando `noShows % 3 == 0`. Opción B: contar solo no-shows de los últimos 90 días. | Test de dominio: 3 no-shows → penaliza; 4.º → no penaliza (opción A). |
+| F7-1 | ✅ | S | **Re-penalización inmediata.** Al terminar la penalización, `noShows` sigue en 3; el 4.º no-show vuelve a penalizar 14 días (`total >= 3` en `Loyalty.kt`). **Decisión:** ¿se cuenta desde cero después de cada penalización? | Opción A: penalizar cuando `noShows % 3 == 0`. Opción B: contar solo no-shows de los últimos 90 días. | Test de dominio: 3 no-shows → penaliza; 4.º → no penaliza (opción A). |
 | F7-2 | P1 | M | **No hay "deshacer".** Si el personal marca atendida o no-show por error, no se puede corregir (A6). Contadores y penalización quedan mal; perdonar solo borra no-shows. | "Deshacer" solo del dueño, dentro de 15 min: estado → BOOKED y contador −1, en el mismo batch. Regla nueva para esa transición. | Reglas: deshacer en ≤ 15 min pasa; después, o hecho por un barbero, falla. Dominio: contador −1. |
-| F7-3 | P2 | S | **Penalizado con citas futuras.** La penalización no toca las citas ya reservadas. **Decisión:** ¿se cancelan o se respetan? | Si se cancelan: en el mismo flujo del 3.er no-show, cancelar sus citas BOOKED futuras y liberar bloques. | Dominio + reglas del batch. |
+| F7-3 | ✅ | S | **Penalizado con citas futuras.** La penalización no toca las citas ya reservadas. **Decisión:** ¿se cancelan o se respetan? | Si se cancelan: en el mismo flujo del 3.er no-show, cancelar sus citas BOOKED futuras y liberar bloques. | Dominio + reglas del batch. |
 | F7-4 | P2 | S | **Pantallas desactualizadas.** "Penalizado hasta", y los botones atendida, no-show y cancelar, se calculan al llegar datos. Con la pantalla abierta no se actualizan al pasar la hora. | Un "reloj" en el ViewModel que actualice `now` cada minuto. | ViewModel con reloj de prueba: avanzar el tiempo cambia `canComplete` y `penalizedUntil`. |
 | F7-5 | P2 | M | **Lista de clientes limitada.** Solo los 50 actualizados más recientemente, sin búsqueda ni paginación. Un penalizado antiguo puede no aparecer. | Paginación (`startAfter`) y búsqueda por nombre (prefijo en un campo `nameLower`). | Gateway contra emulador; ViewModel con fake. |
-| F7-6 | P2 | S | **Clientes sin ficha.** Quien solo ha reservado (sin visita marcada) no aparece en la lista. **Decisión:** ¿deben aparecer? | Crear la ficha al reservar: 1 escritura más por reserva y su regla. | Reglas + dominio. |
+| F7-6 | ✅ | S | **Clientes sin ficha.** Quien solo ha reservado (sin visita marcada) no aparece en la lista. **Decisión:** ¿deben aparecer? | Crear la ficha al reservar: 1 escritura más por reserva y su regla. | Reglas + dominio. |
 | F7-7 | P3 | S | El nombre de la ficha se copia una vez; si el cliente lo cambia, no se actualiza. | Actualizar `name` en cada atendida o no-show (la regla ya permite el campo). | Dominio. |
-| F7-8 | P2 | S | **Barberos canjean premios.** La regla usa `isTenantStaff()`. **Decisión:** ¿solo el dueño? | Cambiar a `isSelf(tenantId)` si se decide. | Reglas. |
+| F7-8 | ✅ | S | **Barberos canjean premios.** La regla usa `isTenantStaff()`. **Decisión:** ¿solo el dueño? | Cambiar a `isSelf(tenantId)` si se decide. | Reglas. |
 | F7-9 | P2 | M | **Marcar estado requiere internet.** Es una transacción, y sin red falla. Hay barberías con conexión mala. | Mostrar claramente "sin conexión, reintenta" con un botón de reintentar. Cola offline más adelante. | ViewModel con repo que falla por red. |
 | F7-10 | P2 | S | **Canje de premio sin probar en dispositivo.** Necesita 10 visitas. | Sembrar 10 visitas en el emulador y canjear desde la pantalla de clientes. | Prueba de punta a punta (ver sección 4). |
 | F7-11 | P3 | S | **Costo de marcar estado sin medir.** Unas 4 lecturas de reglas + 1 de la transacción por cita. | Documentarlo en FIREBASE.md y vigilar el uso en la consola. | — |
@@ -39,7 +39,7 @@ Encontrados revisando el código ya implementado.
 | ID | Prioridad | Esfuerzo | Hueco | Cómo resolverlo |
 |---|---|---|---|---|
 | V3 | **P0** | M | **Abusos saltándose la app.** Las reglas no pueden recorrer listas: alguien con un script puede reservar fuera del horario del barbero, saltarse el límite de 2 citas (B5) o crear muchas citas. | **App Check con Play Integrity** (gratis en Spark) y exigirlo en Firestore. Probar primero en modo "monitor". |
-| A14 | P1 | S | **Verificación de email.** Se envía el correo pero no se exige. **Decisión:** ¿el dueño debe verificar antes de operar? | Si sí: bloquear catálogo y código hasta `emailVerified`, con botón "ya verifiqué" que recargue el usuario. |
+| A14 | ✅ | S | **Verificación de email.** Se envía el correo pero no se exige. **Decisión:** ¿el dueño debe verificar antes de operar? | Si sí: bloquear catálogo y código hasta `emailVerified`, con botón "ya verifiqué" que recargue el usuario. |
 | R2 | P2 | S | **Precio escrito por el cliente.** La regla solo pide entero ≥ 0; podría guardar $0. Hoy se cobra en el local con el precio real. | Si algún día se cobra en la app: guardar los servicios como mapa por id en el catálogo para que la regla compare el precio. |
 | W3 | P3 | S | **Dos invitaciones para el mismo barbero** ligan dos cuentas a él. | Al crear una invitación, avisar si ya hay una cuenta ligada a ese barbero. |
 
@@ -72,7 +72,7 @@ Encontrados revisando el código ya implementado.
 
 | ID | Prioridad | Esfuerzo | Deuda | Cómo resolverla |
 |---|---|---|---|---|
-| AR1 | P2 | S | **Textos fijos en `HomeScreen`** ("Agenda", "Catálogo", "Clientes", "Cerrar sesión", "Revisa tu correo…"), fuera de `strings.xml`. | Moverlos a recursos. |
+| AR1 | ✅ | S | **Textos fijos en `HomeScreen`** ("Agenda", "Catálogo", "Clientes", "Cerrar sesión", "Revisa tu correo…"), fuera de `strings.xml`. | Moverlos a recursos. |
 | AR2 | P2 | M | **El home vive en `:app`** (`HomeViewModel`, `HomeScreen`): lógica de pantalla en el composition root. | Crear `feature:home:presentation`. |
 | AR3 | P2 | M | **`feature:booking` creció demasiado:** reservas + agenda + clientes + lealtad (27 archivos). | Dividir en `feature:agenda` y `feature:clients`; el mapa mostrará el antes y el después. |
 | AR4 | P3 | M | **Acoplamiento entre features.** Tres módulos de presentación dependen de `auth:domain` solo para saber quién es el usuario. | `core:session` con una interfaz mínima (`CurrentUser`); auth la implementa. |
@@ -99,3 +99,17 @@ Encontrados revisando el código ya implementado.
 | 4. Red de seguridad | Q1, Q2, Q3 | Antes de que el código crezca más. |
 | 5. Fase 9 | A7, PLAY-1, L1, L2 | Publicación. |
 | 6. Después del lanzamiento | El resto de P2 y P3 (AR1-AR4, F7-4, F7-5, N4-N6, Q4-Q6) | Mejoras sin bloqueo. |
+
+---
+
+## Resueltos
+
+| ID | Decisión | Cómo quedó |
+|---|---|---|
+| F7-1 | Contar desde cero | Penalización cada 3 faltas (3, 6, 9…); el total de faltas se conserva como historial. Dominio y reglas (`noShows % 3 == 0`). |
+| F7-3 | Sí, cancelar | Al penalizar se cancelan sus citas futuras en esa barbería, con cualquier barbero, y se liberan los horarios. Cualquier personal puede ver y cancelar las citas de un cliente **solo si está penalizado**. La agenda avisa cuántas se cancelaron. |
+| F7-6 | Sí: quienes reservaron | La ficha se crea en la primera reserva, en ceros y en la misma transacción. El cliente no puede regalarse visitas (reglas). Quien solo se unió con el código y no reservó no aparece. |
+| F7-8 | Solo el dueño | Canjear premios: regla `isSelf(tenantId)`. |
+| A14 | Sí (gratis en Spark: 1,000 correos de verificación al día) | El dueño ve "Verifica tu correo" con "Ya lo verifiqué" y "Reenviar" (máx. 1 cada 60 s). Catálogo, agenda, clientes y código quedan bloqueados hasta verificar; las reglas exigen `email_verified` para catálogo, códigos e invitaciones. |
+| A15 | (nuevo) | Tras verificar se fuerza un token nuevo (`getIdToken(true)`); si no, las reglas veían "no verificado" hasta 1 hora. |
+| AR1 | — | Los textos del home pasaron a `strings.xml`. |

@@ -31,7 +31,8 @@ data class ClientRecord(
     /** P1: un no-show más; al llegar al límite queda penalizado. */
     fun afterNoShow(now: Instant, p: LoyaltyPolicy): ClientRecord {
         val total = noShows + 1
-        val penalty = if (total >= p.noShowsForPenalty) now.plus(Duration.ofDays(p.penaltyDays)) else penaltyUntil
+        // F7-1: cada N faltas (3, 6, 9…). Tras cumplir el castigo se cuenta desde cero; el total se conserva.
+        val penalty = if (total % p.noShowsForPenalty == 0) now.plus(Duration.ofDays(p.penaltyDays)) else penaltyUntil
         return copy(noShows = total, penaltyUntil = penalty)
     }
 

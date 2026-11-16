@@ -62,7 +62,7 @@
         ":core:common"
       ],
       "kotlinFiles": 6,
-      "unitTests": 27
+      "unitTests": 29
     },
     {
       "path": ":feature:auth:data",
@@ -73,7 +73,7 @@
         ":feature:auth:domain"
       ],
       "kotlinFiles": 6,
-      "unitTests": 15
+      "unitTests": 16
     },
     {
       "path": ":feature:auth:presentation",
@@ -84,8 +84,8 @@
         ":core:mvi",
         ":feature:auth:domain"
       ],
-      "kotlinFiles": 12,
-      "unitTests": 18
+      "kotlinFiles": 13,
+      "unitTests": 21
     },
     {
       "path": ":feature:catalog:domain",
@@ -130,7 +130,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 8,
-      "unitTests": 41
+      "unitTests": 44
     },
     {
       "path": ":feature:booking:data",
@@ -141,7 +141,7 @@
         ":feature:booking:domain"
       ],
       "kotlinFiles": 7,
-      "unitTests": 20
+      "unitTests": 21
     },
     {
       "path": ":feature:booking:presentation",
@@ -155,7 +155,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 12,
-      "unitTests": 21
+      "unitTests": 22
     }
   ],
   "navigation": {
@@ -496,6 +496,10 @@
           "viewModel": "ShareCodeViewModel"
         },
         {
+          "component": "VerifyEmailCard",
+          "viewModel": "VerifyEmailViewModel"
+        },
+        {
           "component": "LoyaltyCard",
           "viewModel": "LoyaltyViewModel"
         },
@@ -506,15 +510,18 @@
       ],
       "intents": [
         "Cancel",
+        "Check",
         "CodeChanged",
         "DismissFailure",
         "Join",
         "Leave",
         "Redeem",
+        "Resend",
         "SignOut"
       ],
       "useCases": [
         "CancelAppointmentUseCase",
+        "CheckEmailVerifiedUseCase",
         "EnsureShareCodeUseCase",
         "JoinBarbershopUseCase",
         "LeaveBarbershopUseCase",
@@ -523,6 +530,7 @@
         "ObserveMyAppointmentsUseCase",
         "ObserveMyLoyaltyUseCase",
         "RedeemBarberInviteUseCase",
+        "ResendVerificationEmailUseCase",
         "RetrySessionUseCase",
         "SignOutUseCase"
       ]
@@ -675,6 +683,13 @@
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
       "uses": [
         "BookingRepository"
+      ]
+    },
+    {
+      "name": "CheckEmailVerifiedUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository"
       ]
     },
     {
@@ -833,6 +848,13 @@
       "uses": [
         "CatalogEditor",
         "CatalogRepository"
+      ]
+    },
+    {
+      "name": "ResendVerificationEmailUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository"
       ]
     },
     {
@@ -1016,5 +1038,5 @@
       ]
     }
   ],
-  "rulesTests": 93
+  "rulesTests": 103
 }

@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, Timestamp, updateDoc, writeBatch } from "firebase/firestore";
+import { collection, deleteField, doc, getDoc, getDocs, query, serverTimestamp, setDoc, Timestamp, updateDoc, where, writeBatch } from "firebase/firestore";
 
 let env;
 before(async () => {
@@ -14,7 +14,7 @@ before(async () => {
 after(() => env.cleanup());
 beforeEach(() => env.clearFirestore());
 
-const db = (uid) => env.authenticatedContext(uid, { email: `${uid}@mail.com` }).firestore();
+const db = (uid) => env.authenticatedContext(uid, { email: `${uid}@mail.com`, email_verified: true }).firestore();
 const ago = (min) => Timestamp.fromMillis(Date.now() - min * 60_000);
 const inDays = (d) => Timestamp.fromMillis(Date.now() + d * 86_400_000);
 const profile = (extra = {}) => ({ displayName: "X", email: "x@mail.com", phone: null, staffTenantId: null, staffRole: null, createdAt: new Date(), ...extra });
@@ -76,6 +76,13 @@ describe("P3 / P7 visitas y no-shows junto con la cita", () => {
     await assertSucceeds(mark("ana", "a1", "NO_SHOW", stats({ noShows: 3, penaltyUntil: inDays(14) })));
   });
 
+  test("F7-1 la 4.ª falta no penaliza; la 6.ª sí (cada 3)", async () => {
+    await world({ noShows: 3 });
+    await assertFails(mark("ana", "a1", "NO_SHOW", stats({ noShows: 4, penaltyUntil: inDays(14) })));
+    await world({ noShows: 5 });
+    await assertSucceeds(mark("ana", "a2", "NO_SHOW", stats({ noShows: 6, penaltyUntil: inDays(14) })));
+  });
+
   test("P1 no se puede penalizar antes de 3 ni por más de 14 días", async () => {
     await world({ noShows: 0 });
     await assertFails(mark("ana", "a1", "NO_SHOW", stats({ noShows: 1, penaltyUntil: inDays(14) })));
@@ -95,6 +102,11 @@ describe("P4 / P5 premios y penalización (personal)", () => {
   test("P4 se canjea un premio si hay visitas suficientes", async () => {
     await world({ completed: 10 });
     await assertSucceeds(owner(stats({ completed: 10, rewardsUsed: 1 })));
+  });
+
+  test("F7-8 un barbero no canjea premios (solo el dueño)", async () => {
+    await world({ completed: 10 });
+    await assertFails(setDoc(doc(db("luis"), "tenants/ana/clients/cli"), { ...stats({ completed: 10, rewardsUsed: 1 }), lastAppointmentId: "x" }));
   });
 
   test("P4 no se canjea más de lo ganado", async () => {
@@ -130,9 +142,10 @@ describe("P8 / P5 leer", () => {
 });
 
 describe("P2 penalizado no reserva", () => {
-  function book(uid) {
+  function book(uid, withClient = null) {
     const d = db(uid);
     const b = writeBatch(d);
+    if (withClient) b.set(doc(d, `tenants/ana/clients/${uid}`), { ...withClient, lastAppointmentId: "n1" });
     b.set(doc(d, "tenants/ana/appointments/n1"), {
       clientUid: uid, clientName: "Cli", barberId: "b1", barberName: "L", serviceId: "s1", serviceName: "Corte", priceCents: 15000,
       date: "2026-12-01", startMinute: 600, endMinute: 605, startsAt: Timestamp.fromDate(new Date("2026-12-01T16:00:00Z")),
@@ -147,8 +160,57 @@ describe("P2 penalizado no reserva", () => {
     await assertFails(book("cli"));
   });
 
+  test("F7-6 al reservar por primera vez el cliente crea su ficha en ceros", async () => {
+    await world();
+    await assertSucceeds(book("cli", stats()));
+  });
+
+  test("F7-6 el cliente no puede crear su ficha con visitas regaladas", async () => {
+    await world();
+    await assertFails(book("cli", stats({ completed: 9 })));
+  });
+
+  test("F7-6 no se crea la ficha de otro ni sin reservar", async () => {
+    await world();
+    await seed("users/otro", profile());
+    await assertFails(setDoc(doc(db("otro"), "tenants/ana/clients/cli"), { ...stats(), lastAppointmentId: "n1" }));
+    await assertFails(setDoc(doc(db("cli"), "tenants/ana/clients/cli"), { ...stats(), lastAppointmentId: "a1" }));
+  });
+
   test("con la penalización vencida sí reserva", async () => {
     await world({ noShows: 3, penaltyUntil: ago(1) });
     await assertSucceeds(book("cli"));
+  });
+});
+
+describe("F7-3 al penalizar se cancelan sus citas futuras", () => {
+  async function futureWithOtherBarber() {
+    await seed("tenants/ana/appointments/f1", {
+      clientUid: "cli", clientName: "Cli", barberId: "b2", barberName: "P", serviceId: "s1", serviceName: "Corte", priceCents: 15000,
+      date: "2026-12-01", startMinute: 600, endMinute: 605, startsAt: inDays(5), status: "BOOKED", slotKeys: ["600"], dayId: "b2_2026-12-01", createdAt: new Date(),
+    });
+    await seed("tenants/ana/days/b2_2026-12-01", { booked: { 600: "f1" }, lastOp: "f1", updatedAt: new Date() });
+  }
+  function cancelAs(uid) {
+    const d = db(uid);
+    const b = writeBatch(d);
+    b.update(doc(d, "tenants/ana/appointments/f1"), { status: "CANCELLED", updatedAt: serverTimestamp() });
+    b.update(doc(d, "tenants/ana/days/b2_2026-12-01"), { "booked.600": deleteField(), lastOp: "f1", updatedAt: serverTimestamp() });
+    return b.commit();
+  }
+  const activeOf = (uid) => getDocs(query(collection(db(uid), "tenants/ana/appointments"), where("clientUid", "==", "cli"), where("status", "==", "BOOKED")));
+
+  test("un barbero ve y cancela las citas futuras de un cliente penalizado aunque sean con otro barbero", async () => {
+    await world({ noShows: 3, penaltyUntil: inDays(14) });
+    await futureWithOtherBarber();
+    await assertSucceeds(activeOf("luis"));
+    await assertSucceeds(cancelAs("luis"));
+  });
+
+  test("si el cliente no está penalizado, no", async () => {
+    await world({ noShows: 1 });
+    await futureWithOtherBarber();
+    await assertFails(activeOf("luis"));
+    await assertFails(cancelAs("luis"));
   });
 });

@@ -47,7 +47,10 @@ class AgendaUseCasesTest {
     @Test fun `A4 no-show con 10 minutos de tolerancia`() = runTest {
         val a = appt("a1")
         assertEquals(AppResult.Failure(BookingFailure.TooEarly), MarkNoShowUseCase(repo, clockAt("2026-11-16T16:09:00Z"))(a))
-        assertEquals(AppResult.Success(Unit), MarkNoShowUseCase(repo, clockAt("2026-11-16T16:10:00Z"))(a))
+        assertEquals(
+            AppResult.Success(com.barberia.feature.booking.domain.usecase.NoShowOutcome(false, 0, 0)),
+            MarkNoShowUseCase(repo, clockAt("2026-11-16T16:10:00Z"))(a),
+        )
     }
 
     @Test fun `A6 un estado final no cambia`() = runTest {

@@ -19,7 +19,9 @@ import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.booking.presentation.client.ClientHomeRoute
 import com.barberia.feature.booking.presentation.owner.ShareCodeCard
 import androidx.compose.ui.res.stringResource
+import com.barberia.app.R
 import com.barberia.feature.auth.presentation.common.labelRes
+import com.barberia.feature.auth.presentation.verify.VerifyEmailCard
 import org.koin.androidx.compose.koinViewModel
 
 /** Home por modo: cliente → reservas; dueño → código, agenda y catálogo; barbero → agenda. */
@@ -45,23 +47,28 @@ fun HomeRoute(
         Text(stringResource(mode.labelRes()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         Text(state.displayName, style = MaterialTheme.typography.headlineMedium)
         Text(state.email, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (!state.emailVerified) {
+        // A14: el dueño opera solo con el correo verificado (las reglas también lo exigen).
+        val ownerLocked = mode == AppMode.OWNER && !state.emailVerified
+        if (!state.emailVerified && mode != AppMode.OWNER) {
             Spacer(Modifier.height(8.dp))
-            Text("Revisa tu correo para verificar la cuenta.", color = MaterialTheme.colorScheme.secondary)
+            Text(stringResource(R.string.home_check_email), color = MaterialTheme.colorScheme.secondary)
         }
         Spacer(Modifier.height(24.dp))
-        if (mode == AppMode.OWNER) {
+        if (ownerLocked) {
+            VerifyEmailCard()
+            Spacer(Modifier.height(16.dp))
+        } else if (mode == AppMode.OWNER) {
             ShareCodeCard()
             Spacer(Modifier.height(16.dp))
         }
-        BarberButton(text = "Agenda", onClick = onOpenAgenda)
+        BarberButton(text = stringResource(R.string.home_agenda), onClick = onOpenAgenda, enabled = !ownerLocked)
         Spacer(Modifier.height(12.dp))
         if (mode == AppMode.OWNER) {
-            BarberButton(text = "Catálogo", onClick = onOpenCatalog)
+            BarberButton(text = stringResource(R.string.home_catalog), onClick = onOpenCatalog, enabled = !ownerLocked)
             Spacer(Modifier.height(12.dp))
-            BarberButton(text = "Clientes", onClick = onOpenClients)
+            BarberButton(text = stringResource(R.string.home_clients), onClick = onOpenClients, enabled = !ownerLocked)
             Spacer(Modifier.height(12.dp))
         }
-        BarberButton(text = "Cerrar sesión", onClick = { viewModel.onIntent(HomeIntent.SignOut) })
+        BarberButton(text = stringResource(R.string.home_sign_out), onClick = { viewModel.onIntent(HomeIntent.SignOut) })
     }
 }

@@ -20,6 +20,9 @@ internal interface AuthGateway {
     /** Crea la cuenta y deja la sesión iniciada. Devuelve el uid. */
     suspend fun createUser(email: String, password: String): String
     suspend fun sendEmailVerification()
+
+    /** Recarga el usuario y fuerza un token nuevo (A15). Devuelve si el correo ya está verificado. */
+    suspend fun reload(): Boolean
     suspend fun sendPasswordReset(email: String)
     suspend fun deleteCurrentUser()
     fun signOut()

@@ -33,7 +33,7 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
             .whereEqualTo("clientUid", clientUid)
             .whereEqualTo("status", "BOOKED")
             .get().await()
-            .documents.map { it.data.orEmpty().fromFirestore() }
+            .documents.map { it.id to it.data.orEmpty().fromFirestore() }
     }
 
     override suspend fun book(
@@ -42,12 +42,16 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         appointment: Map<String, Any?>,
         dayId: String,
         keys: Set<String>,
+        clientUid: String,
+        newClient: Map<String, Any?>,
     ) {
         unwrapSlotTaken {
             firebaseCall {
                 val dayRef = tenantRef(tenantId).collection("days").document(dayId)
                 val apptRef = tenantRef(tenantId).collection("appointments").document(apptId)
                 db.runTransaction { tx ->
+                    val clientRef = tenantRef(tenantId).collection("clients").document(clientUid)
+                    val hasClient = tx.get(clientRef).exists() // las lecturas van antes que las escrituras
                     @Suppress("UNCHECKED_CAST")
                     val booked = (tx.get(dayRef).get("booked") as? Map<String, Any?>).orEmpty()
                     if (keys.any { it in booked }) throw SlotTakenException()
@@ -60,6 +64,7 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
                             "updatedAt" to FieldValue.serverTimestamp(),
                         ),
                     )
+                    if (!hasClient) tx.set(clientRef, newClient + ("updatedAt" to FieldValue.serverTimestamp()))
                 }.await()
             }
         }

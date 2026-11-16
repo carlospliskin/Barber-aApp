@@ -29,6 +29,9 @@ class FakeBookingRepository : BookingRepository {
 
     var activeOverride: Int? = null
 
+    override suspend fun activeAppointments(tenantId: String, clientUid: String): BookingResult<List<Appointment>> =
+        AppResult.Success(all.value.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED })
+
     override suspend fun countActive(tenantId: String, clientUid: String, from: LocalDate): BookingResult<Int> =
         activeOverride?.let { AppResult.Success(it) } ?: AppResult.Success(all.value.count { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) })
 
@@ -38,6 +41,9 @@ class FakeBookingRepository : BookingRepository {
         if (appointment.slots.any { it in day }) return AppResult.Failure(BookingFailure.SlotTaken)
         appointment.slots.forEach { day[it] = appointment.id }
         all.value = all.value + appointment
+        // F7-6: primera reserva crea la ficha en ceros
+        clients.getOrPut(appointment.clientUid) { ClientRecord.new(appointment.clientUid, appointment.clientName) }
+        publishClients()
         return AppResult.Success(Unit)
     }
 

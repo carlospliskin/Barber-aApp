@@ -109,6 +109,16 @@ internal class FirebaseAccountRepository(
 
     override suspend fun signOut() = auth.signOut()
 
+    override suspend fun resendVerificationEmail(): AuthResult<Unit> = attempt { auth.sendEmailVerification() }
+
+    override suspend fun reloadUser(): AuthResult<Boolean> {
+        var verified = false
+        val r = attempt { verified = auth.reload() }
+        if (r is AppResult.Failure) return r
+        refresh() // la sesión vuelve a leer la cuenta con emailVerified actualizado
+        return AppResult.Success(verified)
+    }
+
     // ── Internos ──────────────────────────────────────────────────────────────
 
     private suspend fun loadSession(uid: String): SessionState {

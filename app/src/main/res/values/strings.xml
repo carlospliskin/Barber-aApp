@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Barbería</string>
+    <string name="home_check_email">Revisa tu correo para verificar la cuenta.</string>
+    <string name="home_agenda">Agenda</string>
+    <string name="home_catalog">Catálogo</string>
+    <string name="home_clients">Clientes</string>
+    <string name="home_sign_out">Cerrar sesión</string>
 </resources>

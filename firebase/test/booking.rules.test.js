@@ -15,7 +15,7 @@ before(async () => {
 after(() => env.cleanup());
 beforeEach(() => env.clearFirestore());
 
-const db = (uid) => env.authenticatedContext(uid, { email: `${uid}@mail.com` }).firestore();
+const db = (uid) => env.authenticatedContext(uid, { email: `${uid}@mail.com`, email_verified: true }).firestore();
 const DAY = "b1_2026-11-20";
 const inDays = (d) => Timestamp.fromMillis(Date.now() + d * 86_400_000);
 // Fecha de cita fija y su inicio real: 2026-11-20 10:00 CDMX = 16:00 UTC (los tests corren antes de esa fecha).

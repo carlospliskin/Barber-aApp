@@ -88,6 +88,19 @@ class AuthUseCasesTest {
         assertEquals(listOf("reset:ana@mail.com"), auth.calls)
     }
 
+    // ── Verificación de correo (A14) ─────────────────────────────────────────
+    @Test fun `A14 reenviar correo de verificacion`() = runTest {
+        val auth = FakeAuthRepository()
+        assertEquals(AppResult.Success(Unit), com.barberia.feature.auth.domain.usecase.ResendVerificationEmailUseCase(auth)())
+        assertEquals(listOf("resendVerification"), auth.calls)
+    }
+
+    @Test fun `A14 A15 comprobar si ya verifico recarga el usuario`() = runTest {
+        val auth = FakeAuthRepository().apply { verified = true }
+        assertEquals(AppResult.Success(true), com.barberia.feature.auth.domain.usecase.CheckEmailVerifiedUseCase(auth)())
+        assertEquals(listOf("reloadUser"), auth.calls)
+    }
+
     // ── Elegir modo (A4) ──────────────────────────────────────────────────────
     @Test fun `elegir un modo permitido lo guarda`() = runTest {
         val session = FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER)))

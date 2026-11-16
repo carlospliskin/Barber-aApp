@@ -80,6 +80,15 @@ class SignOutUseCase(private val auth: AuthRepository, private val session: Sess
     }
 }
 
+class ResendVerificationEmailUseCase(private val auth: AuthRepository) {
+    suspend operator fun invoke(): AuthResult<Unit> = auth.resendVerificationEmail()
+}
+
+class CheckEmailVerifiedUseCase(private val auth: AuthRepository) {
+    /** `true` si el usuario ya abrió el enlace del correo. */
+    suspend operator fun invoke(): AuthResult<Boolean> = auth.reloadUser()
+}
+
 class ObserveSessionDestinationUseCase(private val session: SessionRepository) {
     operator fun invoke(): Flow<SessionDestination?> =
         combine(session.session, session.selectedMode, ::resolveDestination).distinctUntilChanged()

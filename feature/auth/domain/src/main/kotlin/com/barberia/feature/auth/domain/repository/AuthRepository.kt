@@ -16,6 +16,12 @@ interface AuthRepository {
     suspend fun registerClient(registration: ClientRegistration): AuthResult<Unit>
     suspend fun sendPasswordReset(email: String): AuthResult<Unit>
     suspend fun signOut()
+
+    /** A14: reenvía el correo de verificación al usuario con sesión. */
+    suspend fun resendVerificationEmail(): AuthResult<Unit>
+
+    /** A14/A15: recarga el usuario y renueva el token (para que las reglas vean `email_verified`). */
+    suspend fun reloadUser(): AuthResult<Boolean>
 }
 
 /** Estado de sesión observable (sobrevive a la muerte del proceso) y modo elegido guardado localmente. */

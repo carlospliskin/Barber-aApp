@@ -10,10 +10,21 @@ internal interface BookingGateway {
     suspend fun getDay(tenantId: String, dayId: String): Map<String, Any?>?
 
     /** Citas BOOKED del cliente (solo filtros de igualdad: no requiere índice compuesto). */
-    suspend fun activeAppointments(tenantId: String, clientUid: String): List<Map<String, Any?>>
+    suspend fun activeAppointments(tenantId: String, clientUid: String): List<Pair<String, Map<String, Any?>>>
 
-    /** Transacción: si algún bloque ya existe lanza [SlotTakenException]; si no, escribe cita + bloques. */
-    suspend fun book(tenantId: String, apptId: String, appointment: Map<String, Any?>, dayId: String, keys: Set<String>)
+    /**
+     * Transacción: si algún bloque ya existe lanza [SlotTakenException]; si no, escribe cita + bloques y,
+     * si el cliente todavía no tiene ficha en esta barbería, la crea con [newClient] (F7-6).
+     */
+    suspend fun book(
+        tenantId: String,
+        apptId: String,
+        appointment: Map<String, Any?>,
+        dayId: String,
+        keys: Set<String>,
+        clientUid: String,
+        newClient: Map<String, Any?>,
+    )
 
     /** Batch: cita CANCELLED + quitar sus bloques del día. */
     suspend fun cancel(tenantId: String, apptId: String, dayId: String, keys: Set<String>)

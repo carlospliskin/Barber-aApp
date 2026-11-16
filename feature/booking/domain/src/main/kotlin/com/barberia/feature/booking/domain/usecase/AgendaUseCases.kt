@@ -32,15 +32,43 @@ class MarkCompletedUseCase(private val bookings: BookingRepository, private val 
         }
 }
 
+/** Resultado de marcar un no-show: si penalizó y cuántas citas futuras canceló (F7-3). */
+data class NoShowOutcome(val penalized: Boolean, val cancelledFuture: Int, val failedToCancel: Int)
+
 class MarkNoShowUseCase(
     private val bookings: BookingRepository,
     private val clock: Clock,
     private val loyalty: LoyaltyPolicy = LoyaltyPolicy(),
 ) {
-    suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> = markStatus(
-        bookings, appointment, AppointmentStatus.NO_SHOW,
-        earliest = appointment.startsAt.plus(NO_SHOW_GRACE), clock,
-    ) { c -> (c ?: ClientRecord.new(appointment.clientUid, appointment.clientName)).afterNoShow(clock.instant(), loyalty) } // P1
+    suspend operator fun invoke(appointment: Appointment): BookingResult<NoShowOutcome> {
+        val now = clock.instant()
+        var before: ClientRecord? = null
+        var after: ClientRecord? = null
+        val marked = markStatus(
+            bookings, appointment, AppointmentStatus.NO_SHOW,
+            earliest = appointment.startsAt.plus(NO_SHOW_GRACE), clock,
+        ) { c ->
+            before = c
+            (c ?: ClientRecord.new(appointment.clientUid, appointment.clientName)).afterNoShow(now, loyalty).also { after = it } // P1
+        }
+        if (marked is AppResult.Failure) return marked
+        val justPenalized = after?.let { it.isPenalized(now) && it.penaltyUntil != before?.penaltyUntil } == true
+        if (!justPenalized) return AppResult.Success(NoShowOutcome(penalized = false, cancelledFuture = 0, failedToCancel = 0))
+
+        // F7-3: se cancelan sus citas futuras en esta barbería (con cualquier barbero). Se liberan los horarios.
+        val future = when (val r = bookings.activeAppointments(appointment.tenantId, appointment.clientUid)) {
+            is AppResult.Success -> r.value.filter { it.id != appointment.id && it.startsAt.isAfter(now) }
+            is AppResult.Failure -> return AppResult.Success(NoShowOutcome(penalized = true, cancelledFuture = 0, failedToCancel = 1))
+        }
+        val results = future.map { bookings.cancel(it) }
+        return AppResult.Success(
+            NoShowOutcome(
+                penalized = true,
+                cancelledFuture = results.count { it is AppResult.Success },
+                failedToCancel = results.count { it is AppResult.Failure },
+            ),
+        )
+    }
 
     companion object {
         /** A4: tolerancia antes de marcar que el cliente no llegó. */

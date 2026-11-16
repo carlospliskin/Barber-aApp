@@ -14,7 +14,7 @@ before(async () => {
 after(() => env.cleanup());
 beforeEach(() => env.clearFirestore());
 
-const db = (uid) => env.authenticatedContext(uid, { email: `${uid}@mail.com` }).firestore();
+const db = (uid) => env.authenticatedContext(uid, { email: `${uid}@mail.com`, email_verified: true }).firestore();
 const ago = (min) => Timestamp.fromMillis(Date.now() - min * 60_000);
 const inMin = (min) => Timestamp.fromMillis(Date.now() + min * 60_000);
 

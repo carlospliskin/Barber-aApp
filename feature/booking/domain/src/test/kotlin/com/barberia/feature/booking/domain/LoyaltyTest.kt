@@ -13,6 +13,7 @@ import com.barberia.feature.booking.domain.usecase.BookAppointmentUseCase
 import com.barberia.feature.booking.domain.usecase.ForgivePenaltyUseCase
 import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
 import com.barberia.feature.booking.domain.usecase.MarkNoShowUseCase
+import com.barberia.feature.booking.domain.usecase.NoShowOutcome
 import com.barberia.feature.booking.domain.usecase.RedeemRewardUseCase
 import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.model.Catalog
@@ -73,6 +74,36 @@ class LoyaltyTest {
         val c = repo.clients["cli"]!!
         assertEquals(3, c.noShows)
         assertEquals(now.plus(Duration.ofDays(14)), c.penaltyUntil)
+    }
+
+    @Test fun `F7-1 despues de cumplir la penalizacion se cuenta desde cero (cada 3 faltas)`() = runTest {
+        val vencida = now.minusSeconds(60)
+        repo.clients["cli"] = ClientRecord("cli", "Ana", 5, 3, 0, vencida)
+        MarkNoShowUseCase(repo, clock, loyalty)(appt("a1")) // 4.ª falta
+        assertEquals(vencida, repo.clients["cli"]!!.penaltyUntil) // no se vuelve a penalizar
+        MarkNoShowUseCase(repo, clock, loyalty)(appt("a2")) // 5.ª
+        MarkNoShowUseCase(repo, clock, loyalty)(appt("a3")) // 6.ª → penaliza otra vez
+        assertEquals(now.plus(Duration.ofDays(14)), repo.clients["cli"]!!.penaltyUntil)
+        assertEquals(6, repo.clients["cli"]!!.noShows) // el historial total se conserva
+    }
+
+    @Test fun `F7-3 al penalizar se cancelan sus citas futuras (con cualquier barbero)`() = runTest {
+        repo.clients["cli"] = ClientRecord("cli", "Ana", 5, 2, 0, null)
+        val futura1 = appt("f1").copy(barberId = "b2", date = monday.plusDays(3), startsAt = now.plus(Duration.ofDays(3)))
+        val futura2 = appt("f2").copy(date = monday.plusDays(5), startsAt = now.plus(Duration.ofDays(5)))
+        repo.book(futura1)
+        repo.book(futura2)
+
+        val r = MarkNoShowUseCase(repo, clock, loyalty)(appt("a1")) as AppResult.Success
+
+        assertEquals(NoShowOutcome(penalized = true, cancelledFuture = 2, failedToCancel = 0), r.value)
+        assertTrue(repo.created.filter { it.id in setOf("f1", "f2") }.all { it.status == AppointmentStatus.CANCELLED })
+    }
+
+    @Test fun `F7-3 sin penalizacion no se cancela nada`() = runTest {
+        repo.book(appt("f1").copy(date = monday.plusDays(3), startsAt = now.plus(Duration.ofDays(3))))
+        val r = MarkNoShowUseCase(repo, clock, loyalty)(appt("a1")) as AppResult.Success
+        assertEquals(NoShowOutcome(penalized = false, cancelledFuture = 0, failedToCancel = 0), r.value)
     }
 
     @Test fun `P1 antes del tercero no penaliza`() = runTest {

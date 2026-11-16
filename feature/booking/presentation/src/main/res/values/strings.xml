@@ -73,4 +73,8 @@
     <string name="loyalty_penalized">Por faltas sin avisar no puedes reservar hasta el %1$s.</string>
     <string name="booking_error_penalized">Por faltas sin avisar no puedes reservar por ahora.</string>
     <string name="booking_error_no_reward">Este cliente no tiene premios disponibles.</string>
+    <plurals name="agenda_penalty_notice">
+        <item quantity="one">Cliente penalizado 14 días por 3 faltas. Se canceló %1$d cita futura.</item>
+        <item quantity="other">Cliente penalizado 14 días por 3 faltas. Se cancelaron %1$d citas futuras.</item>
+    </plurals>
 </resources>

@@ -36,6 +36,14 @@ internal class FirebaseAuthGateway(private val auth: FirebaseAuth) : AuthGateway
         firebaseCall { auth.currentUser?.sendEmailVerification()?.await() }
     }
 
+    override suspend fun reload(): Boolean = firebaseCall {
+        val user = auth.currentUser ?: return@firebaseCall false
+        user.reload().await()
+        // A15: sin forzar un token nuevo, las reglas ven email_verified=false hasta 1 hora.
+        user.getIdToken(true).await()
+        auth.currentUser?.isEmailVerified == true
+    }
+
     override suspend fun sendPasswordReset(email: String) {
         firebaseCall { auth.sendPasswordResetEmail(email).await() }
     }

@@ -73,7 +73,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] A11. Carrera al registrarse: la sesión se abría antes de escribir el perfil y el dueño aparecía como cliente. El repositorio refresca el perfil al terminar.
 - [x] A12. Textos sin color sobre fondo oscuro (faltaba un `Surface` raíz).
 - [x] A13. Dos clics en "Enviar" corrían en paralelo: la base MVI ahora procesa intents en cola.
-- [ ] A14. Verificación de email: decidir si el dueño debe verificar antes de operar.
+- [x] A14. El dueño verifica su correo antes de operar (app y reglas). A15: se fuerza token nuevo al verificar.
 
 ### Revisión antes de la fase 4
 - [x] H1. Al registrar dueño se navegaba un instante al home de cliente (la cuenta existía antes que el perfil). La sesión queda en `Loading` mientras se registra.

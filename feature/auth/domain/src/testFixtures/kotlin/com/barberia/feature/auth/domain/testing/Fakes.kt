@@ -46,6 +46,16 @@ class FakeAuthRepository(var result: AuthResult<Unit> = AppResult.Success(Unit))
     override suspend fun signOut() {
         calls += "signOut"
     }
+
+    var verified = false
+    override suspend fun resendVerificationEmail(): AuthResult<Unit> {
+        calls += "resendVerification"
+        return result
+    }
+    override suspend fun reloadUser(): AuthResult<Boolean> {
+        calls += "reloadUser"
+        return AppResult.Success(verified)
+    }
 }
 
 class FakeSessionRepository(

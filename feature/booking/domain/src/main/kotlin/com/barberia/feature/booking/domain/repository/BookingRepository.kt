@@ -12,6 +12,9 @@ interface BookingRepository {
     /** Bloques ocupados de un barbero en un día (1 lectura). */
     suspend fun dayBookings(tenantId: String, barberId: String, date: LocalDate): BookingResult<Set<Int>>
 
+    /** F7-3: citas BOOKED del cliente en la barbería (pasadas y futuras). */
+    suspend fun activeAppointments(tenantId: String, clientUid: String): BookingResult<List<Appointment>>
+
     /** Citas BOOKED del cliente desde [from] (para el límite de citas activas). */
     suspend fun countActive(tenantId: String, clientUid: String, from: LocalDate): BookingResult<Int>
 

@@ -39,4 +39,11 @@
     <string name="auth_error_not_signed_in">Tu sesión terminó. Vuelve a entrar</string>
     <string name="auth_error_mode">No tienes acceso a ese modo</string>
     <string name="auth_error_unknown">Ocurrió un error inesperado</string>
+
+    <string name="verify_title">Verifica tu correo</string>
+    <string name="verify_hint">Te enviamos un enlace a %1$s. Ábrelo para activar tu barbería (catálogo, agenda y código para clientes).</string>
+    <string name="verify_sent">Te mandamos otro correo. Revisa también la carpeta de spam.</string>
+    <string name="verify_not_yet">Todavía no aparece verificado. Abre el enlace del correo y vuelve a intentar.</string>
+    <string name="verify_check">Ya lo verifiqué</string>
+    <string name="verify_resend">Reenviar correo</string>
 </resources>

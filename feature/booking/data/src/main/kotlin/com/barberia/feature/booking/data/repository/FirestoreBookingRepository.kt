@@ -30,8 +30,12 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
 
     override suspend fun countActive(tenantId: String, clientUid: String, from: LocalDate) = attempt {
         gateway.activeAppointments(tenantId, clientUid)
-            .mapNotNull { AppointmentMapper.fromMap("", tenantId, it) }
+            .mapNotNull { (id, m) -> AppointmentMapper.fromMap(id, tenantId, m) }
             .count { !it.date.isBefore(from) }
+    }
+
+    override suspend fun activeAppointments(tenantId: String, clientUid: String) = attempt {
+        gateway.activeAppointments(tenantId, clientUid).mapNotNull { (id, m) -> AppointmentMapper.fromMap(id, tenantId, m) }
     }
 
     override suspend fun book(appointment: Appointment): BookingResult<Unit> = attempt(onDenied = BookingFailure.SlotTaken) {
@@ -41,6 +45,8 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             AppointmentMapper.toMap(appointment),
             dayId(appointment.barberId, appointment.date),
             appointment.slots.map { it.toString() }.toSet(),
+            appointment.clientUid,
+            ClientMapper.toMap(ClientRecord.new(appointment.clientUid, appointment.clientName), lastAppointmentId = appointment.id),
         )
     }
 

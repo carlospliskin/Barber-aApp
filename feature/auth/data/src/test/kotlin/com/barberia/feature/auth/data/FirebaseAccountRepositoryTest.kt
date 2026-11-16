@@ -53,6 +53,12 @@ class FirebaseAccountRepositoryTest {
             return "u1"
         }
         override suspend fun sendEmailVerification() { calls += "verify" }
+        var serverVerified = false
+        override suspend fun reload(): Boolean {
+            calls += "reload"
+            account = account?.copy(emailVerified = serverVerified)
+            return serverVerified
+        }
         override suspend fun sendPasswordReset(email: String) {
             calls += "reset"
             error?.let { throw it }
@@ -224,6 +230,17 @@ class FirebaseAccountRepositoryTest {
         val repo = repo()
         repo.registerOwner(owner)
         assertEquals(SessionState.SignedOut, repo.session.value)
+    }
+
+    @Test fun `A15 al comprobar la verificacion se recarga y la sesion muestra el correo verificado`() = runTest {
+        val repo = repo()
+        repo.signIn("ana@mail.com", "x")
+        assertEquals(false, (repo.session.first() as SessionState.SignedIn).user.emailVerified)
+
+        auth.serverVerified = true // el usuario abrió el enlace del correo
+        assertEquals(AppResult.Success(true), repo.reloadUser())
+        assertTrue("reload" in auth.calls)
+        assertEquals(true, (repo.session.first() as SessionState.SignedIn).user.emailVerified)
     }
 
     // ── Recuperar contraseña ──────────────────────────────────────────────────
