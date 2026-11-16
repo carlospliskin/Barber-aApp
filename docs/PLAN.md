@@ -73,6 +73,15 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] A13. Dos clics en "Enviar" corrían en paralelo: la base MVI ahora procesa intents en cola.
 - [ ] A14. Verificación de email: decidir si el dueño debe verificar antes de operar.
 
+### Revisión antes de la fase 4
+- [x] H1. Al registrar dueño se navegaba un instante al home de cliente (la cuenta existía antes que el perfil). La sesión queda en `Loading` mientras se registra.
+- [x] H2. Sin red tras iniciar sesión, la app se quedaba en el login sin aviso. Nuevo destino `Offline` desde cualquier pantalla.
+- [x] H3. En "sin conexión" no había forma de cerrar sesión.
+- [x] H4. El modo guardado no era de un usuario: se guarda como `uid:MODO`.
+- [x] H5. Las reglas permitían listar todas las barberías (un script podía gastar la cuota). Solo `get`.
+- [x] H6. **R8 rompía la navegación en release** (renombraba `AppMode`). Lo encontró el nuevo build `qa`; regla de keep en `app/proguard-rules.pro`.
+- [x] H7. `firebase-tools` global estaba en 15.15 (n-21). Se fija 15.36.0 en `firebase/package.json`.
+
 ### Reservas
 - [ ] B1. No permitir reservar en el pasado ni fuera del horario del barbero.
 - [ ] B2. El servicio no puede terminar después del cierre.
@@ -96,9 +105,11 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - Los roles van en `users/{uid}`, no en custom claims (esos necesitan Admin SDK).
 
 ## Deuda técnica pendiente del diagnóstico
-- [ ] Convention plugins en `build-logic/` (la config de Android se repite por módulo).
-- [ ] CI (GitHub Actions) con `./gradlew test` + reglas, detekt/ktlint y verificación de módulos Koin.
-- [ ] Probar el build release con R8 (no se ha compilado).
+- [x] Convention plugins en `build-logic/` (`barberia.android.library`, `.android.compose`, `.jvm.library`).
+- [x] CI (GitHub Actions): tests, build debug + QA y reglas en emulador.
+- [x] Verificación del grafo de Koin (`KoinGraphTest`), comprobada quitando un registro a propósito.
+- [x] Build release con R8 probado en ejecución mediante el build type `qa`.
+- [ ] detekt/ktlint en CI.
 - [ ] Tests instrumentados de los gateways reales contra el emulador.
 
 ## Versiones (revisión 2026-11-15)
@@ -110,6 +121,8 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 | Kotlin | 2.4.21 | 2.4.21 | n |
 | Compose BOM | 2026.09.00 | 2026.09.00 | n |
 | Firebase BOM | 35.2.0 | 35.2.0 | n |
+| firebase-tools (CLI) | 15.36.0 | 15.36.0 | n |
+| actions/checkout · setup-java · setup-node · setup-gradle · upload-artifact | v7 · v6 · v7 · v6 · v7 | iguales | n |
 | Coroutines | 1.11.0 | 1.11.0 | n |
 | Serialization | 1.13.0 | 1.13.0 | n |
 | Koin | 4.2.2 | 4.2.2 | n |

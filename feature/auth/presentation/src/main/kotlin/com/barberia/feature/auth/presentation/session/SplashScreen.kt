@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,7 +21,7 @@ import com.barberia.core.designsystem.component.BarberButton
 import com.barberia.feature.auth.presentation.R
 
 @Composable
-fun SplashScreen(showRetry: Boolean, onRetry: () -> Unit) {
+fun SplashScreen(offline: Boolean = false, onRetry: () -> Unit = {}, onSignOut: () -> Unit = {}) {
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -32,10 +33,11 @@ fun SplashScreen(showRetry: Boolean, onRetry: () -> Unit) {
             color = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.height(32.dp))
-        if (showRetry) {
+        if (offline) {
             Text(stringResource(R.string.auth_offline), textAlign = TextAlign.Center)
             Spacer(Modifier.height(16.dp))
             BarberButton(text = stringResource(R.string.auth_retry), onClick = onRetry)
+            TextButton(onClick = onSignOut) { Text(stringResource(R.string.auth_sign_out)) }
         } else {
             CircularProgressIndicator()
         }

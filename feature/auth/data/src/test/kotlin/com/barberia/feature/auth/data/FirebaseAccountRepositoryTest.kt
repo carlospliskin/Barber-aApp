@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -74,6 +75,7 @@ class FirebaseAccountRepositoryTest {
         var fetchError: GatewayError? = null
         var writeError: GatewayError? = null
         var fetchCount = 0
+        var writeGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
 
         override suspend fun fetch(uid: String): ProfileRecord? {
             fetchCount++
@@ -81,6 +83,7 @@ class FirebaseAccountRepositoryTest {
             return profiles[uid]
         }
         override suspend fun createOwner(uid: String, profile: ProfileRecord, tenant: TenantRecord) {
+            writeGate?.await()
             writeError?.let { throw it }
             profiles[uid] = profile
             tenants[uid] = tenant
@@ -193,6 +196,27 @@ class FirebaseAccountRepositoryTest {
         assertTrue(profiles.tenants.isEmpty())
     }
 
+    @Test fun `H1 mientras se escribe el perfil la sesion no se publica como cliente`() = runTest {
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        profiles.writeGate = gate
+        val repo = repo()
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repo.registerOwner(owner) }
+
+        assertEquals(SessionState.Loading, repo.session.value) // ni SignedOut ni cliente
+
+        gate.complete(Unit)
+        job.join()
+        val state = repo.session.value as SessionState.SignedIn
+        assertEquals(StaffRole.OWNER, state.user.staffRole)
+    }
+
+    @Test fun `H1 si el registro falla la sesion vuelve a SignedOut`() = runTest {
+        profiles.writeError = GatewayError.Network()
+        val repo = repo()
+        repo.registerOwner(owner)
+        assertEquals(SessionState.SignedOut, repo.session.value)
+    }
+
     // ── Recuperar contraseña ──────────────────────────────────────────────────
     @Test fun `recuperar contrasena no revela si el email existe`() = runTest {
         auth.error = GatewayError.InvalidCredentials()
@@ -202,9 +226,20 @@ class FirebaseAccountRepositoryTest {
     // ── Modo ──────────────────────────────────────────────────────────────────
     @Test fun `el modo se guarda y se lee como enum`() = runTest {
         val repo = repo()
+        repo.signIn("ana@mail.com", "x")
         repo.saveMode(AppMode.BARBER)
         assertEquals(AppMode.BARBER, repo.selectedMode.first())
         modes.mode.value = "BASURA"
+        assertEquals(null, repo.selectedMode.first())
+    }
+
+    @Test fun `H4 el modo guardado pertenece a un usuario`() = runTest {
+        val repo = repo()
+        repo.signIn("ana@mail.com", "x") // uid u1
+        repo.saveMode(AppMode.CLIENT)
+        assertEquals(AppMode.CLIENT, repo.selectedMode.first())
+
+        modes.mode.value = "otro-uid:OWNER" // modo que dejó otra cuenta
         assertEquals(null, repo.selectedMode.first())
     }
 }

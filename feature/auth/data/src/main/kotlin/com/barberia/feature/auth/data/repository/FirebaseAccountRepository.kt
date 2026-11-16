@@ -43,17 +43,34 @@ internal class FirebaseAccountRepository(
 
     private val refreshes = MutableStateFlow(0)
 
+    /** H1: mientras se crea la cuenta y su perfil, la sesión no se publica (si no, el dueño se vería como cliente). */
+    private val registering = MutableStateFlow(false)
+
     override val session: StateFlow<SessionState> =
-        combine(auth.uidChanges, refreshes) { uid, _ -> uid }
-            .mapLatest { uid -> if (uid == null) SessionState.SignedOut else loadSession(uid) }
+        combine(auth.uidChanges, refreshes, registering) { uid, _, busy -> uid to busy }
+            .mapLatest { (uid, busy) ->
+                when {
+                    busy -> SessionState.Loading
+                    uid == null -> SessionState.SignedOut
+                    else -> loadSession(uid)
+                }
+            }
             .stateIn(scope, SharingStarted.Eagerly, SessionState.Loading)
 
+    /** H4: el modo se guarda como `uid:MODO`; el de otra cuenta se ignora. */
     override val selectedMode: Flow<AppMode?> =
-        modes.mode.map { raw -> AppMode.entries.find { it.name == raw } }
+        combine(modes.mode, session) { raw, state ->
+            val uid = (state as? SessionState.SignedIn)?.user?.uid ?: return@combine null
+            val (owner, mode) = raw?.split(':', limit = 2)?.takeIf { it.size == 2 } ?: return@combine null
+            if (owner == uid) AppMode.entries.find { it.name == mode } else null
+        }
 
     override fun currentUser(): AuthUser? = (session.value as? SessionState.SignedIn)?.user
 
-    override suspend fun saveMode(mode: AppMode?) = modes.save(mode?.name)
+    override suspend fun saveMode(mode: AppMode?) {
+        val uid = currentUser()?.uid
+        modes.save(if (mode == null || uid == null) null else "$uid:${mode.name}")
+    }
 
     override fun refresh() {
         refreshes.value++
@@ -63,7 +80,7 @@ internal class FirebaseAccountRepository(
 
     override suspend fun signIn(email: String, password: String) = attempt { auth.signIn(email, password) }
 
-    override suspend fun registerOwner(registration: OwnerRegistration) = attempt {
+    override suspend fun registerOwner(registration: OwnerRegistration) = registeringAttempt {
         val uid = auth.createUser(registration.email, registration.password)
         createProfileOrRollback {
             profiles.createOwner(
@@ -74,7 +91,7 @@ internal class FirebaseAccountRepository(
         }
     }
 
-    override suspend fun registerClient(registration: ClientRegistration) = attempt {
+    override suspend fun registerClient(registration: ClientRegistration) = registeringAttempt {
         val uid = auth.createUser(registration.email, registration.password)
         createProfileOrRollback {
             profiles.createClient(uid, ProfileRecord(registration.name, registration.email, registration.phone, null, null))
@@ -117,6 +134,15 @@ internal class FirebaseAccountRepository(
         }
         runCatching { auth.sendEmailVerification() } // A2: mejor esfuerzo
         refresh()
+    }
+
+    private suspend fun registeringAttempt(block: suspend () -> Unit): AuthResult<Unit> {
+        registering.value = true
+        return try {
+            attempt(block)
+        } finally {
+            registering.value = false
+        }
     }
 
     private suspend fun attempt(block: suspend () -> Unit): AuthResult<Unit> = try {

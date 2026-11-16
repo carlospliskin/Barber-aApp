@@ -59,7 +59,9 @@ service cloud.firestore {
           && isText(data.timezone, 3, 64);
       }
 
-      allow read: if signedIn();
+      // get sí (para reservar en una barbería conocida); list no: un script podría leer todas y gastar la cuota (H5).
+      allow get: if signedIn();
+      allow list: if false;
       allow create: if isSelf(tenantId)
         && validTenant(request.resource.data)
         && request.resource.data.createdAt == request.time;

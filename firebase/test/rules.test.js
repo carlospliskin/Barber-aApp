@@ -6,7 +6,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch, deleteDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch, deleteDoc } from "firebase/firestore";
 
 let env;
 
@@ -93,6 +93,11 @@ describe("tenants/{ownerUid}", () => {
     await seed("tenants/ana", tenant());
     await assertSucceeds(getDoc(doc(beto(), "tenants/ana")));
     await assertFails(getDoc(doc(anon(), "tenants/ana")));
+  });
+
+  test("H5 no se puede listar todas las barberías (gastaría cuota)", async () => {
+    await seed("tenants/ana", tenant());
+    await assertFails(getDocs(collection(beto(), "tenants")));
   });
 
   test("el id de la barbería debe ser el uid del dueño", () =>

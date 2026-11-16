@@ -3,10 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "cd .. && firebase emulators:exec --only firestore --project demo-barberia \"node --test firebase/test/*.test.js\""
+    "test": "cd .. && firebase emulators:exec --only firestore --project demo-barberia \"node --test firebase/test/*.test.js\"",
+    "emulators": "cd .. && firebase emulators:start --only auth,firestore --project demo-barberia"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "6.0.0",
-    "firebase": "13.3.0"
+    "firebase": "13.3.0",
+    "firebase-tools": "15.36.0"
   }
 }

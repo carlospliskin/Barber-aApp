@@ -7,8 +7,9 @@ Solo usamos productos que el plan gratuito permite. Ver la tabla y las limitacio
 El build **debug** usa el proyecto `demo-barberia`, que no existe en la nube: todo va al Emulator Suite y no gasta cuota.
 
 ```bash
-firebase emulators:start --only auth,firestore
+cd firebase && npm install && npm run emulators
 ```
+(usa `firebase-tools` 15.36.0 del proyecto, no el global)
 
 | Servicio | Puerto | Nota |
 |---|---|---|
@@ -23,6 +24,11 @@ La app en el emulador de Android llega a la Mac por `10.0.2.2` (ver `FIREBASE_EM
 cd firebase && npm install && npm test
 ```
 Levanta el emulador de Firestore, corre `firebase/test/*.test.js` y lo apaga.
+Si ya tienes los emuladores corriendo, usa `node --test firebase/test/*.test.js` desde la raíz.
+
+## Build QA
+`./gradlew :app:assembleQa` genera el mismo APK que release (con R8) pero apuntando al emulador.
+Así se prueban los problemas de R8 antes de publicar.
 
 ## Producción (cuando exista el proyecto real)
 1. Crear el proyecto en la consola de Firebase (plan Spark) y una app Android `com.barberia.app`.

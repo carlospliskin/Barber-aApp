@@ -42,6 +42,18 @@ android {
             buildConfigField("String", "FIREBASE_API_KEY", firebase("apiKey"))
             buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"\"")
         }
+        // QA: el mismo build que release (R8 activado) pero contra el emulador de Firebase.
+        // Sirve para encontrar problemas de R8 antes de publicar.
+        create("qa") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".qa"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+            buildConfigField("String", "FIREBASE_PROJECT_ID", "\"demo-barberia\"")
+            buildConfigField("String", "FIREBASE_APP_ID", "\"1:000000000000:android:0000000000000000\"")
+            buildConfigField("String", "FIREBASE_API_KEY", "\"demo-api-key\"")
+            buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"10.0.2.2\"")
+        }
     }
 
     buildFeatures {
@@ -72,4 +84,10 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
     debugImplementation(libs.compose.ui.tooling)
+}
+
+dependencies {
+    testImplementation(libs.junit4)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.koin.test.junit4)
 }

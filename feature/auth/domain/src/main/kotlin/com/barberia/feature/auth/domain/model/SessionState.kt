@@ -9,16 +9,17 @@ sealed interface SessionState {
     data object Unavailable : SessionState
 }
 
-enum class SessionDestination { Login, ModeSelection, OwnerHome, BarberHome, ClientHome }
+enum class SessionDestination { Login, ModeSelection, OwnerHome, BarberHome, ClientHome, Offline }
 
 /**
- * Regla única de a dónde va el usuario. `null` = todavía no se decide (se queda en splash).
+ * Regla única de a dónde va el usuario. `null` = todavía no se decide (se queda donde está).
  * - Cliente puro → home de cliente.
  * - Personal con un modo guardado que todavía tiene → directo a ese home.
  * - Personal sin modo (o con uno que ya no tiene) → selector.
  */
 fun resolveDestination(state: SessionState, mode: AppMode?): SessionDestination? = when (state) {
-    SessionState.Loading, SessionState.Unavailable -> null
+    SessionState.Loading -> null
+    SessionState.Unavailable -> SessionDestination.Offline // H2: se ve desde cualquier pantalla
     SessionState.SignedOut -> SessionDestination.Login
     is SessionState.SignedIn -> {
         val modes = state.user.availableModes

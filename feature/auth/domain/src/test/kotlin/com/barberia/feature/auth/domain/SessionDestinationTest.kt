@@ -13,10 +13,11 @@ import org.junit.Test
 
 class SessionDestinationTest {
 
-    @Test fun `cargando o sin perfil no decide destino (se queda en splash)`() {
+    @Test fun `cargando no decide destino (se queda en splash)`() =
         assertNull(resolveDestination(SessionState.Loading, null))
-        assertNull(resolveDestination(SessionState.Unavailable, null))
-    }
+
+    @Test fun `H2 sin perfil por falta de red va a la pantalla sin conexion desde cualquier lugar`() =
+        assertEquals(SessionDestination.Offline, resolveDestination(SessionState.Unavailable, AppMode.OWNER))
 
     @Test fun `sin sesion va a login aunque haya un modo guardado`() =
         assertEquals(SessionDestination.Login, resolveDestination(SessionState.SignedOut, AppMode.OWNER))

@@ -22,6 +22,7 @@ import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
 
 @Serializable data object SplashDest
+@Serializable data object OfflineDest
 @Serializable data object LoginDest
 @Serializable data object RegisterDest
 @Serializable data object ModeSelectionDest
@@ -43,8 +44,13 @@ fun BarberiaNavHost(
     }
 
     NavHost(navController = navController, startDestination = SplashDest) {
-        composable<SplashDest> {
-            SplashScreen(showRetry = state.showRetry, onRetry = { session.onIntent(SessionIntent.Retry) })
+        composable<SplashDest> { SplashScreen() }
+        composable<OfflineDest> {
+            SplashScreen(
+                offline = true,
+                onRetry = { session.onIntent(SessionIntent.Retry) },
+                onSignOut = { session.onIntent(SessionIntent.SignOut) },
+            )
         }
         composable<LoginDest> { LoginRoute(onOpenRegister = { navController.navigate(RegisterDest) }) }
         composable<RegisterDest> { RegisterRoute(onClose = { navController.popBackStack() }) }
@@ -60,6 +66,7 @@ private fun NavHostController.navigateToSession(destination: SessionDestination)
         SessionDestination.OwnerHome -> HomeDest(AppMode.OWNER)
         SessionDestination.BarberHome -> HomeDest(AppMode.BARBER)
         SessionDestination.ClientHome -> HomeDest(AppMode.CLIENT)
+        SessionDestination.Offline -> OfflineDest
     }
     navigate(route) {
         popUpTo(graph.id) { inclusive = true }

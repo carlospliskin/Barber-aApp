@@ -85,10 +85,6 @@ class ObserveSessionDestinationUseCase(private val session: SessionRepository) {
         combine(session.session, session.selectedMode, ::resolveDestination).distinctUntilChanged()
 }
 
-class ObserveSessionStateUseCase(private val session: SessionRepository) {
-    operator fun invoke(): Flow<SessionState> = session.session
-}
-
 class ObserveCurrentUserUseCase(private val session: SessionRepository) {
     operator fun invoke(): Flow<AuthUser?> =
         session.session.map { (it as? SessionState.SignedIn)?.user }.distinctUntilChanged()

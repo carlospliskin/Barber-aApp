@@ -4,7 +4,6 @@ import com.barberia.app.home.HomeViewModel
 import com.barberia.feature.auth.data.di.ApplicationScope
 import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.auth.domain.usecase.ObserveSessionDestinationUseCase
-import com.barberia.feature.auth.domain.usecase.ObserveSessionStateUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterClientUseCase
 import com.barberia.feature.auth.domain.usecase.RegisterOwnerUseCase
 import com.barberia.feature.auth.domain.usecase.RetrySessionUseCase
@@ -34,7 +33,6 @@ val authDomainModule = module {
     factoryOf(::SelectModeUseCase)
     factoryOf(::SignOutUseCase)
     factoryOf(::ObserveSessionDestinationUseCase)
-    factoryOf(::ObserveSessionStateUseCase)
     factoryOf(::ObserveCurrentUserUseCase)
     factoryOf(::RetrySessionUseCase)
 }

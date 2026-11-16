@@ -9,7 +9,6 @@ import com.barberia.feature.auth.domain.testing.FakeSessionRepository
 import com.barberia.feature.auth.domain.testing.user
 import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.auth.domain.usecase.ObserveSessionDestinationUseCase
-import com.barberia.feature.auth.domain.usecase.ObserveSessionStateUseCase
 import com.barberia.feature.auth.domain.usecase.RetrySessionUseCase
 import com.barberia.feature.auth.domain.usecase.SelectModeUseCase
 import com.barberia.feature.auth.presentation.mode.ModeSelectorIntent
@@ -25,10 +24,11 @@ import org.junit.Test
 class SessionAndModeTest {
     @get:Rule val main = MainDispatcherRule()
 
+    private val auth = com.barberia.feature.auth.domain.testing.FakeAuthRepository()
     private fun sessionVm(repo: FakeSessionRepository) = SessionViewModel(
         ObserveSessionDestinationUseCase(repo),
-        ObserveSessionStateUseCase(repo),
         RetrySessionUseCase(repo),
+        com.barberia.feature.auth.domain.usecase.SignOutUseCase(auth, repo),
     )
 
     @Test fun `la sesion decide el destino y lo actualiza sola (hueco 1)`() {
@@ -43,13 +43,19 @@ class SessionAndModeTest {
         assertEquals(SessionDestination.Login, vm.state.value.destination)
     }
 
-    @Test fun `sin perfil por falta de red muestra reintentar (A8 y hueco 4)`() {
+    @Test fun `sin perfil por falta de red va a sin conexion y permite reintentar (A8 y H2)`() {
         val repo = FakeSessionRepository(SessionState.Unavailable)
         val vm = sessionVm(repo)
-        assertTrue(vm.state.value.showRetry)
+        assertEquals(SessionDestination.Offline, vm.state.value.destination)
 
         vm.onIntent(SessionIntent.Retry)
         assertEquals(listOf("refresh"), repo.calls)
+    }
+
+    @Test fun `H3 desde sin conexion se puede cerrar sesion`() {
+        val repo = FakeSessionRepository(SessionState.Unavailable)
+        sessionVm(repo).onIntent(SessionIntent.SignOut)
+        assertEquals(listOf("signOut"), auth.calls)
     }
 
     @Test fun `el selector muestra los modos del usuario sin pedirlo desde la pantalla (hueco 3)`() {

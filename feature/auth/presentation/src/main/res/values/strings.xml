@@ -23,6 +23,7 @@
     <string name="auth_mode_client">Cliente</string>
     <string name="auth_offline">No pudimos cargar tu perfil. Revisa tu conexión.</string>
     <string name="auth_retry">Reintentar</string>
+    <string name="auth_sign_out">Cerrar sesión</string>
 
     <string name="auth_error_email">Escribe un email válido</string>
     <string name="auth_error_password_empty">Escribe tu contraseña</string>
