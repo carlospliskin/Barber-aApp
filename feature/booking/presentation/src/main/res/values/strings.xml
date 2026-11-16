@@ -95,4 +95,5 @@
     <string name="booking_error_undo_expired">Pasaron los 15 minutos para deshacer.</string>
     <string name="booking_error_reward_used">No se puede deshacer: ya canjeó un premio contando esa visita.</string>
     <string name="booking_cancel_closed">Ya no se puede cancelar (faltan menos de 2 horas). Si no puedes ir, avisa a la barbería.</string>
+    <string name="booking_appt_started">Ya pasó la hora de esta cita.</string>
 </resources>

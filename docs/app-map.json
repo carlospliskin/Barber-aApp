@@ -155,7 +155,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 14,
-      "unitTests": 40
+      "unitTests": 44
     }
   ],
   "navigation": {

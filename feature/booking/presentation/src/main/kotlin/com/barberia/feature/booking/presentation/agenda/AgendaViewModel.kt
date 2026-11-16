@@ -25,6 +25,7 @@ import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -117,21 +118,37 @@ class AgendaViewModel(
                 }
         }
         launchInScope {
-            query.flatMapLatest { q -> if (q == null) emptyFlow() else observeCatalog(q.tenantId) }
-                .catch { }
+            query.flatMapLatest { q -> if (q == null) emptyFlow() else observeCatalog(q.tenantId).catch { } }
                 .collect { c -> setState { copy(barbers = c.barbers) } }
         }
         launchInScope {
+            // F7-2-c/U7: con la agenda abierta, la hora avanza sola (aparece "Atendida", se va "Deshacer").
+            while (true) {
+                delay(TICK_MS)
+                setState { copy(now = clock.instant()) }
+            }
+        }
+        launchInScope {
             // A3: solo las citas del día consultado.
-            query.flatMapLatest { q -> if (q == null) emptyFlow() else observeAgenda(q.tenantId, q.date, q.barberId) }
-                // A16: si se pierde el acceso no se dejan a la vista las citas que quedaron en caché.
-                .catch { e ->
+            query.flatMapLatest { q ->
+                if (q == null) return@flatMapLatest emptyFlow()
+                // El catch va adentro: tras un error, cambiar de día o de barbero vuelve a cargar.
+                observeAgenda(q.tenantId, q.date, q.barberId).catch { e ->
+                    // A16: si se pierde el acceso no se dejan a la vista las citas que quedaron en caché.
                     val f = e.asBookingFailure()
                     setState {
                         copy(failure = f, noAccess = f == BookingFailure.NoAccess, appointments = emptyList(), summary = summarize(emptyList()))
                     }
                 }
-                .collect { list -> setState { copy(appointments = list, summary = summarize(list), now = clock.instant()) } }
+            }
+                .collect { list ->
+                    setState {
+                        copy(
+                            appointments = list, summary = summarize(list), now = clock.instant(), noAccess = false,
+                            failure = failure.takeUnless { it == BookingFailure.NoConnection || it == BookingFailure.NoAccess },
+                        )
+                    }
+                }
         }
     }
 
@@ -177,7 +194,19 @@ class AgendaViewModel(
     private suspend fun act(id: String, action: suspend (Appointment) -> BookingResult<Unit>) {
         val appointment = currentState.appointments.find { it.id == id } ?: return
         setState { copy(busyId = id, failure = null) }
-        val r = action(appointment)
+        // E1: un error inesperado no deja los botones de esa cita bloqueados para siempre.
+        val r = try {
+            action(appointment)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            onUnexpectedError(e)
+            AppResult.Failure(BookingFailure.Unknown(e.message))
+        }
         setState { copy(busyId = null, failure = (r as? AppResult.Failure)?.error) }
+    }
+
+    private companion object {
+        const val TICK_MS = 60_000L
     }
 }

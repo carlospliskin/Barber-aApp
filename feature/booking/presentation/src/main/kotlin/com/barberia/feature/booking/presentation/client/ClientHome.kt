@@ -44,6 +44,9 @@ data class ClientHomeState(
     /** B7: el cliente cancela hasta 2 h antes; después ya no se le ofrece (antes daba error al tocar). */
     fun canCancel(a: Appointment) =
         a.status == com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED && now.isBefore(a.startsAt.minus(cancelWindow))
+
+    /** U12: ya pasó la hora (todavía no la marcan): no se dice "faltan menos de 2 horas". */
+    fun hasStarted(a: Appointment) = !now.isBefore(a.startsAt)
 }
 
 sealed interface ClientHomeIntent : UiIntent {
@@ -90,9 +93,15 @@ class ClientHomeViewModel(
                             failure = (joined as? AppResult.Failure)?.error ?: failure,
                         )
                     }
-                    if (uid == null || shop == null) flowOf(emptyList()) else observeMine(shop.id, uid, shop.zone)
+                    if (uid == null || shop == null) {
+                        flowOf(emptyList())
+                    } else {
+                        // El catch va adentro: tras un error, cambiar de barbería vuelve a cargar.
+                        observeMine(shop.id, uid, shop.zone).catch { e ->
+                            setState { copy(failure = e.asBookingFailure(), appointments = emptyList()) }
+                        }
+                    }
                 }
-                .catch { e -> setState { copy(failure = e.asBookingFailure(), appointments = emptyList()) } }
                 .collect { list ->
                     setState { copy(appointments = list, now = clock.instant()) }
                     syncReminders(list) // R3: también en un teléfono nuevo o tras reinstalar

@@ -73,7 +73,7 @@ fun ClientHomeScreen(
             if (state.appointments.isEmpty()) {
                 Text(stringResource(R.string.booking_no_appointments), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            state.appointments.forEach { AppointmentCard(it, state.cancellingId == it.id, state.canCancel(it), onIntent) }
+            state.appointments.forEach { AppointmentCard(it, state.cancellingId == it.id, state.canCancel(it), state.hasStarted(it), onIntent) }
             TextButton(onClick = { onIntent(ClientHomeIntent.Leave) }) { Text(stringResource(R.string.booking_change_shop)) }
         }
         RedeemInviteCard()
@@ -83,7 +83,7 @@ fun ClientHomeScreen(
 }
 
 @Composable
-private fun AppointmentCard(a: Appointment, cancelling: Boolean, canCancel: Boolean, onIntent: (ClientHomeIntent) -> Unit) {
+private fun AppointmentCard(a: Appointment, cancelling: Boolean, canCancel: Boolean, started: Boolean, onIntent: (ClientHomeIntent) -> Unit) {
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -102,7 +102,10 @@ private fun AppointmentCard(a: Appointment, cancelling: Boolean, canCancel: Bool
                     Text(stringResource(R.string.booking_cancel), color = MaterialTheme.colorScheme.error)
                 }
             } else if (a.status == com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED) {
-                Text(stringResource(R.string.booking_cancel_closed), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(
+                    stringResource(if (started) R.string.booking_appt_started else R.string.booking_cancel_closed),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             } else {
                 Text(stringResource(R.string.booking_cancelled), color = MaterialTheme.colorScheme.error)
             }

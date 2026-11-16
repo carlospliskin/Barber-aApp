@@ -89,9 +89,9 @@ class ClientsViewModel(
                 .distinctUntilChanged()
                 .flatMapLatest { t ->
                     setState { copy(tenantId = t) }
-                    if (t == null) emptyFlow() else observeClients(t)
+                    // El catch va adentro: un error no corta las actualizaciones siguientes.
+                    if (t == null) emptyFlow() else observeClients(t).catch { e -> setState { copy(failure = e.asBookingFailure()) } }
                 }
-                .catch { e -> setState { copy(failure = e.asBookingFailure()) } }
                 .collect { list -> setState { copy(clients = list, now = clock.instant()) } }
         }
     }

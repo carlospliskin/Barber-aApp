@@ -64,9 +64,15 @@ class CatalogViewModel(
                 .distinctUntilChanged()
                 .flatMapLatest { (tenantId, isOwner) ->
                     setState { copy(tenantId = tenantId, canEdit = isOwner && tenantId != null) }
-                    if (tenantId == null) emptyFlow() else observeCatalog(tenantId)
+                    // El catch va adentro: un error no corta las actualizaciones siguientes.
+                    if (tenantId == null) {
+                        emptyFlow()
+                    } else {
+                        observeCatalog(tenantId).catch { e ->
+                            setState { copy(failure = (e as? CatalogException)?.failure ?: CatalogFailure.Unknown(e.message)) }
+                        }
+                    }
                 }
-                .catch { e -> setState { copy(failure = (e as? CatalogException)?.failure ?: CatalogFailure.Unknown(e.message)) } }
                 .collect { c -> setState { copy(catalog = c) } }
         }
     }

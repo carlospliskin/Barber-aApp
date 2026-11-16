@@ -94,9 +94,8 @@ class BookingViewModel(
                     if (shop == null) return@flatMapLatest emptyFlow()
                     val today = LocalDateTime.ofInstant(clock.instant(), shop.zone).toLocalDate()
                     setState { copy(shop = shop, dates = (0 until DAYS_SHOWN).map { today.plusDays(it.toLong()) }) }
-                    observeCatalog(shop.id)
+                    observeCatalog(shop.id).catch { e -> setState { copy(failure = e.asBookingFailure()) } }
                 }
-                .catch { e -> setState { copy(failure = e.asBookingFailure()) } }
                 .collect { c -> setState { copy(services = c.bookableServices, barbers = c.bookableBarbers) } }
         }
     }

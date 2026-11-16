@@ -48,7 +48,8 @@ import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AgendaTest {
-    @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+    private val main = UnconfinedTestDispatcher()
+    @Before fun setUp() = Dispatchers.setMain(main)
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val zone = ZoneId.of("America/Mexico_City")
@@ -69,7 +70,7 @@ class AgendaTest {
         }
     }
 
-    private fun vm(role: StaffRole, barberId: String? = null) = AgendaViewModel(
+    private fun vm(role: StaffRole, barberId: String? = null, clock: Clock = this.clock) = AgendaViewModel(
         ObserveCurrentUserUseCase(
             FakeSessionRepository(SessionState.SignedIn(user(role).copy(staffTenantId = "t1", staffBarberId = barberId))),
         ),
@@ -100,6 +101,39 @@ class AgendaTest {
         assertTrue(vm.state.value.noAccess)
         vm.onIntent(AgendaIntent.DismissFailure)
         assertTrue(vm.state.value.noAccess) // quitar el aviso no vuelve a mostrar "+ Agendar cliente"
+    }
+
+    @Test fun `tras un error (p ej sin red) cambiar de dia vuelve a cargar`() {
+        bookings.agendaError = BookingFailure.NoConnection
+        val vm = vm(StaffRole.OWNER)
+        assertEquals(BookingFailure.NoConnection, vm.state.value.failure)
+        bookings.agendaError = null
+        vm.onIntent(AgendaIntent.NextDay)
+        vm.onIntent(AgendaIntent.PreviousDay)
+        assertEquals(listOf("a1", "a2"), vm.state.value.appointments.map { it.id })
+    }
+
+    @Test fun `F7-2-c U7 la agenda abierta actualiza la hora cada minuto (aparece Atendida, se va Deshacer)`() {
+        var now = Instant.parse("2026-11-16T17:59:30Z") // a2 empieza a las 18:00 UTC
+        val moving = object : Clock() {
+            override fun getZone() = ZoneId.of("UTC")
+            override fun withZone(zone: ZoneId?) = this
+            override fun instant() = now
+        }
+        val vm = vm(StaffRole.OWNER, clock = moving)
+        val a2 = { vm.state.value.appointments.first { it.id == "a2" } }
+        assertEquals(false, vm.state.value.canComplete(a2()))
+        now = Instant.parse("2026-11-16T18:00:30Z")
+        main.scheduler.advanceTimeBy(61_000)
+        assertTrue(vm.state.value.canComplete(a2()))
+    }
+
+    @Test fun `E1 si una accion falla de forma inesperada los botones no quedan bloqueados`() {
+        bookings.statusCrash = IllegalStateException("bug")
+        val vm = vm(StaffRole.OWNER)
+        vm.onIntent(AgendaIntent.Complete("a1"))
+        assertNull(vm.state.value.busyId)
+        assertTrue(vm.state.value.failure is BookingFailure.Unknown)
     }
 
     @Test fun `con acceso se puede agendar sin cuenta`() {

@@ -114,6 +114,21 @@ class BookingPresentationTest {
         assertEquals(com.barberia.feature.booking.domain.model.BookingFailure.NoAccess, vm.state.value.failure)
     }
 
+    @Test fun `tras un error en Mis citas, unirse a otra barberia vuelve a cargar`() = runTest {
+        store.saved["uid-1"] = "t1"
+        bookings.agendaError = BookingFailure.NoConnection
+        val vm = clientHome()
+        assertEquals(BookingFailure.NoConnection, vm.state.value.failure)
+        bookings.agendaError = null
+        bookings.book(com.barberia.feature.booking.domain.model.Appointment(
+            "x1", "t1", "uid-1", "Ana", "b1", "Luis", "s1", "Corte", Money(100), monday.plusDays(1), 600, 630,
+            com.barberia.feature.booking.domain.model.AppointmentStatus.BOOKED, clock.instant().plusSeconds(86_400),
+        ))
+        store.save("uid-1", null)
+        store.save("uid-1", "t1")
+        assertEquals(listOf("x1"), vm.state.value.appointments.map { it.id })
+    }
+
     @Test fun `A7-c la barberia guardada ya no existe se avisa y pide codigo`() {
         store.saved["uid-1"] = "borrada"
         val vm = clientHome()
@@ -131,6 +146,9 @@ class BookingPresentationTest {
         assertTrue(state.canCancel(appt))
         assertFalse(state.canCancel(appt.copy(startsAt = start(1)))) // ya empezó o está por empezar
         assertFalse(state.canCancel(appt.copy(startsAt = start(-1))))
+        // una que ya pasó no dice "faltan menos de 2 horas"
+        assertFalse(state.hasStarted(appt.copy(startsAt = start(1))))
+        assertTrue(state.hasStarted(appt.copy(startsAt = start(-1))))
     }
 
     @Test fun `codigo invalido se muestra sin salir`() {

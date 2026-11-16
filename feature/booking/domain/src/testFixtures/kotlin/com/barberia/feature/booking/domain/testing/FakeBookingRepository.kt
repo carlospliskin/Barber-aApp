@@ -69,6 +69,8 @@ class FakeBookingRepository : BookingRepository {
 
     var lastAgendaDate: LocalDate? = null
     var lastStatus: AppointmentStatus? = null
+    /** Simula un error inesperado (bug) al cambiar el estado. */
+    var statusCrash: RuntimeException? = null
     /** Hora que el "servidor" pone al marcar (F7-2). */
     var serverNow: java.time.Instant? = null
 
@@ -89,6 +91,7 @@ class FakeBookingRepository : BookingRepository {
         status: AppointmentStatus,
         updateClient: ((ClientRecord?) -> ClientRecord)?,
     ): BookingResult<Unit> {
+        statusCrash?.let { throw it }
         lastStatus = status
         all.value = all.value.map { if (it.id == appointment.id) it.copy(status = status, markedAt = serverNow ?: it.markedAt) else it }
         val uid = appointment.clientUid

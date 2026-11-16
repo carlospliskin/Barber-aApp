@@ -8,7 +8,7 @@
 
 | Módulos | Pantallas | Casos de uso | Repositorios | Rutas en Firestore | Tests Kotlin | Tests de reglas |
 |---|---|---|---|---|---|---|
-| 14 | 12 | 49 | 5 | 10 | 337 | 147 |
+| 14 | 12 | 49 | 5 | 10 | 341 | 147 |
 
 ## 1. Módulos y dependencias
 
@@ -82,7 +82,7 @@ graph LR
 | [`:feature:catalog:presentation`](../feature/catalog/presentation) | Android + Compose | 6 | 25 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:catalog:domain` |
 | [`:feature:booking:domain`](../feature/booking/domain) | Kotlin puro | 13 | 76 | `:core:common`, `:feature:catalog:domain` |
 | [`:feature:booking:data`](../feature/booking/data) | Android | 11 | 34 | `:core:firebase`, `:feature:booking:domain` |
-| [`:feature:booking:presentation`](../feature/booking/presentation) | Android + Compose | 14 | 40 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:booking:domain`, `:feature:catalog:domain` |
+| [`:feature:booking:presentation`](../feature/booking/presentation) | Android + Compose | 14 | 44 | `:core:designsystem`, `:core:mvi`, `:feature:auth:domain`, `:feature:booking:domain`, `:feature:catalog:domain` |
 
 ## 2. Navegación
 

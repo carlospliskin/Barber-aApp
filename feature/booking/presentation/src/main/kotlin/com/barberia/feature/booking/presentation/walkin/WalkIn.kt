@@ -50,7 +50,7 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import org.koin.androidx.compose.koinViewModel
 import java.time.Clock
@@ -128,8 +128,8 @@ class WalkInViewModel(
                     }
                     observeCatalog(tenantId)
                         .catch { e -> setState { copy(failure = e.asBookingFailure()) } }
-                        .first()
-                        .let { c -> setState { copy(services = c.bookableServices, barbers = c.bookableBarbers) } }
+                        .firstOrNull() // con error el flujo termina vacío: first() lanzaba NoSuchElementException
+                        ?.let { c -> setState { copy(services = c.bookableServices, barbers = c.bookableBarbers) } }
                 }
         }
     }

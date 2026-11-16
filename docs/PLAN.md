@@ -212,7 +212,12 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] R10. Marcar exige escribir la ficha en el mismo batch.
 - [x] E1/E2. Errores no manejados ya no cierran la app; "Mis citas" muestra el motivo.
 - [x] U12. Cancelar solo se ofrece al cliente con más de 2 h.
-- [ ] F7-2-b/c. Citas canceladas por la penalización no vuelven; "Deshacer" visible pasado el plazo (P3).
+- [ ] F7-2-b. Citas canceladas por la penalización no vuelven al deshacer (P3).
+- [x] F7-2-c. La agenda abierta actualiza la hora cada minuto.
+- [x] E3. Un error de carga dejaba la pantalla sin actualizarse (catch fuera del flatMapLatest).
+- [x] E4. `first()` tras `catch` en "Agendar cliente".
+- [x] E5. Botones bloqueados tras un error inesperado en la agenda.
+- [x] U13. Cita ya pasada decía "faltan menos de 2 horas".
 - [ ] A7-c. Clientes de una barbería borrada la conservan en el teléfono con recordatorios (P2).
 - [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
 - [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app).

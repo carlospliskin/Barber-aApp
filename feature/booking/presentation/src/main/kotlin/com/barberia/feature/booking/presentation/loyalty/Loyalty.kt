@@ -66,9 +66,8 @@ class LoyaltyViewModel(
                 .flatMapLatest { uid -> if (uid == null) emptyFlow() else observeJoined(uid).map { uid to it } }
                 .flatMapLatest { (uid, joined) ->
                     val shop = (joined as? AppResult.Success)?.value
-                    if (shop == null) flowOf(null) else observeMine(shop.id, uid)
+                    if (shop == null) flowOf(null) else observeMine(shop.id, uid).catch { } // sin tarjeta, sin cortar
                 }
-                .catch { }
                 .collect { c ->
                     setState {
                         copy(
