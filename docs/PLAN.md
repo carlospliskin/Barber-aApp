@@ -65,7 +65,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] A4. `switchMode` dependía del backend; con Firebase el modo es una preferencia local y debe sobrevivir al reinicio.
 - [x] A5. Al cerrar sesión hay que borrar el modo elegido y los cachés.
 - [x] A6. Un dueño que también es cliente de otra barbería: ¿qué modos ve? Todo el personal tiene modo cliente; el dueño también es barbero.
-- [ ] A7. Eliminar cuenta y datos (obligatorio en Google Play).
+- [x] A7. Eliminar cuenta y datos (obligatorio en Google Play). Ver fase 9.
 - [x] A8. Sesión sin internet: entrar con la sesión cacheada, no mandar al login.
 - [x] A9. Registrar dueño crea `users` + `tenants` juntos (batch). Si falla uno, no puede quedar a medias. Batch + borrar la cuenta si falla el perfil.
 
@@ -221,9 +221,9 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] Q1. Tests instrumentados de los gateways contra Emulator Suite (10, `scripts/android-tests.sh`).
 - [x] E6. Errores inesperados visibles en logcat en debug/QA.
 - [ ] Q1-b. Correr los instrumentados en el CI (P2).
-- [ ] A7-c. Clientes de una barbería borrada la conservan en el teléfono con recordatorios (P2).
 - [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
-- [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app).
+- [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app). Páginas en `web/`; falta publicarlas.
+- [x] L2-a. `release` se firma con `keystore.properties` (ver RELEASE.md); falta la llave real.
 
 ### Limitaciones por usar solo Spark (decisiones conscientes)
 - Sin Cloud Functions no hay **push del servidor** → recordatorios con notificaciones **locales** (WorkManager) y avisos en vivo con listeners mientras la app está abierta.
@@ -237,7 +237,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] Verificación del grafo de Koin (`KoinGraphTest`), comprobada quitando un registro a propósito.
 - [x] Build release con R8 probado en ejecución mediante el build type `qa`.
 - [ ] detekt/ktlint en CI.
-- [ ] Tests instrumentados de los gateways reales contra el emulador.
+- [x] Tests instrumentados de los gateways reales contra el emulador (Q1).
 
 ## Versiones (revisión 2026-11-15)
 

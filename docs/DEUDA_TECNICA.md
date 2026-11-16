@@ -12,7 +12,7 @@ primero el test que demuestra el hueco, luego el arreglo. Al cerrarlo, se marca 
 **Esfuerzo:** S (≤ 2 h) · M (medio día a 1 día) · L (varios días).
 **Decisión:** el punto necesita que el dueño del producto elija una opción antes de programarlo.
 
-Estado a la fecha: fase 9 en curso (A7 listo; faltan PLAY-1, L1 y L2, que dependen del proyecto real) · CI en verde. ✅ = resuelto (ver «Resueltos» al final).
+Estado a la fecha: fase 9 en curso (A7 listo; PLAY-1 y L2 listos en el repo; faltan tu llave, tu correo de contacto y L1, el proyecto real) · CI en verde. ✅ = resuelto (ver «Resueltos» al final).
 
 ---
 
@@ -27,7 +27,7 @@ Encontrados revisando el código ya implementado.
 | F7-2-b | P3 | S | Deshacer el no-show que penalizó **no restaura las citas futuras** que la penalización canceló (F7-3). | La agenda ya dice cuántas se cancelaron; ofrecer volver a agendarlas (el horario puede estar tomado). |
 | F7-2-c | ✅ | S | "Deshacer" seguía visible pasados los 15 min (y "Atendida" no aparecía al llegar la hora). | Ver «Resueltos». |
 | F7-3 | ✅ | S | **Penalizado con citas futuras.** La penalización no toca las citas ya reservadas. **Decisión:** ¿se cancelan o se respetan? | Si se cancelan: en el mismo flujo del 3.er no-show, cancelar sus citas BOOKED futuras y liberar bloques. | Dominio + reglas del batch. |
-| F7-4 | P2 | S | **Pantallas desactualizadas.** "Penalizado hasta", y los botones atendida, no-show y cancelar, se calculan al llegar datos. Con la pantalla abierta no se actualizan al pasar la hora. | Un "reloj" en el ViewModel que actualice `now` cada minuto. | ViewModel con reloj de prueba: avanzar el tiempo cambia `canComplete` y `penalizedUntil`. |
+| F7-4 | P3 · parcial | S | **Pantallas desactualizadas.** La agenda ya refresca la hora cada minuto (F7-2-c); faltan "Mis citas", clientes y lealtad. "Penalizado hasta", y los botones atendida, no-show y cancelar, se calculan al llegar datos. Con la pantalla abierta no se actualizan al pasar la hora. | Un "reloj" en el ViewModel que actualice `now` cada minuto. | ViewModel con reloj de prueba: avanzar el tiempo cambia `canComplete` y `penalizedUntil`. |
 | F7-5 | P2 | M | **Lista de clientes limitada.** Solo los 50 actualizados más recientemente, sin búsqueda ni paginación. Un penalizado antiguo puede no aparecer. | Paginación (`startAfter`) y búsqueda por nombre (prefijo en un campo `nameLower`). | Gateway contra emulador; ViewModel con fake. |
 | F7-6 | ✅ | S | **Clientes sin ficha.** Quien solo ha reservado (sin visita marcada) no aparece en la lista. **Decisión:** ¿deben aparecer? | Crear la ficha al reservar: 1 escritura más por reserva y su regla. | Reglas + dominio. |
 | F7-7 | P3 | S | El nombre de la ficha se copia una vez; si el cliente lo cambia, no se actualiza. | Actualizar `name` en cada atendida o no-show (la regla ya permite el campo). | Dominio. |
@@ -57,7 +57,7 @@ Encontrados revisando el código ya implementado.
 | A16-f | ✅ | S | Caché de Firestore de la cuenta anterior en el teléfono. | Ver «Resueltos». Verificado solo indirectamente en el emulador (QA no es depurable): falta comprobarlo en un teléfono. |
 | A7-c | ✅ | S | Clientes de una barbería borrada la seguían teniendo guardada. | Ver «Resueltos». |
 | A7-d | P2 | S | **Barbería muy grande:** Spark permite 20 000 borrados al día; más de ~9 000 citas no se borran en un solo día. | Ya se puede reintentar (sigue donde quedó). Avisar en la pantalla y contar lo borrado. |
-| PLAY-1 | **P0** | S | **Política de privacidad y formulario de "Seguridad de los datos"** en Play Console. | Datos que se guardan: email, nombre, teléfono, citas. Play también pide un **enlace web para solicitar el borrado** sin instalar la app (página simple que explique el borrado desde la app y dé un correo de contacto). |
+| PLAY-1 | **P0 · parcial** | S | Páginas listas en `web/` (privacidad y borrar cuenta), workflow manual de GitHub Pages y respuestas del formulario en [RELEASE.md](RELEASE.md). Falta poner responsable y correo, y publicarlas. · **Política de privacidad y formulario de "Seguridad de los datos"** en Play Console. | Datos que se guardan: email, nombre, teléfono, citas. Play también pide un **enlace web para solicitar el borrado** sin instalar la app (página simple que explique el borrado desde la app y dé un correo de contacto). |
 | X3 | P2 | S | **El ícono es provisional** (tijeras vectoriales). | Reemplazar por el ícono de marca cuando exista. |
 | N1 | ✅ | L | **El personal no puede reservar por un cliente** (por teléfono o de mostrador). | Ver «Resueltos». |
 | N2 | ✅ | M | **Sin excepciones de horario.** | Ver «Resueltos». |
@@ -98,7 +98,7 @@ Encontrados revisando el código ya implementado.
 | ID | Prioridad | Esfuerzo | Falta | Notas |
 |---|---|---|---|---|
 | L1 | **P0** | S | **Proyecto real de Firebase** (Spark), `firebase.properties` y publicar reglas e índices. | Pasos en [FIREBASE.md](FIREBASE.md). Lo hace el dueño de la cuenta de Google. |
-| L2 | **P0** | S | **Firma de release:** `release` no tiene `signingConfig` y no se puede publicar. | Keystore fuera de git (`keystore.properties`), como en pos-farmacia. |
+| L2 | **P0 · parcial** | S | **Firma de release.** El build ya firma con `keystore.properties` (probado con una llave de prueba). Falta que el dueño cree su llave de subida. | Pasos en [RELEASE.md](RELEASE.md). |
 | L3 | P1 · parcial | S | **Ícono de la app ✅ y fuentes:** no hay `mipmap`, se ve el ícono por defecto. Faltan Playfair Display y DM Sans. | Ícono adaptativo y fuentes en `core:designsystem`. |
 | L4 | ✅ | S | **Crashlytics y Analytics** (fase 8). | Gratis en Spark. Sin datos personales en los eventos. |
 

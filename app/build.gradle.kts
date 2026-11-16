@@ -13,6 +13,12 @@ val firebaseProps = Properties().apply {
 }
 fun firebase(key: String) = "\"${firebaseProps.getProperty(key, "")}\""
 
+// L2: firma de release con `keystore.properties` (fuera de git). Sin el archivo, release sale sin firmar.
+// Claves: storeFile (ruta relativa a la raíz o absoluta), storePassword, keyAlias, keyPassword. Ver docs/RELEASE.md.
+val keystoreProps = Properties().apply {
+    rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+
 android {
     namespace = "com.barberia.app"
     compileSdk = 37
@@ -23,6 +29,17 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
+    }
+
+    signingConfigs {
+        if (!keystoreProps.isEmpty) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+                storePassword = keystoreProps.getProperty("storePassword")
+                keyAlias = keystoreProps.getProperty("keyAlias")
+                keyPassword = keystoreProps.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -38,6 +55,7 @@ android {
         }
         release {
             isMinifyEnabled = true
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             // Subir el mapa de R8 necesita el proyecto real de Firebase (L1). Se activa entonces.
             (this as ExtensionAware).extensions.configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
                 mappingFileUploadEnabled = false

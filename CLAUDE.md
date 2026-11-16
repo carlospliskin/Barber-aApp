@@ -10,6 +10,7 @@ App Android nativa (Kotlin + Compose) para barberías, con Firebase en plan **Sp
    Pendientes priorizados (P0–P3): [docs/DEUDA_TECNICA.md](docs/DEUDA_TECNICA.md).
 3. [ARCHITECTURE.md](ARCHITECTURE.md) — reglas de capas, MVI y SOLID.
 4. [docs/FIREBASE.md](docs/FIREBASE.md) — emuladores, puertos, reglas y build QA.
+5. [docs/RELEASE.md](docs/RELEASE.md) — firma, páginas de privacidad/borrado y formulario de Play.
 
 ## Reglas del proyecto
 - **TDD**: primero el test que falla, luego el código. Ningún caso de uso, reducer, ViewModel o regla de

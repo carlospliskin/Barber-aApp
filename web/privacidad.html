@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aviso de privacidad · Barbería</title>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<main>
+<h1>Aviso de privacidad</h1>
+<p class="meta">App «Barbería» para Android · Última actualización: {{FECHA}}</p>
+
+<p>Este aviso explica qué datos guarda la app, para qué y cómo puedes borrarlos. Responsable: {{RESPONSABLE}}.
+Contacto: <a href="mailto:{{CORREO}}">{{CORREO}}</a>.</p>
+
+<h2>Qué datos guardamos</h2>
+<table>
+<tr><th>Dato</th><th>Para qué</th></tr>
+<tr><td>Correo y contraseña</td><td>Crear tu cuenta e iniciar sesión. La contraseña la guarda Firebase Authentication cifrada; nosotros nunca la vemos.</td></tr>
+<tr><td>Nombre y teléfono</td><td>Que la barbería sepa quién reservó y pueda contactarte por tu cita.</td></tr>
+<tr><td>Citas</td><td>Fecha, hora, servicio, barbero, precio y estado (reservada, atendida, cancelada o no llegó).</td></tr>
+<tr><td>Ficha de cliente en cada barbería</td><td>Visitas atendidas, faltas sin avisar, premios canjeados y, si aplica, la fecha hasta la que no puedes reservar.</td></tr>
+<tr><td>Datos de la barbería (dueños)</td><td>Nombre, servicios, precios, barberos, horarios y días libres.</td></tr>
+<tr><td>Informes de errores</td><td>Firebase Crashlytics recibe datos técnicos cuando la app falla (modelo de teléfono, versión de Android y de la app, el error). No incluyen tu nombre, correo ni teléfono.</td></tr>
+</table>
+<p>Si la barbería te agenda sin que tengas la app, guarda tu nombre y teléfono en esa cita.</p>
+<p>No usamos publicidad, no vendemos datos y no pedimos ubicación, contactos, fotos ni micrófono.
+Los recordatorios de cita son notificaciones del propio teléfono.</p>
+
+<h2>Quién puede ver tus datos</h2>
+<ul>
+<li>Tú ves tus citas y tu progreso de lealtad.</li>
+<li>El dueño y los barberos de la barbería donde reservas ven tu nombre, teléfono, citas y ficha de esa barbería. No ven tus citas en otras barberías.</li>
+<li>Los datos se guardan en Google Firebase (Authentication y Cloud Firestore), que actúa como proveedor de servicio. Viajan cifrados (HTTPS).</li>
+</ul>
+
+<h2>Cuánto tiempo los guardamos</h2>
+<p>Mientras tengas tu cuenta. Al eliminarla se borran tus datos como se explica abajo.</p>
+
+<h2>Eliminar tu cuenta y tus datos</h2>
+<p>Desde la app: <strong>Inicio → Eliminar mi cuenta</strong>. Si ya no tienes la app, sigue los pasos de
+<a href="borrar-cuenta.html">esta página</a>.</p>
+<ul>
+<li>Se borran tu cuenta, tu perfil (nombre y teléfono) y tu ficha en cada barbería.</li>
+<li>Las citas que aún puedes cancelar se cancelan. Las demás se quedan en la agenda de la barbería <strong>sin tu nombre ni tu cuenta</strong> (solo fecha, servicio y precio), para que el negocio conserve sus registros.</li>
+<li>Si eres dueño, se borra también tu barbería con sus citas, clientes, catálogo e invitaciones.</li>
+</ul>
+
+<h2>Tus derechos</h2>
+<p>Puedes pedir acceso, corrección o eliminación de tus datos, u oponerte a su uso, escribiendo a
+<a href="mailto:{{CORREO}}">{{CORREO}}</a>. Respondemos en un plazo máximo de 20 días hábiles.</p>
+
+<h2>Menores de edad</h2>
+<p>La app no está dirigida a menores de 13 años.</p>
+
+<h2>Cambios</h2>
+<p>Si este aviso cambia, actualizaremos la fecha de arriba y lo avisaremos en la app cuando el cambio sea importante.</p>
+</main>
+</body>
+</html>
