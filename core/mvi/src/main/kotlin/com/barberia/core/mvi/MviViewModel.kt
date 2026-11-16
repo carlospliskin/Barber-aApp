@@ -17,15 +17,18 @@ interface UiState
 /** Acción del usuario o del sistema que entra al ViewModel. */
 interface UiIntent
 
-/** Evento de una sola vez (navegar, mostrar un toast); no forma parte del estado. */
+/** Evento de una sola vez (navegar, mostrar un mensaje); no forma parte del estado. */
 interface UiEffect
 
 /**
  * Base MVI con flujo unidireccional:
- * `Intent → handleIntent (casos de uso) → setState (reducer) → State`, y efectos aparte.
+ * `Intent → handleIntent (casos de uso) → setState (reducer puro) → State`, y efectos aparte.
  *
- * - La vista solo llama [onIntent] y observa [state] / [effects].
- * - Las subclases solo conocen casos de uso (DIP); no saben de red ni almacenamiento.
+ * - Los intents se procesan **uno a la vez, en orden de llegada** (cola). Así un doble toque en
+ *   "Enviar" no corre dos veces en paralelo y el estado nunca se pisa.
+ * - Para trabajo que dura toda la vida del ViewModel (escuchar un Flow), usar [launchInScope]
+ *   para no bloquear la cola.
+ * - La vista solo llama [onIntent] y observa [state] / [effects] (con `CollectEffects`).
  */
 abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(initialState: S) : ViewModel() {
 
@@ -35,10 +38,18 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(initialStat
     private val _effects = Channel<E>(Channel.BUFFERED)
     val effects: Flow<E> = _effects.receiveAsFlow()
 
+    private val intents = Channel<I>(Channel.UNLIMITED)
+
     protected val currentState: S get() = _state.value
 
+    init {
+        viewModelScope.launch {
+            for (intent in intents) handleIntent(intent)
+        }
+    }
+
     fun onIntent(intent: I) {
-        viewModelScope.launch { handleIntent(intent) }
+        intents.trySend(intent)
     }
 
     protected abstract suspend fun handleIntent(intent: I)
@@ -47,4 +58,9 @@ abstract class MviViewModel<S : UiState, I : UiIntent, E : UiEffect>(initialStat
     protected fun setState(reducer: S.() -> S) = _state.update(reducer)
 
     protected suspend fun sendEffect(effect: E) = _effects.send(effect)
+
+    /** Trabajo largo (p. ej. observar la sesión) fuera de la cola de intents. */
+    protected fun launchInScope(block: suspend () -> Unit) {
+        viewModelScope.launch { block() }
+    }
 }
