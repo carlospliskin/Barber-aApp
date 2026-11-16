@@ -328,9 +328,19 @@ def render(data: dict) -> str:
             steps = " → ".join(f"`{s['to']}` ({s['how']})" for s in w["steps"])
             out.append(f"- **{w['route']}**: abrir app → {steps}")
 
-    out += ["", "## 5. Casos de uso → repositorios", "", "| Caso de uso | Usa | Archivo |", "|---|---|---|"]
+    used_by: dict[str, list[str]] = {}
+    for s in scr:
+        for uc in s["useCases"]:
+            used_by.setdefault(uc, []).append(s["route"])
+    orphans = [u["name"] for u in data["useCases"] if u["name"] not in used_by]
+    out += ["", "## 5. Casos de uso → repositorios", ""]
+    if orphans:
+        out += [f"⚠️ **{len(orphans)} casos de uso sin pantalla** (lógica lista que nadie usa todavía): "
+                + ", ".join(f"`{o}`" for o in orphans), ""]
+    out += ["| Caso de uso | Usa | Lo usan las pantallas | Archivo |", "|---|---|---|---|"]
     for u in data["useCases"]:
-        out.append(f"| `{u['name']}` | {', '.join(u['uses']) or '—'} | [{Path(u['file']).name}](../{u['file']}) |")
+        screens_txt = ", ".join(f"`{r}`" for r in sorted(set(used_by.get(u["name"], [])))) or "⚠️ ninguna"
+        out.append(f"| `{u['name']}` | {', '.join(u['uses']) or '—'} | {screens_txt} | [{Path(u['file']).name}](../{u['file']}) |")
     out += ["", "| Implementación | Implementa | Archivo |", "|---|---|---|"]
     for r in data["repositories"]:
         out.append(f"| `{r['implementation']}` | {', '.join(r['implements'])} | [{Path(r['file']).name}](../{r['file']}) |")

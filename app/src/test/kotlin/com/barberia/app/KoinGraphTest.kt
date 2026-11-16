@@ -8,6 +8,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.barberia.feature.auth.data.di.authDataModule
 import com.barberia.feature.auth.presentation.di.authPresentationModule
+import com.barberia.feature.booking.data.di.bookingDataModule
 import com.barberia.feature.catalog.data.di.catalogDataModule
 import com.barberia.feature.catalog.presentation.catalogPresentationModule
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,7 @@ class KoinGraphTest {
                 authPresentationModule,
                 catalogDataModule,
                 catalogPresentationModule,
+                bookingDataModule,
             )
         }.verify(extraTypes = listOf(
                 Context::class,

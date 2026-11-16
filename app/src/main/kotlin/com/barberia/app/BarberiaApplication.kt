@@ -7,6 +7,7 @@ import com.barberia.core.firebase.FirebaseConfig
 import com.barberia.core.firebase.firebaseModule
 import com.barberia.feature.auth.data.di.authDataModule
 import com.barberia.feature.auth.presentation.di.authPresentationModule
+import com.barberia.feature.booking.data.di.bookingDataModule
 import com.barberia.feature.catalog.data.di.catalogDataModule
 import com.barberia.feature.catalog.presentation.catalogPresentationModule
 import org.koin.android.ext.koin.androidContext
@@ -31,6 +32,7 @@ class BarberiaApplication : Application() {
                 authPresentationModule,
                 catalogDataModule,
                 catalogPresentationModule,
+                bookingDataModule,
             )
         }
     }

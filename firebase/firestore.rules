@@ -95,6 +95,94 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ── Reservas ─────────────────────────────────────────────────────────────
+    // days/{barberId_fecha}.booked = { "600": "idCita", "605": "idCita", ... } (bloques de 5 min).
+    // Doble reserva imposible sin servidor (B3): un bloque existente nunca se sobrescribe ni se borra
+    // si no es de la cita que se cancela. `lastOp` liga cada escritura del día con su cita.
+    match /tenants/{tenantId}/appointments/{apptId} {
+      function dayAfter(data) {
+        return getAfter(/databases/$(database)/documents/tenants/$(tenantId)/days/$(data.dayId)).data;
+      }
+
+      function isMine() {
+        return signedIn() && resource.data.clientUid == request.auth.uid;
+      }
+
+      function validNew(data) {
+        return data.keys().hasOnly(['clientUid', 'clientName', 'barberId', 'barberName', 'serviceId',
+            'serviceName', 'priceCents', 'date', 'startMinute', 'endMinute', 'startsAt', 'status',
+            'slotKeys', 'dayId', 'createdAt'])
+          && data.clientUid == request.auth.uid
+          && data.status == 'BOOKED'
+          && data.slotKeys is list && data.slotKeys.size() > 0 && data.slotKeys.size() <= 96
+          && data.startMinute is int && data.endMinute is int && data.endMinute > data.startMinute
+          && data.startsAt is timestamp && data.startsAt > request.time
+          && data.dayId == data.barberId + '_' + data.date
+          && data.createdAt == request.time
+          && dayAfter(data).lastOp == apptId;
+      }
+
+      allow get, list: if isMine() || isSelf(tenantId);
+      allow create: if signedIn() && validNew(request.resource.data);
+      // Cancelar: el cliente hasta 2 h antes (B7); el dueño cuando sea. Se liberan los bloques en el mismo batch.
+      allow update: if (isMine() || isSelf(tenantId))
+        && resource.data.status == 'BOOKED'
+        && request.resource.data.status == 'CANCELLED'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && (isSelf(tenantId) || request.time < resource.data.startsAt - duration.value(2, 'h'))
+        && dayAfter(resource.data).lastOp == apptId;
+      allow delete: if false;
+    }
+
+    match /tenants/{tenantId}/days/{dayId} {
+      function apptAfter() {
+        return getAfter(/databases/$(database)/documents/tenants/$(tenantId)/appointments/$(request.resource.data.lastOp)).data;
+      }
+
+      function validShape() {
+        return request.resource.data.keys().hasOnly(['booked', 'lastOp', 'updatedAt'])
+          && request.resource.data.booked is map
+          && request.resource.data.updatedAt == request.time;
+      }
+
+      function bookingFor(appt, status) {
+        return appt.status == status && appt.dayId == dayId;
+      }
+
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && validShape()
+        && request.resource.data.booked.keys().toSet() == apptAfter().slotKeys.toSet()
+        && bookingFor(apptAfter(), 'BOOKED');
+      allow update: if signedIn() && validShape() && (
+        // Reservar: solo agrega bloques nuevos, exactamente los de la cita.
+        (request.resource.data.booked.diff(resource.data.booked).changedKeys().size() == 0
+          && request.resource.data.booked.diff(resource.data.booked).removedKeys().size() == 0
+          && request.resource.data.booked.diff(resource.data.booked).addedKeys() == apptAfter().slotKeys.toSet()
+          && bookingFor(apptAfter(), 'BOOKED'))
+        ||
+        // Cancelar: solo quita los bloques de la cita cancelada.
+        (request.resource.data.booked.diff(resource.data.booked).changedKeys().size() == 0
+          && request.resource.data.booked.diff(resource.data.booked).addedKeys().size() == 0
+          && request.resource.data.booked.diff(resource.data.booked).removedKeys() == apptAfter().slotKeys.toSet()
+          && bookingFor(apptAfter(), 'CANCELLED'))
+      );
+      allow delete: if false;
+    }
+
+    // ── shareCodes/{code} (B0) ───────────────────────────────────────────────
+    // Código corto para que un cliente encuentre la barbería sin poder listarlas todas (H5).
+    match /shareCodes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['tenantId', 'createdAt'])
+        && request.resource.data.tenantId == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && code.size() == 6;
+      allow update, delete: if false;
+    }
+
     // Todo lo que no esté declarado arriba queda cerrado.
     match /{document=**} {
       allow read, write: if false;

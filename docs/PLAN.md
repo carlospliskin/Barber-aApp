@@ -31,7 +31,7 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 2 | Auth con Firebase: login, registro dueño/cliente, recuperar contraseña, modo local, roles en Firestore | ✅ |
 | 3 | Reglas de Firestore + tests en emulador + `firebase.json` | ✅ |
 | 4 | Catálogo de servicios y barberos (dueño) | ✅ |
-| 5 | Disponibilidad y reserva sin choques (cliente) | ⏭️ siguiente |
+| 5 | Disponibilidad y reserva sin choques (cliente) | 🔄 dominio, datos y reglas ✅ · pantallas pendientes |
 | 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ⏳ |
 | 7 | Clientes, penalizaciones y lealtad | ⏳ |
 | 8 | Recordatorios locales, Crashlytics, App Check, versión release | ⏳ |
@@ -83,13 +83,13 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] H7. `firebase-tools` global estaba en 15.15 (n-21). Se fija 15.36.0 en `firebase/package.json`.
 
 ### Reservas
-- [ ] B1. No permitir reservar en el pasado ni fuera del horario del barbero.
-- [ ] B2. El servicio no puede terminar después del cierre.
-- [ ] B3. Dos clientes reservando el mismo horario a la vez (transacción).
+- [x] B1. No permitir reservar en el pasado ni fuera del horario del barbero. → anticipación mínima 30 min.
+- [x] B2. El servicio no puede terminar después del cierre. → el servicio cabe completo en un turno (no cruza el descanso).
+- [x] B3. Dos clientes reservando el mismo horario a la vez (transacción). → mapa de bloques de 5 min por barbero y día; las reglas prohíben sobrescribir un bloque.
 - [ ] B4. Cliente penalizado no puede reservar hasta `penaltyUntil`.
-- [ ] B5. Límite de citas activas por cliente (evita acaparar horarios).
-- [ ] B6. Zona horaria: guardar en UTC y mostrar en la de la barbería.
-- [ ] B7. Cancelación: hasta cuántas horas antes y qué pasa con el horario liberado.
+- [x] B5. Límite de citas activas por cliente (evita acaparar horarios). → máximo 2 citas activas.
+- [x] B6. Zona horaria: guardar en UTC y mostrar en la de la barbería. → zona horaria de la barbería; `startsAt` en UTC.
+- [x] B7. Cancelación: hasta cuántas horas antes y qué pasa con el horario liberado. → hasta 2 h antes; también lo exigen las reglas (el dueño puede siempre).
 
 ### Operación
 - [ ] C1. Marcar no-show suma al contador y penaliza al llegar al límite.
@@ -111,6 +111,17 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] C15. La traducción de errores de Firebase estaba en `auth:data`; se movió a `core:firebase` para no duplicarla.
 - [ ] C16. Vincular un barbero del catálogo con una cuenta (para que vea su agenda): se necesita un código de invitación. Fase 6.
 - [ ] C17. Editar el catálogo sin red falla con aviso (las transacciones necesitan servidor). Aceptado para el lanzamiento.
+
+### Encontrados en la fase 5 (reservas)
+- [x] B0. Sin poder listar barberías (H5), el cliente no tenía cómo encontrar la suya → `shareCodes/{CODE}` de 6 caracteres sin letras confusas.
+- [x] B8. No reservar más de 30 días adelante.
+- [x] B9. Servicio o barbero desactivado entre abrir la pantalla y confirmar: se valida contra el catálogo del momento.
+- [x] B10. La regla de cancelación necesitaba la hora como instante → `startsAt` (UTC) en la cita.
+- [x] B11. Firebase envolvía el "horario tomado" lanzado en la transacción y se veía como error desconocido.
+- [x] B12. `GetAvailableSlots` devolvía lista vacía ante un error de red ("no hay horarios") → ahora devuelve el error.
+- [ ] B4. Cliente penalizado no puede reservar → con la fase 7 (penalizaciones).
+- [ ] B13. Pantallas de reserva (código de barbería, servicio, barbero, día, hora, confirmar, mis citas).
+- [ ] B14. Prueba instrumentada del gateway real de reservas contra el emulador (la doble reserva ya está probada en reglas).
 
 ### Revisión antes de la fase 5
 - [x] G1. **Pérdida de datos**: el formulario de horario solo editaba el primer turno y al guardar borraba el turno partido.

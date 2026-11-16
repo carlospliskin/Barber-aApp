@@ -12,6 +12,8 @@
         ":feature:auth:data",
         ":feature:auth:domain",
         ":feature:auth:presentation",
+        ":feature:booking:data",
+        ":feature:booking:domain",
         ":feature:catalog:data",
         ":feature:catalog:domain",
         ":feature:catalog:presentation"
@@ -117,6 +119,28 @@
       ],
       "kotlinFiles": 6,
       "unitTests": 15
+    },
+    {
+      "path": ":feature:booking:domain",
+      "folder": "feature/booking/domain",
+      "layer": "Kotlin puro",
+      "dependsOn": [
+        ":core:common",
+        ":feature:catalog:domain"
+      ],
+      "kotlinFiles": 4,
+      "unitTests": 19
+    },
+    {
+      "path": ":feature:booking:data",
+      "folder": "feature/booking/data",
+      "layer": "Android",
+      "dependsOn": [
+        ":core:firebase",
+        ":feature:booking:domain"
+      ],
+      "kotlinFiles": 5,
+      "unitTests": 13
     }
   ],
   "navigation": {
@@ -426,6 +450,36 @@
       ]
     },
     {
+      "name": "BookAppointmentUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "CancelAppointmentUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
+      "name": "GetAvailableSlotsUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "JoinBarbershopUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
       "name": "ObserveCatalogUseCase",
       "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
       "uses": [
@@ -437,6 +491,13 @@
       "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
       "uses": [
         "SessionRepository"
+      ]
+    },
+    {
+      "name": "ObserveMyAppointmentsUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository"
       ]
     },
     {
@@ -547,6 +608,13 @@
       "file": "feature/auth/data/src/main/kotlin/com/barberia/feature/auth/data/repository/FirebaseAccountRepository.kt"
     },
     {
+      "implementation": "FirestoreBookingRepository",
+      "implements": [
+        "BookingRepository"
+      ],
+      "file": "feature/booking/data/src/main/kotlin/com/barberia/feature/booking/data/repository/FirestoreBookingRepository.kt"
+    },
+    {
       "implementation": "FirestoreCatalogRepository",
       "implements": [
         "CatalogRepository"
@@ -583,7 +651,37 @@
         "update",
         "delete ✗"
       ]
+    },
+    {
+      "path": "/tenants/{tenantId}/appointments/{apptId}",
+      "ops": [
+        "get",
+        "list",
+        "create",
+        "update",
+        "delete ✗"
+      ]
+    },
+    {
+      "path": "/tenants/{tenantId}/days/{dayId}",
+      "ops": [
+        "get",
+        "list ✗",
+        "create",
+        "update",
+        "delete ✗"
+      ]
+    },
+    {
+      "path": "/shareCodes/{code}",
+      "ops": [
+        "get",
+        "list ✗",
+        "create",
+        "update ✗",
+        "delete ✗"
+      ]
     }
   ],
-  "rulesTests": 27
+  "rulesTests": 46
 }
