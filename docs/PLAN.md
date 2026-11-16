@@ -220,7 +220,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] U13. Cita ya pasada decía "faltan menos de 2 horas".
 - [x] Q1. Tests instrumentados de los gateways contra Emulator Suite (10, `scripts/android-tests.sh`).
 - [x] E6. Errores inesperados visibles en logcat en debug/QA.
-- [ ] Q1-b. Correr los instrumentados en el CI (P2).
+- [x] Q1-b. Los instrumentados corren en el CI (job `instrumented`).
 - [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
 - [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app). Páginas en `web/`; falta publicarlas.
 - [x] L2-a. `release` se firma con `keystore.properties` (ver RELEASE.md); falta la llave real.
@@ -250,6 +250,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 | Firebase BOM | 35.2.0 | 35.2.0 | n |
 | firebase-tools (CLI) | 15.36.0 | 15.36.0 | n |
 | actions/checkout · setup-java · setup-node · setup-gradle · upload-artifact | v7 · v6 · v7 · v6 · v7 | iguales | n |
+| reactivecircus/android-emulator-runner | v2 (2.38.0) | 2.38.0 | n |
 | Coroutines | 1.11.0 | 1.11.0 | n |
 | Serialization | 1.13.0 | 1.13.0 | n |
 | Koin | 4.2.2 | 4.2.2 | n |

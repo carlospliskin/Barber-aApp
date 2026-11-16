@@ -63,3 +63,37 @@ jobs:
           cache-dependency-path: firebase/package-lock.json
       - run: npm ci
       - run: npm test
+
+  instrumented:
+    name: Tests instrumentados (emulador Android + Firebase)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - name: Habilitar KVM (acelera el emulador)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: firebase/package-lock.json
+      - uses: gradle/actions/setup-gradle@v6
+      - run: npm ci
+        working-directory: firebase
+      - name: APKs de prueba (antes de encender el emulador)
+        run: ./gradlew :feature:auth:data:assembleDebugAndroidTest :feature:catalog:data:assembleDebugAndroidTest :feature:booking:data:assembleDebugAndroidTest
+      - name: Emulator Suite + emulador Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -no-snapshot -no-audio -no-boot-anim -gpu swiftshader_indirect
+          script: firebase/node_modules/.bin/firebase emulators:exec --only auth,firestore --project demo-barberia "ANDROID_SERIAL=emulator-5554 scripts/android-tests.sh"

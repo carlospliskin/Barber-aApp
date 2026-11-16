@@ -38,6 +38,8 @@ las reglas reales. Viven en `src/androidTest` de `feature/*/data` y usan `core:f
 scripts/android-tests.sh             # instala y corre en emulator-5570 (ANDROID_SERIAL para otro)
 ```
 
+En el CI los corre el job `instrumented` (emulador API 34 + `firebase emulators:exec`, unos 10 min).
+
 ## Build QA
 `./gradlew :app:assembleQa` genera el mismo APK que release (con R8) pero apuntando al emulador.
 Así se prueban los problemas de R8 antes de publicar.
