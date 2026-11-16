@@ -24,6 +24,7 @@
     <string name="catalog_save">Guardar</string>
     <string name="catalog_cancel">Cancelar</string>
     <string name="catalog_inactive">Inactivo</string>
+    <string name="catalog_extra_shift">También trabaja de %1$s a %2$s</string>
 
     <string name="catalog_error_name">Escribe un nombre</string>
     <string name="catalog_error_name_long">Máximo 60 caracteres</string>

@@ -1,0 +1,589 @@
+{
+  "modules": [
+    {
+      "path": ":app",
+      "folder": "app",
+      "layer": "App (Android)",
+      "dependsOn": [
+        ":core:common",
+        ":core:designsystem",
+        ":core:firebase",
+        ":core:mvi",
+        ":feature:auth:data",
+        ":feature:auth:domain",
+        ":feature:auth:presentation",
+        ":feature:catalog:data",
+        ":feature:catalog:domain",
+        ":feature:catalog:presentation"
+      ],
+      "kotlinFiles": 6,
+      "unitTests": 1
+    },
+    {
+      "path": ":core:common",
+      "folder": "core/common",
+      "layer": "Kotlin puro",
+      "dependsOn": [],
+      "kotlinFiles": 1,
+      "unitTests": 2
+    },
+    {
+      "path": ":core:mvi",
+      "folder": "core/mvi",
+      "layer": "Android + Compose",
+      "dependsOn": [],
+      "kotlinFiles": 2,
+      "unitTests": 2
+    },
+    {
+      "path": ":core:firebase",
+      "folder": "core/firebase",
+      "layer": "Android",
+      "dependsOn": [],
+      "kotlinFiles": 2,
+      "unitTests": 0
+    },
+    {
+      "path": ":core:designsystem",
+      "folder": "core/designsystem",
+      "layer": "Android + Compose",
+      "dependsOn": [],
+      "kotlinFiles": 4,
+      "unitTests": 0
+    },
+    {
+      "path": ":feature:auth:domain",
+      "folder": "feature/auth/domain",
+      "layer": "Kotlin puro",
+      "dependsOn": [
+        ":core:common"
+      ],
+      "kotlinFiles": 6,
+      "unitTests": 27
+    },
+    {
+      "path": ":feature:auth:data",
+      "folder": "feature/auth/data",
+      "layer": "Android",
+      "dependsOn": [
+        ":core:firebase",
+        ":feature:auth:domain"
+      ],
+      "kotlinFiles": 6,
+      "unitTests": 14
+    },
+    {
+      "path": ":feature:auth:presentation",
+      "folder": "feature/auth/presentation",
+      "layer": "Android + Compose",
+      "dependsOn": [
+        ":core:designsystem",
+        ":core:mvi",
+        ":feature:auth:domain"
+      ],
+      "kotlinFiles": 12,
+      "unitTests": 18
+    },
+    {
+      "path": ":feature:catalog:domain",
+      "folder": "feature/catalog/domain",
+      "layer": "Kotlin puro",
+      "dependsOn": [
+        ":core:common"
+      ],
+      "kotlinFiles": 4,
+      "unitTests": 24
+    },
+    {
+      "path": ":feature:catalog:data",
+      "folder": "feature/catalog/data",
+      "layer": "Android",
+      "dependsOn": [
+        ":core:firebase",
+        ":feature:catalog:domain"
+      ],
+      "kotlinFiles": 5,
+      "unitTests": 9
+    },
+    {
+      "path": ":feature:catalog:presentation",
+      "folder": "feature/catalog/presentation",
+      "layer": "Android + Compose",
+      "dependsOn": [
+        ":core:designsystem",
+        ":core:mvi",
+        ":feature:auth:domain",
+        ":feature:catalog:domain"
+      ],
+      "kotlinFiles": 6,
+      "unitTests": 15
+    }
+  ],
+  "navigation": {
+    "start": "SplashDest",
+    "destinations": [
+      {
+        "route": "SplashDest",
+        "screen": "SplashScreen"
+      },
+      {
+        "route": "OfflineDest",
+        "screen": "SplashScreen"
+      },
+      {
+        "route": "LoginDest",
+        "screen": "LoginRoute"
+      },
+      {
+        "route": "RegisterDest",
+        "screen": "RegisterRoute"
+      },
+      {
+        "route": "ModeSelectionDest",
+        "screen": "ModeSelectorRoute"
+      },
+      {
+        "route": "HomeDest",
+        "screen": "HomeRoute"
+      },
+      {
+        "route": "CatalogDest",
+        "screen": "CatalogRoute"
+      }
+    ],
+    "edges": [
+      {
+        "from": "LoginDest",
+        "to": "RegisterDest",
+        "trigger": "botón en pantalla"
+      },
+      {
+        "from": "RegisterDest",
+        "to": "(atrás)",
+        "trigger": "volver"
+      },
+      {
+        "from": "HomeDest",
+        "to": "CatalogDest",
+        "trigger": "botón en pantalla"
+      },
+      {
+        "from": "CatalogDest",
+        "to": "(atrás)",
+        "trigger": "volver"
+      }
+    ],
+    "sessionRoutes": [
+      {
+        "sessionDestination": "Login",
+        "route": "LoginDest"
+      },
+      {
+        "sessionDestination": "ModeSelection",
+        "route": "ModeSelectionDest"
+      },
+      {
+        "sessionDestination": "OwnerHome",
+        "route": "HomeDest"
+      },
+      {
+        "sessionDestination": "BarberHome",
+        "route": "HomeDest"
+      },
+      {
+        "sessionDestination": "ClientHome",
+        "route": "HomeDest"
+      },
+      {
+        "sessionDestination": "Offline",
+        "route": "OfflineDest"
+      }
+    ]
+  },
+  "walkthroughs": [
+    {
+      "route": "SplashDest",
+      "steps": []
+    },
+    {
+      "route": "OfflineDest",
+      "steps": [
+        {
+          "to": "OfflineDest",
+          "how": "la sesión resuelve **Offline**"
+        }
+      ]
+    },
+    {
+      "route": "LoginDest",
+      "steps": [
+        {
+          "to": "LoginDest",
+          "how": "la sesión resuelve **Login**"
+        }
+      ]
+    },
+    {
+      "route": "RegisterDest",
+      "steps": [
+        {
+          "to": "LoginDest",
+          "how": "la sesión resuelve **Login**"
+        },
+        {
+          "to": "RegisterDest",
+          "how": "tocar el botón que navega"
+        }
+      ]
+    },
+    {
+      "route": "ModeSelectionDest",
+      "steps": [
+        {
+          "to": "ModeSelectionDest",
+          "how": "la sesión resuelve **ModeSelection**"
+        }
+      ]
+    },
+    {
+      "route": "HomeDest",
+      "steps": [
+        {
+          "to": "HomeDest",
+          "how": "la sesión resuelve **OwnerHome**"
+        }
+      ]
+    },
+    {
+      "route": "CatalogDest",
+      "steps": [
+        {
+          "to": "HomeDest",
+          "how": "la sesión resuelve **OwnerHome**"
+        },
+        {
+          "to": "CatalogDest",
+          "how": "tocar el botón que navega"
+        }
+      ]
+    }
+  ],
+  "screens": [
+    {
+      "route": "SplashDest",
+      "screen": "SplashScreen",
+      "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SplashScreen.kt",
+      "viewModel": "SessionViewModel",
+      "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SessionViewModel.kt",
+      "intents": [
+        "Retry",
+        "SignOut"
+      ],
+      "useCases": [
+        "ObserveSessionDestinationUseCase",
+        "RetrySessionUseCase",
+        "SignOutUseCase"
+      ]
+    },
+    {
+      "route": "OfflineDest",
+      "screen": "SplashScreen",
+      "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SplashScreen.kt",
+      "viewModel": "SessionViewModel",
+      "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/session/SessionViewModel.kt",
+      "intents": [
+        "Retry",
+        "SignOut"
+      ],
+      "useCases": [
+        "ObserveSessionDestinationUseCase",
+        "RetrySessionUseCase",
+        "SignOutUseCase"
+      ]
+    },
+    {
+      "route": "LoginDest",
+      "screen": "LoginRoute",
+      "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/login/LoginScreen.kt",
+      "viewModel": "LoginViewModel",
+      "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/login/LoginViewModel.kt",
+      "intents": [
+        "DismissFailure",
+        "EmailChanged",
+        "ForgotPassword",
+        "GoToRegister",
+        "PasswordChanged",
+        "Submit"
+      ],
+      "useCases": [
+        "SendPasswordResetUseCase",
+        "SignInUseCase"
+      ]
+    },
+    {
+      "route": "RegisterDest",
+      "screen": "RegisterRoute",
+      "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/register/RegisterScreen.kt",
+      "viewModel": "RegisterViewModel",
+      "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/register/RegisterViewModel.kt",
+      "intents": [
+        "Back",
+        "BusinessNameChanged",
+        "EmailChanged",
+        "NameChanged",
+        "PasswordChanged",
+        "PhoneChanged",
+        "Submit",
+        "TypeChanged"
+      ],
+      "useCases": [
+        "RegisterClientUseCase",
+        "RegisterOwnerUseCase"
+      ]
+    },
+    {
+      "route": "ModeSelectionDest",
+      "screen": "ModeSelectorRoute",
+      "file": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/mode/ModeSelector.kt",
+      "viewModel": "ModeSelectorViewModel",
+      "viewModelFile": "feature/auth/presentation/src/main/kotlin/com/barberia/feature/auth/presentation/mode/ModeSelector.kt",
+      "intents": [
+        "Select"
+      ],
+      "useCases": [
+        "ObserveCurrentUserUseCase",
+        "SelectModeUseCase"
+      ]
+    },
+    {
+      "route": "HomeDest",
+      "screen": "HomeRoute",
+      "file": "app/src/main/kotlin/com/barberia/app/home/HomeScreen.kt",
+      "viewModel": "HomeViewModel",
+      "viewModelFile": "app/src/main/kotlin/com/barberia/app/home/HomeViewModel.kt",
+      "intents": [
+        "SignOut"
+      ],
+      "useCases": [
+        "ObserveCurrentUserUseCase",
+        "SignOutUseCase"
+      ]
+    },
+    {
+      "route": "CatalogDest",
+      "screen": "CatalogRoute",
+      "file": "feature/catalog/presentation/src/main/kotlin/com/barberia/feature/catalog/presentation/CatalogScreen.kt",
+      "viewModel": "CatalogViewModel",
+      "viewModelFile": "feature/catalog/presentation/src/main/kotlin/com/barberia/feature/catalog/presentation/CatalogViewModel.kt",
+      "intents": [
+        "BarberNameChanged",
+        "DayEndChanged",
+        "DayStartChanged",
+        "DayToggled",
+        "DismissDialog",
+        "DismissFailure",
+        "OpenEditBarber",
+        "OpenEditService",
+        "OpenNewBarber",
+        "OpenNewService",
+        "OpenSchedule",
+        "SaveDialog",
+        "ServiceDurationChanged",
+        "ServiceNameChanged",
+        "ServicePriceChanged",
+        "SetBarberActive",
+        "SetServiceActive",
+        "TabSelected"
+      ],
+      "useCases": [
+        "AddBarberUseCase",
+        "AddServiceUseCase",
+        "ObserveCatalogUseCase",
+        "ObserveCurrentUserUseCase",
+        "RenameBarberUseCase",
+        "SetBarberActiveUseCase",
+        "SetBarberScheduleUseCase",
+        "SetServiceActiveUseCase",
+        "UpdateServiceUseCase"
+      ]
+    }
+  ],
+  "useCases": [
+    {
+      "name": "AddBarberUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogEditor",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "AddServiceUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogEditor",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "ObserveCatalogUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "ObserveCurrentUserUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "SessionRepository"
+      ]
+    },
+    {
+      "name": "ObserveSessionDestinationUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "SessionRepository"
+      ]
+    },
+    {
+      "name": "RegisterClientUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository"
+      ]
+    },
+    {
+      "name": "RegisterOwnerUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository"
+      ]
+    },
+    {
+      "name": "RenameBarberUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogEditor",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "RetrySessionUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "SessionRepository"
+      ]
+    },
+    {
+      "name": "SelectModeUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "SessionRepository"
+      ]
+    },
+    {
+      "name": "SendPasswordResetUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository"
+      ]
+    },
+    {
+      "name": "SetBarberActiveUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogEditor",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "SetBarberScheduleUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogEditor",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "SetServiceActiveUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogEditor",
+        "CatalogRepository"
+      ]
+    },
+    {
+      "name": "SignInUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository"
+      ]
+    },
+    {
+      "name": "SignOutUseCase",
+      "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
+      "uses": [
+        "AuthRepository",
+        "SessionRepository"
+      ]
+    },
+    {
+      "name": "UpdateServiceUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/CatalogUseCases.kt",
+      "uses": [
+        "CatalogEditor",
+        "CatalogRepository"
+      ]
+    }
+  ],
+  "repositories": [
+    {
+      "implementation": "FirebaseAccountRepository",
+      "implements": [
+        "AuthRepository",
+        "SessionRepository"
+      ],
+      "file": "feature/auth/data/src/main/kotlin/com/barberia/feature/auth/data/repository/FirebaseAccountRepository.kt"
+    },
+    {
+      "implementation": "FirestoreCatalogRepository",
+      "implements": [
+        "CatalogRepository"
+      ],
+      "file": "feature/catalog/data/src/main/kotlin/com/barberia/feature/catalog/data/repository/FirestoreCatalogRepository.kt"
+    }
+  ],
+  "firestore": [
+    {
+      "path": "/users/{uid}",
+      "ops": [
+        "read",
+        "create",
+        "update",
+        "delete ✗"
+      ]
+    },
+    {
+      "path": "/tenants/{tenantId}",
+      "ops": [
+        "get",
+        "list ✗",
+        "create",
+        "update",
+        "delete ✗"
+      ]
+    },
+    {
+      "path": "/tenants/{tenantId}/catalog/{docId}",
+      "ops": [
+        "get",
+        "list ✗",
+        "create",
+        "update",
+        "delete ✗"
+      ]
+    }
+  ],
+  "rulesTests": 27
+}

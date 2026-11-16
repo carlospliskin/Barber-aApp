@@ -112,6 +112,11 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [ ] C16. Vincular un barbero del catálogo con una cuenta (para que vea su agenda): se necesita un código de invitación. Fase 6.
 - [ ] C17. Editar el catálogo sin red falla con aviso (las transacciones necesitan servidor). Aceptado para el lanzamiento.
 
+### Revisión antes de la fase 5
+- [x] G1. **Pérdida de datos**: el formulario de horario solo editaba el primer turno y al guardar borraba el turno partido.
+- [x] G2. Si fallaba la escucha del catálogo se mostraba "sin conexión" en vez del motivo real (p. ej. sin permiso).
+- [x] G3. No existía una vista general de la app: `scripts/app_map.py` genera `docs/APP_MAP.md` + JSON y el CI falla si se desactualiza.
+
 ### Limitaciones por usar solo Spark (decisiones conscientes)
 - Sin Cloud Functions no hay **push del servidor** → recordatorios con notificaciones **locales** (WorkManager) y avisos en vivo con listeners mientras la app está abierta.
 - Sin Storage no hay **fotos subidas** → logos e íconos van en la app.

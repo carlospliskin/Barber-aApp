@@ -26,4 +26,6 @@ firebase emulators:start --only auth,firestore   # backend local para debug
 
 Plan de trabajo y huecos: [docs/PLAN.md](docs/PLAN.md).
 
-Arquitectura y reglas: [ARCHITECTURE.md](ARCHITECTURE.md).
+**Mapa de la app** (módulos, navegación, pantallas, datos, recorridos de prueba): [docs/APP_MAP.md](docs/APP_MAP.md).
+
+Arquitectura y reglas: [ARCHITECTURE.md](ARCHITECTURE.md). Guía para IA: [CLAUDE.md](CLAUDE.md).

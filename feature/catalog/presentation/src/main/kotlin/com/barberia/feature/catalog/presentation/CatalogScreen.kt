@@ -262,6 +262,12 @@ private fun ScheduleDialog(form: Schedule, isSaving: Boolean, onIntent: (Catalog
                     Switch(draft.enabled, { onIntent(CatalogIntent.DayToggled(day, it)) })
                 }
                 if (draft.enabled) {
+                    draft.extra.forEach { r ->
+                        Text(
+                            stringResource(R.string.catalog_extra_shift, r.startLabel, r.endLabel),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Row(Modifier.fillMaxWidth()) {
                         BarberTextField(
                             draft.start, { onIntent(CatalogIntent.DayStartChanged(day, it)) },

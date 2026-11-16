@@ -181,6 +181,28 @@ class CatalogViewModelTest {
         assertNull(vm.state.value.dialog)
     }
 
+    @Test fun `G1 un turno partido no se pierde al editar el horario`() {
+        val split = listOf(TimeRange.of("10:00", "14:00"), TimeRange.of("16:00", "20:00"))
+        catalogRepo.stored.value = Catalog(
+            emptyList(),
+            listOf(Barber("b", "Luis", schedule = WeeklySchedule(mapOf(DayOfWeek.MONDAY to split)))),
+            1,
+        )
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenSchedule("b"))
+        vm.onIntent(CatalogIntent.DayStartChanged(DayOfWeek.MONDAY, "09:00"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertEquals(
+            listOf(TimeRange.of("09:00", "14:00"), TimeRange.of("16:00", "20:00")),
+            catalogRepo.stored.value.barbers.single().schedule.days[DayOfWeek.MONDAY],
+        )
+    }
+
+    @Test fun `G2 si falla la escucha se muestra el motivo real`() {
+        catalogRepo.observeFailure = CatalogFailure.NotOwner
+        assertEquals(CatalogFailure.NotOwner, vm().state.value.failure)
+    }
+
     @Test fun `hora mal escrita marca error de horario`() {
         val vm = vm()
         vm.onIntent(CatalogIntent.OpenNewBarber)

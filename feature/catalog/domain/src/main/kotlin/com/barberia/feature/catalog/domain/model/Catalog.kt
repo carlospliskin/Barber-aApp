@@ -99,6 +99,9 @@ enum class CatalogError {
     SCHEDULE_OVERLAP,
 }
 
+/** Lleva un [CatalogFailure] por un Flow (los flujos solo pueden fallar con excepciones). */
+class CatalogException(val failure: CatalogFailure) : Exception(failure.toString())
+
 sealed interface CatalogFailure {
     data class Validation(val errors: Set<CatalogError>) : CatalogFailure
     data object NotFound : CatalogFailure

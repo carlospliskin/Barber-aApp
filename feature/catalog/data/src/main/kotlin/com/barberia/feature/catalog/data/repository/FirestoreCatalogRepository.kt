@@ -6,16 +6,20 @@ import com.barberia.feature.catalog.data.gateway.CatalogGateway
 import com.barberia.feature.catalog.data.mapper.CatalogMapper
 import com.barberia.feature.catalog.domain.editor.CatalogResult
 import com.barberia.feature.catalog.domain.model.Catalog
+import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.repository.CatalogRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 
 internal class FirestoreCatalogRepository(private val gateway: CatalogGateway) : CatalogRepository {
 
     override fun observe(tenantId: String): Flow<Catalog> =
-        gateway.observe(tenantId).map { CatalogMapper.fromMap(it) ?: Catalog.empty() }
+        gateway.observe(tenantId)
+            .map { CatalogMapper.fromMap(it) ?: Catalog.empty() }
+            .catch { e -> throw if (e is GatewayError) CatalogException(e.toFailure()) else e } // G2
 
     override suspend fun edit(
         tenantId: String,

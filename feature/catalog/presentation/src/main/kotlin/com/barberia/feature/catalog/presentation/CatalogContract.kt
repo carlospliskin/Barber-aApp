@@ -6,11 +6,21 @@ import com.barberia.core.mvi.UiState
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.CatalogError
 import com.barberia.feature.catalog.domain.model.CatalogFailure
+import com.barberia.feature.catalog.domain.model.TimeRange
 import java.time.DayOfWeek
 
 enum class CatalogTab { SERVICES, BARBERS }
 
-data class DayDraft(val enabled: Boolean = false, val start: String = "10:00", val end: String = "19:00")
+/**
+ * Un día del formulario: se edita el primer turno. [extra] guarda los demás turnos del día (turno
+ * partido) para no perderlos al guardar (G1).
+ */
+data class DayDraft(
+    val enabled: Boolean = false,
+    val start: String = "10:00",
+    val end: String = "19:00",
+    val extra: List<TimeRange> = emptyList(),
+)
 
 /** Formularios abiertos. Guardan texto tal cual se escribe; se convierte al guardar (C12). */
 sealed interface CatalogDialog {

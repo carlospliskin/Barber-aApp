@@ -7,6 +7,7 @@ import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.catalog.domain.editor.CatalogResult
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.CatalogError
+import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.ServiceDraft
 import com.barberia.feature.catalog.domain.model.TimeRange
@@ -52,7 +53,7 @@ class CatalogViewModel(
                     setState { copy(tenantId = tenantId, canEdit = isOwner && tenantId != null) }
                     if (tenantId == null) emptyFlow() else observeCatalog(tenantId)
                 }
-                .catch { setState { copy(failure = CatalogFailure.NoConnection) } }
+                .catch { e -> setState { copy(failure = (e as? CatalogException)?.failure ?: CatalogFailure.Unknown(e.message)) } }
                 .collect { c -> setState { copy(catalog = c) } }
         }
     }
@@ -84,8 +85,8 @@ class CatalogViewModel(
 
             is CatalogIntent.OpenSchedule -> currentState.catalog.barbers.find { it.id == intent.barberId }?.let { b ->
                 val days = DayOfWeek.entries.associateWith { day ->
-                    b.schedule.days[day]?.firstOrNull()
-                        ?.let { DayDraft(true, it.startLabel, it.endLabel) } ?: DayDraft()
+                    val ranges = b.schedule.days[day].orEmpty()
+                    ranges.firstOrNull()?.let { DayDraft(true, it.startLabel, it.endLabel, extra = ranges.drop(1)) } ?: DayDraft()
                 }
                 openIfEditable(Schedule(b.id, b.name, days))
             }
@@ -161,7 +162,7 @@ class CatalogViewModel(
         val ranges = days.filterValues { it.enabled }.mapValues { (_, d) ->
             val start = parseHour(d.start) ?: return null
             val end = parseHour(d.end) ?: return null
-            listOf(TimeRange(start, end))
+            listOf(TimeRange(start, end)) + d.extra
         }
         return WeeklySchedule(ranges)
     }

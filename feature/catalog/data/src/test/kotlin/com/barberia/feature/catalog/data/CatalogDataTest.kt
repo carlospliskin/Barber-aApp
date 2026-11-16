@@ -7,6 +7,7 @@ import com.barberia.feature.catalog.data.mapper.CatalogMapper
 import com.barberia.feature.catalog.data.repository.FirestoreCatalogRepository
 import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.model.Catalog
+import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.Money
 import com.barberia.feature.catalog.domain.model.Service
@@ -89,6 +90,16 @@ class CatalogDataTest {
         val repo = FirestoreCatalogRepository(gw)
         repo.edit("t") { AppResult.Failure(CatalogFailure.NotFound) }
         assertEquals(7L, gw.doc!!["version"])
+    }
+
+    @Test fun `G2 un error al escuchar llega como fallo de catalogo`() = runTest {
+        val gw = object : CatalogGateway {
+            override fun observe(tenantId: String) =
+                kotlinx.coroutines.flow.flow<Map<String, Any?>?> { throw GatewayError.PermissionDenied() }
+            override suspend fun transact(tenantId: String, update: (Map<String, Any?>?) -> Map<String, Any?>?) = Unit
+        }
+        val error = runCatching { FirestoreCatalogRepository(gw).observe("t").first() }.exceptionOrNull()
+        assertEquals(CatalogFailure.NotOwner, (error as CatalogException).failure)
     }
 
     @Test fun `errores de Firebase se traducen`() = runTest {

@@ -10,6 +10,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  app-map:
+    name: Mapa de la app al día
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: docs/APP_MAP.md coincide con el código
+        run: python3 scripts/app_map.py --check
+
   android:
     name: Tests unitarios y builds
     runs-on: ubuntu-latest

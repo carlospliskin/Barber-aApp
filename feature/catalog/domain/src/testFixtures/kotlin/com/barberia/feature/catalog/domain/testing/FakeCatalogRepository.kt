@@ -3,18 +3,22 @@ package com.barberia.feature.catalog.domain.testing
 import com.barberia.core.common.AppResult
 import com.barberia.feature.catalog.domain.editor.CatalogResult
 import com.barberia.feature.catalog.domain.model.Catalog
+import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.repository.CatalogRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
 
 /** Repositorio en memoria: simula el documento y su versión. */
 class FakeCatalogRepository(initial: Catalog = Catalog.empty()) : CatalogRepository {
     val stored = MutableStateFlow(initial)
     var failure: CatalogFailure? = null
     var edits = 0
+    var observeFailure: CatalogFailure? = null
 
-    override fun observe(tenantId: String): Flow<Catalog> = stored
+    override fun observe(tenantId: String): Flow<Catalog> =
+        observeFailure?.let { f -> flow { throw CatalogException(f) } } ?: stored
 
     override suspend fun edit(tenantId: String, change: (Catalog) -> CatalogResult<Catalog>): CatalogResult<Catalog> {
         failure?.let { return AppResult.Failure(it) }
