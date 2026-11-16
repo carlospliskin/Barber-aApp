@@ -23,3 +23,11 @@ keystore.properties
 
 # Firebase (cuando se integre: decidir si se versiona)
 google-services.json
+
+# Firebase real (release): projectId, appId, apiKey
+firebase.properties
+
+# Firebase local
+firebase/node_modules/
+*-debug.log
+.firebase/
