@@ -194,7 +194,7 @@ def screens(nav: dict) -> list[dict]:
         embedded, seen, pending = [], {screen}, [body]
         while pending and len(seen) < 20:  # recorre componentes anidados (HomeRoute → ClientHomeRoute → RedeemInviteCard)
             current = pending.pop()
-            for call in sorted(set(re.findall(r"\b([A-Z]\w*(?:Route|Card|Section))\(", current)) - seen):
+            for call in sorted(set(re.findall(r"\b([A-Z]\w*(?:Route|Card|Section|Screen))\(", current)) - seen):
                 seen.add(call)
                 _, child_vm, child_body = composable_info(call, files)
                 if child_vm:

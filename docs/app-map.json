@@ -467,6 +467,10 @@
         {
           "component": "ShareCodeCard",
           "viewModel": "ShareCodeViewModel"
+        },
+        {
+          "component": "RedeemInviteCard",
+          "viewModel": "RedeemInviteViewModel"
         }
       ],
       "intents": [
@@ -475,6 +479,7 @@
         "DismissFailure",
         "Join",
         "Leave",
+        "Redeem",
         "SignOut"
       ],
       "useCases": [
@@ -485,6 +490,8 @@
         "ObserveCurrentUserUseCase",
         "ObserveJoinedBarbershopUseCase",
         "ObserveMyAppointmentsUseCase",
+        "RedeemBarberInviteUseCase",
+        "RetrySessionUseCase",
         "SignOutUseCase"
       ]
     },
