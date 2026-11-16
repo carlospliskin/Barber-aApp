@@ -43,6 +43,10 @@ internal class FirestoreAccountDataGateway(private val db: FirebaseFirestore) : 
         db.collection("staffInvites").whereEqualTo("tenantId", tenantId).get().await().documents.map { it.id }
     }
 
+    override suspend fun revokedIds(tenantId: String) = firebaseCall {
+        db.collection("tenants").document(tenantId).collection("revoked").get().await().documents.map { it.id }
+    }
+
     override suspend fun shareCodeOf(tenantId: String) = firebaseCall {
         db.collection("tenants").document(tenantId).get().await().getString("shareCode")
     }

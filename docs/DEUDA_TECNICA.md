@@ -48,7 +48,11 @@ Encontrados revisando el código ya implementado.
 | ID | Prioridad | Esfuerzo | Falta | Notas |
 |---|---|---|---|---|
 | A7 | ✅ | M | **Eliminar cuenta y datos** (obligatorio en Google Play). | Ver «Resueltos». |
-| A7-b | P1 | S | **Barberos de una barbería borrada** siguen con `staffRole = BARBER` apuntando a una barbería que no existe; su agenda falla. | Al cargar la sesión, si la barbería no existe, tratarlo como cliente y ofrecer "dejar la barbería" (regla: quitar el rol si `!exists(tenant)`). |
+| A7-b | ✅ | S | **Barberos de una barbería borrada** seguían con un rol que apuntaba a nada. | Ver «Resueltos» (junto con A16). |
+| A16 | ✅ | M | **El dueño no podía quitarle el acceso a un barbero.** Desactivarlo en el catálogo no tocaba su perfil: seguía viendo su agenda (nombres y teléfonos) y podía cancelar o marcar citas. | Ver «Resueltos». |
+| A16-d | P3 | S | Un barbero sin acceso todavía ve **"+ Agendar cliente"** (falla al guardar). | Ocultarlo cuando la agenda dice "sin acceso". |
+| A16-e | P3 | S | Otras pantallas (catálogo, "Mis citas") todavía muestran **"Sin conexión" ante cualquier error**, aunque sea falta de permiso. | Usar `BookingException`/`CatalogException` con la falla real en cada `.catch`. |
+| A16-f | P3 | S | La **caché de Firestore** del teléfono de un barbero revocado conserva las citas que ya vio (no se muestran, pero están en el disco). | Al soltar el rol o cerrar sesión: `terminate()` + `clearPersistence()`. |
 | A7-c | P2 | S | **Clientes de una barbería borrada** la siguen teniendo guardada en el teléfono y sus recordatorios locales siguen programados. | Si `tenants/{id}` no existe al abrir el home: olvidarla y cancelar sus recordatorios. |
 | A7-d | P2 | S | **Barbería muy grande:** Spark permite 20 000 borrados al día; más de ~9 000 citas no se borran en un solo día. | Ya se puede reintentar (sigue donde quedó). Avisar en la pantalla y contar lo borrado. |
 | PLAY-1 | **P0** | S | **Política de privacidad y formulario de "Seguridad de los datos"** en Play Console. | Datos que se guardan: email, nombre, teléfono, citas. Play también pide un **enlace web para solicitar el borrado** sin instalar la app (página simple que explique el borrado desde la app y dé un correo de contacto). |
@@ -105,7 +109,7 @@ Encontrados revisando el código ya implementado.
 | 2. Fase 8 | V3 (App Check), N3 (recordatorios), L4 (Crashlytics), L3 (ícono y fuentes) | Ya era la siguiente fase y cierra el riesgo de abuso. |
 | 3. Huecos de negocio | F7-1 ✅, F7-2, N1 ✅, N2 ✅ | Lo que más va a notar una barbería real en su primera semana. |
 | 4. Red de seguridad | Q1, Q2, Q3 | Antes de que el código crezca más. |
-| 5. Fase 9 | A7 ✅, A7-b, PLAY-1, L1, L2 | Publicación. |
+| 5. Fase 9 | A7 ✅, A7-b ✅, A16 ✅, PLAY-1, L1, L2 | Publicación. |
 | 6. Después del lanzamiento | El resto de P2 y P3 (AR1-AR4, F7-4, F7-5, N4-N6, Q4-Q6) | Mejoras sin bloqueo. |
 
 ---
@@ -132,3 +136,7 @@ Encontrados revisando el código ya implementado.
 | L3 (parcial) | Fase 8 | Ícono adaptativo (con versión monocromática). **Faltan** las fuentes Playfair/DM Sans: hay que agregar los archivos (licencia OFL) o usar fuentes descargables. |
 | A7 | Fase 9 | **"Eliminar mi cuenta"** en el home de cliente, dueño y barbero. Pide marcar "entiendo que no se puede deshacer" y la contraseña (Firebase exige un inicio de sesión reciente; también confirma que es el dueño de la cuenta). Orden: confirmar → borrar datos → perfil → cuenta de Auth; si algo falla, la cuenta sigue y se reintenta (cada paso continúa donde quedó). **Cliente:** sus citas en *todas* las barberías se encuentran con una consulta de grupo (`appointments where clientUid == uid`, índice en `fieldOverrides`); las que aún puede cancelar se cancelan (liberan el horario) y todas quedan sin uid ni nombre; su ficha en cada barbería se borra antes de anonimizar. **Dueño:** además se borra su barbería: citas y días (lotes de 200 + 200), fichas, invitaciones, catálogo, código y al final la barbería. Reglas: `delete` propio en perfil, ficha, barbería y sus subcolecciones; anonimizar solo la cita propia ya no cancelable. La agenda muestra "Cliente que eliminó su cuenta". |
 | A7-a | (nuevo) | La casilla "Entiendo…" solo respondía al tocar el cuadrito, no el texto: ahora toda la fila se toca (`toggleable`, rol de casilla). |
+| A16 + A7-b | Fase 9 | **"Quitar acceso a la app"** en cada barbero del catálogo (también desactivado). Busca las cuentas que usaron alguna invitación de ese barbero (las invitaciones usadas no se borran) y crea `tenants/{t}/revoked/{uid}`; dice a cuántas cuentas se quitó (o que no había ninguna). Las reglas de barbero (`isBarberOf`, `isStaffOfTenant`) agregan `!exists(revoked/uid)`: 1 lectura más solo en operaciones de barbero. El barbero ve "El dueño te quitó el acceso…" o "Esta barbería ya no existe" en su home (2 lecturas al abrirlo; dueño y cliente no gastan) y **"Seguir solo como cliente"** borra su rol (regla `leavesStaff`: todo o nada, solo BARBER). Para volver basta una **invitación nueva**: al aceptarla se borra la revocación en el mismo batch, solo si la invitación es posterior a la revocación. Al borrar la barbería (A7) también se borran sus revocaciones. |
+| A16-a | (nuevo) | Al perder el acceso, la agenda seguía mostrando las citas de la caché local: ahora se vacía al recibir el error. |
+| A16-b | (nuevo) | "Seguir solo como cliente" guardaba el cambio pero la pantalla no avanzaba: borrar el modo **antes** navegaba, destruía la pantalla y cancelaba el resto. Lo mismo pasaba (por suerte sin efecto) al eliminar la cuenta. Ahora el modo se borra al final. |
+| A16-c | (nuevo) | La agenda decía "Sin conexión" ante una falta de permiso: ahora "Ya no tienes acceso a esta barbería" (`BookingFailure.NoAccess`). |

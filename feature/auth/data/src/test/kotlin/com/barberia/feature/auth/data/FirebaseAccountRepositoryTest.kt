@@ -106,6 +106,14 @@ class FirebaseAccountRepositoryTest {
             writeError?.let { throw it }
             profiles.remove(uid)
         }
+        val existingTenants = mutableSetOf<String>()
+        val revoked = mutableSetOf<Pair<String, String>>()
+        override suspend fun tenantExists(tenantId: String) = tenantId in existingTenants
+        override suspend fun isRevoked(tenantId: String, uid: String) = (tenantId to uid) in revoked
+        override suspend fun leaveStaff(uid: String) {
+            writeError?.let { throw it }
+            profiles[uid] = profiles.getValue(uid).copy(staffTenantId = null, staffRole = null, staffBarberId = null)
+        }
     }
 
     private class FakeModeStore : ModeStore {
@@ -303,5 +311,30 @@ class FirebaseAccountRepositoryTest {
 
         assertEquals(AppResult.Failure(AuthFailure.NoConnection), repo.deleteAccount())
         assertTrue("delete" !in auth.calls)
+    }
+
+    // ── A7-b / A16 ────────────────────────────────────────────────────────────
+    @Test fun `A16 barberia borrada, acceso revocado o vigente`() = runTest {
+        profiles.profiles["u1"] = ProfileRecord("Luis", "luis@mail.com", null, "t1", "BARBER", staffBarberId = "b1")
+        val repo = repo()
+        repo.signIn("luis@mail.com", "x")
+        repo.session.first { it is SessionState.SignedIn }
+        assertEquals(AppResult.Success(com.barberia.feature.auth.domain.model.StaffAccess.SHOP_GONE), repo.staffAccess("t1"))
+        profiles.existingTenants += "t1"
+        assertEquals(AppResult.Success(com.barberia.feature.auth.domain.model.StaffAccess.ACTIVE), repo.staffAccess("t1"))
+        profiles.revoked += "t1" to "u1"
+        assertEquals(AppResult.Success(com.barberia.feature.auth.domain.model.StaffAccess.REVOKED), repo.staffAccess("t1"))
+    }
+
+    @Test fun `A7-b soltar el rol vuelve a leer el perfil y queda como cliente`() = runTest {
+        profiles.profiles["u1"] = ProfileRecord("Luis", "luis@mail.com", null, "t1", "BARBER", staffBarberId = "b1")
+        val repo = repo()
+        repo.signIn("luis@mail.com", "x")
+        repo.session.first { it is SessionState.SignedIn }
+
+        assertEquals(AppResult.Success(Unit), repo.leaveStaff())
+
+        val user = (repo.session.first { (it as? SessionState.SignedIn)?.user?.staffRole == null } as SessionState.SignedIn).user
+        assertEquals(listOf(AppMode.CLIENT), user.availableModes)
     }
 }

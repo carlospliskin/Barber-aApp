@@ -91,6 +91,13 @@ class AgendaTest {
         assertEquals(listOf("a2"), vm.state.value.appointments.map { it.id })
     }
 
+    @Test fun `A16 sin acceso no muestra citas de la cache y lo dice`() {
+        bookings.agendaError = BookingFailure.NoAccess
+        val vm = vm(StaffRole.BARBER, barberId = "b1")
+        assertEquals(BookingFailure.NoAccess, vm.state.value.failure)
+        assertEquals(emptyList<String>(), vm.state.value.appointments.map { it.id })
+    }
+
     @Test fun `A2 el barbero solo ve lo suyo y no puede filtrar`() {
         val vm = vm(StaffRole.BARBER, barberId = "b1")
         assertEquals(listOf("a1"), vm.state.value.appointments.map { it.id })

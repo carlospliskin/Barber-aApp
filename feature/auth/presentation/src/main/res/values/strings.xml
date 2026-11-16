@@ -57,4 +57,8 @@
     <string name="delete_account_confirm">Eliminar definitivamente</string>
     <string name="delete_account_wait">Borrando… no cierres la app.</string>
     <string name="delete_account_cancel">Cancelar</string>
+    <!-- A7-b / A16 -->
+    <string name="staff_access_revoked">El dueño te quitó el acceso a esta barbería. Ya no puedes ver su agenda.</string>
+    <string name="staff_access_shop_gone">Esta barbería ya no existe.</string>
+    <string name="staff_access_leave">Seguir solo como cliente</string>
 </resources>

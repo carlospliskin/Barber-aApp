@@ -5,6 +5,7 @@ import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.auth.domain.model.AuthFailure
 import com.barberia.feature.auth.domain.model.AuthUser
 import com.barberia.feature.auth.domain.model.SessionState
+import com.barberia.feature.auth.domain.model.StaffAccess
 import kotlinx.coroutines.flow.Flow
 
 typealias AuthResult<T> = AppResult<AuthFailure, T>
@@ -28,6 +29,12 @@ interface AuthRepository {
 
     /** A7: borra el perfil `users/{uid}` y la cuenta de Firebase Auth (la sesión se cierra sola). */
     suspend fun deleteAccount(): AuthResult<Unit>
+
+    /** A7-b/A16: ¿existe la barbería y no me quitaron el acceso? (2 lecturas). */
+    suspend fun staffAccess(tenantId: String): AuthResult<StaffAccess>
+
+    /** A7-b/A16: el barbero vuelve a ser solo cliente (borra su rol del perfil). */
+    suspend fun leaveStaff(): AuthResult<Unit>
 }
 
 /**

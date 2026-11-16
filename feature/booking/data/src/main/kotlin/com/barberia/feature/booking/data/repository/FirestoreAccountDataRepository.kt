@@ -45,6 +45,7 @@ internal class FirestoreAccountDataRepository(private val gateway: AccountDataGa
             gateway.deleteAll(ids.map { "$root/clients/$it" })
         }
         gateway.inviteCodes(tenantId).map { "staffInvites/$it" }.chunked(BATCH).forEach { gateway.deleteAll(it) }
+        gateway.revokedIds(tenantId).map { "$root/revoked/$it" }.chunked(BATCH).forEach { gateway.deleteAll(it) }
         val code = gateway.shareCodeOf(tenantId)
         // La barbería va al final: mientras exista, el reintento sabe qué falta (y su código).
         gateway.deleteAll(listOfNotNull("$root/catalog/main", code?.let { "shareCodes/$it" }, root))

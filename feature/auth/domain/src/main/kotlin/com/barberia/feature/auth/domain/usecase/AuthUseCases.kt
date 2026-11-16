@@ -15,6 +15,7 @@ import com.barberia.feature.auth.domain.repository.SessionRepository
 import com.barberia.feature.auth.domain.repository.UserDataEraser
 import com.barberia.feature.auth.domain.model.FieldError
 import com.barberia.feature.auth.domain.model.StaffRole
+import com.barberia.feature.auth.domain.model.StaffAccess
 import com.barberia.feature.auth.domain.validation.AuthValidator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -107,8 +108,28 @@ class DeleteAccountUseCase(
         auth.reauthenticate(password).let { if (it is AppResult.Failure) return it }
         val owned = user.staffTenantId.takeIf { user.staffRole == StaffRole.OWNER }
         eraser.erase(user.uid, owned).let { if (it is AppResult.Failure) return it }
-        session.saveMode(null)
-        return auth.deleteAccount()
+        // El modo se borra AL FINAL: borrarlo antes navega, destruye la pantalla y cancela esta corrutina a medias.
+        return auth.deleteAccount().also { if (it is AppResult.Success) session.saveMode(null) }
+    }
+}
+
+/** A7-b/A16: solo los barberos revisan (dueño y cliente no gastan lecturas). */
+class CheckStaffAccessUseCase(private val auth: AuthRepository, private val session: SessionRepository) {
+    suspend operator fun invoke(): AuthResult<StaffAccess> {
+        val user = session.currentUser() ?: return AppResult.Failure(AuthFailure.NotSignedIn)
+        val tenant = user.staffTenantId
+        if (user.staffRole != StaffRole.BARBER || tenant == null) return AppResult.Success(StaffAccess.ACTIVE)
+        return auth.staffAccess(tenant)
+    }
+}
+
+/** A7-b/A16: dejar de ser barbero. El dueño no puede (su barbería depende de su cuenta). */
+class LeaveStaffUseCase(private val auth: AuthRepository, private val session: SessionRepository) {
+    suspend operator fun invoke(): AuthResult<Unit> {
+        val user = session.currentUser() ?: return AppResult.Failure(AuthFailure.NotSignedIn)
+        if (user.staffRole != StaffRole.BARBER) return AppResult.Failure(AuthFailure.ModeNotAllowed)
+        // El modo se borra AL FINAL (ver DeleteAccountUseCase): si no, la navegación cancela el cambio a medias.
+        return auth.leaveStaff().also { if (it is AppResult.Success) session.saveMode(null) }
     }
 }
 

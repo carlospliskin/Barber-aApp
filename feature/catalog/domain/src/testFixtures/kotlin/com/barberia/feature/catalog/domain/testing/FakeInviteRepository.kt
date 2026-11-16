@@ -25,4 +25,14 @@ class FakeInviteRepository : InviteRepository {
         stored[invite.code] = invite.copy(usedBy = uid)
         return AppResult.Success(Unit)
     }
+
+    val revoked = mutableSetOf<Triple<String, String, String>>()
+
+    override suspend fun linkedAccounts(tenantId: String, barberId: String): CatalogResult<Set<String>> =
+        AppResult.Success(stored.values.filter { it.tenantId == tenantId && it.barberId == barberId }.mapNotNull { it.usedBy }.toSet())
+
+    override suspend fun revoke(tenantId: String, uid: String, barberId: String): CatalogResult<Unit> {
+        revoked += Triple(tenantId, uid, barberId)
+        return AppResult.Success(Unit)
+    }
 }

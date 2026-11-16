@@ -69,8 +69,11 @@ class FakeBookingRepository : BookingRepository {
     var lastAgendaDate: LocalDate? = null
     var lastStatus: AppointmentStatus? = null
 
+    var agendaError: BookingFailure? = null
+
     override fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>> {
         lastAgendaDate = date
+        agendaError?.let { f -> return kotlinx.coroutines.flow.flow { throw com.barberia.feature.booking.domain.model.BookingException(f) } }
         return all.map { list -> list.filter { it.date == date && (barberId == null || it.barberId == barberId) } }
     }
 

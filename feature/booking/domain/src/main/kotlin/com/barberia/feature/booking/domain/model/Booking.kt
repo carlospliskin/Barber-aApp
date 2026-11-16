@@ -103,10 +103,15 @@ sealed interface BookingFailure {
     /** N1: nombre vacío o teléfono inválido. */
     data object InvalidClient : BookingFailure
     data object NoConnection : BookingFailure
+    /** A16: sin permiso (le quitaron el acceso o la barbería ya no existe). */
+    data object NoAccess : BookingFailure
     data class Unknown(val detail: String? = null) : BookingFailure
 }
 
 typealias BookingResult<T> = AppResult<BookingFailure, T>
+
+/** Error de un Flow del repositorio (los Flow no devuelven AppResult). */
+class BookingException(val failure: BookingFailure) : Exception(failure.toString())
 
 /** Unidad de agenda: bloques de 5 minutos (la misma que usa el catálogo para horarios y duraciones). */
 const val SLOT_UNIT = 5

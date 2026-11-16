@@ -54,6 +54,21 @@ internal class FirestoreProfileGateway(private val db: FirebaseFirestore) : Prof
         Unit
     }
 
+    override suspend fun tenantExists(tenantId: String): Boolean = firebaseCall {
+        db.collection(TENANTS).document(tenantId).get().await().exists()
+    }
+
+    override suspend fun isRevoked(tenantId: String, uid: String): Boolean = firebaseCall {
+        db.collection(TENANTS).document(tenantId).collection("revoked").document(uid).get().await().exists()
+    }
+
+    override suspend fun leaveStaff(uid: String) = firebaseCall {
+        db.collection(USERS).document(uid).update(
+            mapOf("staffTenantId" to null, "staffRole" to null, "staffBarberId" to null, "staffInviteCode" to null),
+        ).await()
+        Unit
+    }
+
     private fun ProfileRecord.toMap(): Map<String, Any?> = mapOf(
         "displayName" to displayName,
         "email" to email,

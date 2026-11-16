@@ -33,6 +33,13 @@ class DeleteAccountTest {
         assertTrue("saveMode:null" in session.calls) // el siguiente usuario no hereda el modo
     }
 
+    @Test fun `el modo se borra al final (si no, la navegacion cancela el borrado a medias)`() = runTest {
+        val session = signedIn(StaffRole.OWNER)
+        val auth = FakeAuthRepository().apply { onCall = { session.calls += "auth:$it" } }
+        DeleteAccountUseCase(auth, session, FakeUserDataEraser())("secreto1")
+        assertEquals(listOf("auth:deleteAccount", "saveMode:null"), session.calls)
+    }
+
     @Test fun `el duenio borra tambien su barberia`() = runTest {
         val eraser = FakeUserDataEraser()
         DeleteAccountUseCase(FakeAuthRepository(), signedIn(StaffRole.OWNER), eraser)("secreto1")

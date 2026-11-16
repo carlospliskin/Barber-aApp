@@ -32,12 +32,18 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
+    // A16: el dueño le quitó el acceso a este barbero (1 lectura, solo en operaciones de barbero).
+    function notRevoked(tenantId) {
+      return !exists(/databases/$(database)/documents/tenants/$(tenantId)/revoked/$(request.auth.uid));
+    }
+
     // Dueño o cualquier barbero de la barbería.
     function isStaffOfTenant(tenantId) {
       return isSelf(tenantId)
         || (signedIn()
             && myProfile().get('staffRole', null) == 'BARBER'
-            && myProfile().get('staffTenantId', null) == tenantId);
+            && myProfile().get('staffTenantId', null) == tenantId
+            && notRevoked(tenantId));
     }
 
     // A2: barbero ligado a esta barbería y a este barbero del catálogo.
@@ -45,7 +51,8 @@ service cloud.firestore {
       return signedIn()
         && myProfile().get('staffRole', null) == 'BARBER'
         && myProfile().get('staffTenantId', null) == tenantId
-        && myProfile().get('staffBarberId', null) == barberId;
+        && myProfile().get('staffBarberId', null) == barberId
+        && notRevoked(tenantId);
     }
 
     // ── users/{uid} ──────────────────────────────────────────────────────────
@@ -84,7 +91,19 @@ service cloud.firestore {
           && inviteAfter().barberId == request.resource.data.staffBarberId;
       }
 
+      // A7-b/A16: un barbero puede dejar de serlo (barbería borrada, acceso quitado o se fue). Todo o nada.
+      function leavesStaff() {
+        let d = request.resource.data;
+        return resource.data.get('staffRole', null) == 'BARBER'
+          && d.diff(resource.data).affectedKeys().hasOnly(['staffTenantId', 'staffRole', 'staffBarberId', 'staffInviteCode'])
+          && d.get('staffRole', null) == null
+          && d.get('staffTenantId', null) == null
+          && d.get('staffBarberId', null) == null
+          && d.get('staffInviteCode', null) == null;
+      }
+
       allow update: if isSelf(uid) && (
+        leavesStaff() ||
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'phone'])
           && isText(request.resource.data.displayName, 1, 80)
           && isOptionalText(request.resource.data.phone, 20))
@@ -305,6 +324,27 @@ service cloud.firestore {
       allow delete: if isSelf(tenantId); // A7
     }
 
+    // ── tenants/{t}/revoked/{uid} (A16) ──────────────────────────────────────
+    // El dueño quita el acceso a la cuenta de un barbero; el barbero lo puede leer para enterarse.
+    match /tenants/{tenantId}/revoked/{staffUid} {
+      allow get: if isSelf(tenantId) || isSelf(staffUid);
+      allow list: if isSelf(tenantId);
+      allow create: if isSelf(tenantId)
+        && request.resource.data.keys().hasOnly(['barberId', 'createdAt'])
+        && isText(request.resource.data.barberId, 1, 64)
+        && request.resource.data.createdAt == request.time;
+      allow update: if false;
+      // El barbero vuelve solo con una invitación NUEVA (creada después de quitarle el acceso) que usa en el mismo batch.
+      function redeemsFreshInvite() {
+        let invite = getAfter(/databases/$(database)/documents/staffInvites/$(
+          getAfter(/databases/$(database)/documents/users/$(staffUid)).data.get('staffInviteCode', 'none'))).data;
+        return invite.tenantId == tenantId
+          && invite.usedBy == staffUid
+          && (resource == null || invite.createdAt > resource.data.createdAt);
+      }
+      allow delete: if isSelf(tenantId) || (isSelf(staffUid) && redeemsFreshInvite());
+    }
+
     // ── shareCodes/{code} (B0) ───────────────────────────────────────────────
     // Código corto para que un cliente encuentre la barbería sin poder listarlas todas (H5).
     match /shareCodes/{code} {
@@ -332,10 +372,7 @@ service cloud.firestore {
       }
 
       function isTenantStaff() {
-        return isSelf(tenantId)
-          || (signedIn()
-              && myProfile().get('staffRole', null) == 'BARBER'
-              && myProfile().get('staffTenantId', null) == tenantId);
+        return isStaffOfTenant(tenantId);
       }
 
       function validShape(d) {

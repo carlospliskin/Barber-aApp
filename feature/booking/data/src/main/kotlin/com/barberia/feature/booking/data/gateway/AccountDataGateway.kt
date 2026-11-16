@@ -11,6 +11,9 @@ internal interface AccountDataGateway {
     suspend fun tenantAppointments(tenantId: String, limit: Int): List<Pair<String, Map<String, Any?>>>
     suspend fun clientIds(tenantId: String, limit: Int): List<String>
     suspend fun inviteCodes(tenantId: String): List<String>
+
+    /** A16: uids en `tenants/{t}/revoked` (también se borran con la barbería). */
+    suspend fun revokedIds(tenantId: String): List<String>
     suspend fun shareCodeOf(tenantId: String): String?
 
     /** Batch de borrados (máx. 500 rutas). */

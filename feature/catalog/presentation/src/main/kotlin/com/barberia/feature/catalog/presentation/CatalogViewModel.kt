@@ -14,6 +14,7 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.usecase.AddBarberUseCase
 import com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase
+import com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase
 import com.barberia.feature.catalog.domain.usecase.AddServiceUseCase
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
 import com.barberia.feature.catalog.domain.usecase.RenameBarberUseCase
@@ -52,6 +53,7 @@ class CatalogViewModel(
     private val createInvite: CreateBarberInviteUseCase,
     private val addTimeOff: AddTimeOffUseCase,
     private val removeTimeOff: RemoveTimeOffUseCase,
+    private val revokeAccess: RevokeBarberAccessUseCase,
     private val clock: Clock,
 ) : MviViewModel<CatalogState, CatalogIntent, CatalogEffect>(CatalogState()) {
 
@@ -117,6 +119,9 @@ class CatalogViewModel(
 
             CatalogIntent.SaveDialog -> saveDialog()
             is CatalogIntent.InviteBarber -> invite(intent.barberId)
+            is CatalogIntent.OpenRevokeAccess -> currentState.catalog.barbers.find { it.id == intent.barberId }?.let {
+                openIfEditable(CatalogDialog.RevokeAccess(it.id, it.name))
+            }
         }
     }
 
@@ -129,6 +134,16 @@ class CatalogViewModel(
                 copy(isSaving = false, dialog = CatalogDialog.Invite(r.value.barberName, r.value.code, r.value.expiresAt))
             }
             is AppResult.Failure -> setState { copy(isSaving = false, failure = r.error) }
+        }
+    }
+
+    private suspend fun revoke(d: CatalogDialog.RevokeAccess) {
+        val tenantId = currentState.tenantId
+        if (!currentState.canEdit || tenantId == null || currentState.isSaving) return
+        setState { copy(isSaving = true, failure = null) }
+        when (val r = revokeAccess(tenantId, d.barberId)) {
+            is AppResult.Success -> setState { copy(isSaving = false, dialog = d.copy(revoked = r.value)) }
+            is AppResult.Failure -> setState { copy(isSaving = false, dialog = null, failure = r.error) }
         }
     }
 
@@ -168,6 +183,7 @@ class CatalogViewModel(
                 }
                 save { t -> addTimeOff(t, d.barberId, TimeOff(date, range)) }
             }
+            is CatalogDialog.RevokeAccess -> if (d.revoked != null) setState { copy(dialog = null) } else revoke(d)
             is CatalogDialog.Invite, null -> setState { copy(dialog = null) }
         }
     }
@@ -224,6 +240,7 @@ class CatalogViewModel(
         is BarberForm -> copy(errors = errors)
         is Schedule -> copy(errors = errors)
         is CatalogDialog.Invite -> copy(errors = errors)
+        is CatalogDialog.RevokeAccess -> copy(errors = errors)
         is TimeOffForm -> copy(errors = errors)
     }
 

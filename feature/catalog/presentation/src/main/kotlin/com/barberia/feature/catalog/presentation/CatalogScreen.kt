@@ -132,6 +132,29 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
         is BarberForm -> BarberDialog(d, state.isSaving, onIntent)
         is Schedule -> ScheduleDialog(d, state.isSaving, onIntent)
         is CatalogDialog.TimeOffForm -> TimeOffDialog(d, state.isSaving, onIntent)
+        is CatalogDialog.RevokeAccess -> AlertDialog(
+            onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
+            title = { Text(stringResource(R.string.catalog_revoke_title, d.barberName)) },
+            text = {
+                Text(
+                    when (d.revoked) {
+                        null -> stringResource(R.string.catalog_revoke_hint)
+                        0 -> stringResource(R.string.catalog_revoke_none)
+                        else -> pluralStringResource(R.plurals.catalog_revoke_done, d.revoked, d.revoked)
+                    },
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { onIntent(CatalogIntent.SaveDialog) }, enabled = !state.isSaving) {
+                    Text(stringResource(if (d.revoked == null) R.string.catalog_revoke_confirm else R.string.catalog_done))
+                }
+            },
+            dismissButton = if (d.revoked == null) {
+                { TextButton(onClick = { onIntent(CatalogIntent.DismissDialog) }) { Text(stringResource(R.string.catalog_cancel)) } }
+            } else {
+                null
+            },
+        )
         is CatalogDialog.Invite -> AlertDialog(
             onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
             title = { Text(stringResource(R.string.catalog_invite_title, d.barberName)) },
@@ -204,6 +227,12 @@ private fun BarbersList(barbers: List<Barber>, canEdit: Boolean, onIntent: (Cata
                         if (canEdit && b.active) {
                             TextButton(onClick = { onIntent(CatalogIntent.OpenTimeOff(b.id)) }) {
                                 Text("+ " + stringResource(R.string.catalog_time_off))
+                            }
+                        }
+                        // A16: también para un barbero desactivado (renunció o lo despidieron)
+                        if (canEdit) {
+                            TextButton(onClick = { onIntent(CatalogIntent.OpenRevokeAccess(b.id)) }) {
+                                Text(stringResource(R.string.catalog_revoke), color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }

@@ -11,4 +11,10 @@ interface InviteRepository {
 
     /** Marca la invitación como usada y liga el perfil de [uid] al barbero, de forma atómica. */
     suspend fun redeem(invite: StaffInvite, uid: String): CatalogResult<Unit>
+
+    /** A16: cuentas que usaron alguna invitación de [barberId] (las invitaciones usadas no se borran). */
+    suspend fun linkedAccounts(tenantId: String, barberId: String): CatalogResult<Set<String>>
+
+    /** A16: quita el acceso de [uid] a la barbería (`tenants/{t}/revoked/{uid}`). */
+    suspend fun revoke(tenantId: String, uid: String, barberId: String): CatalogResult<Unit>
 }

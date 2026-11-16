@@ -1,6 +1,7 @@
 package com.barberia.feature.auth.presentation.di
 
 import com.barberia.feature.auth.presentation.account.DeleteAccountViewModel
+import com.barberia.feature.auth.presentation.account.StaffAccessViewModel
 import com.barberia.feature.auth.presentation.login.LoginViewModel
 import com.barberia.feature.auth.presentation.mode.ModeSelectorViewModel
 import com.barberia.feature.auth.presentation.register.RegisterViewModel
@@ -16,4 +17,5 @@ val authPresentationModule = module {
     viewModelOf(::ModeSelectorViewModel)
     viewModelOf(::VerifyEmailViewModel)
     viewModelOf(::DeleteAccountViewModel)
+    viewModelOf(::StaffAccessViewModel)
 }

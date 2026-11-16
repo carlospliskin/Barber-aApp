@@ -69,6 +69,7 @@ class CatalogViewModelTest {
             ),
             com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase(catalogRepo, editor, clock),
             com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase(catalogRepo, editor),
+            com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase(invites),
             clock,
         )
     }
@@ -220,6 +221,34 @@ class CatalogViewModelTest {
         val d = vm.state.value.dialog as CatalogDialog.Invite
         assertEquals("Luis", d.barberName)
         assertEquals(invites.stored.keys.single(), d.code)
+    }
+
+    @Test fun `A16 quitar acceso pide confirmar y dice a cuantas cuentas`() {
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenNewBarber)
+        vm.onIntent(CatalogIntent.BarberNameChanged("Luis"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        vm.onIntent(CatalogIntent.InviteBarber("id-1"))
+        val code = invites.stored.keys.single()
+        invites.stored[code] = invites.stored.getValue(code).copy(usedBy = "luis")
+        vm.onIntent(CatalogIntent.DismissDialog)
+
+        vm.onIntent(CatalogIntent.OpenRevokeAccess("id-1"))
+        assertEquals(CatalogDialog.RevokeAccess("id-1", "Luis"), vm.state.value.dialog)
+        assertTrue(invites.revoked.isEmpty()) // todavía no: falta confirmar
+
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertEquals(CatalogDialog.RevokeAccess("id-1", "Luis", revoked = 1), vm.state.value.dialog)
+        assertEquals(setOf(Triple("uid-1", "luis", "id-1")), invites.revoked)
+
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertNull(vm.state.value.dialog)
+    }
+
+    @Test fun `A16 un barbero no puede quitar accesos`() {
+        val vm = vm(StaffRole.BARBER)
+        vm.onIntent(CatalogIntent.OpenRevokeAccess("id-1"))
+        assertNull(vm.state.value.dialog)
     }
 
     @Test fun `hora mal escrita marca error de horario`() {

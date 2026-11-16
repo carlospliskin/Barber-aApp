@@ -3,6 +3,9 @@ package com.barberia.feature.auth.domain.model
 /** Cómo está usando la app el usuario en este momento. */
 enum class AppMode { OWNER, BARBER, CLIENT }
 
+/** A7-b/A16: si la cuenta de barbero todavía sirve. */
+enum class StaffAccess { ACTIVE, REVOKED, SHOP_GONE }
+
 /** Rol de personal dentro de una barbería. Un cliente no tiene. */
 enum class StaffRole { OWNER, BARBER }
 

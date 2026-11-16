@@ -56,6 +56,15 @@ internal interface ProfileGateway {
 
     /** A7: borra `users/{uid}`. */
     suspend fun delete(uid: String)
+
+    /** A7-b: `tenants/{id}` existe (1 lectura). */
+    suspend fun tenantExists(tenantId: String): Boolean
+
+    /** A16: `tenants/{t}/revoked/{uid}` existe (1 lectura). */
+    suspend fun isRevoked(tenantId: String, uid: String): Boolean
+
+    /** A7-b/A16: pone en null staffTenantId, staffRole, staffBarberId y staffInviteCode (todo o nada, como la regla). */
+    suspend fun leaveStaff(uid: String)
 }
 
 /** Preferencia local del modo elegido (no se guarda en Firestore: no gasta escrituras). */

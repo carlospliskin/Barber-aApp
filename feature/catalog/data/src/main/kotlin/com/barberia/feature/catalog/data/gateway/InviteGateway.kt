@@ -9,4 +9,10 @@ internal interface InviteGateway {
 
     /** Batch: `users/{uid}` += [profileChanges] y `staffInvites/{code}.usedBy = uid`. */
     suspend fun redeem(code: String, uid: String, profileChanges: Map<String, Any?>)
+
+    /** A16: invitaciones de la barbería (`where tenantId ==`, lo exige la regla). */
+    suspend fun invitesOfTenant(tenantId: String): List<Map<String, Any?>>
+
+    /** A16: crea `tenants/{t}/revoked/{uid}`. */
+    suspend fun revoke(tenantId: String, uid: String, barberId: String)
 }

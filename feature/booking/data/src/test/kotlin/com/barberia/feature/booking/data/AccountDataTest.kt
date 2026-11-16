@@ -47,6 +47,9 @@ class AccountDataTest {
         override suspend fun inviteCodes(tenantId: String) =
             under("staffInvites/").filterValues { it["tenantId"] == tenantId }.keys.map { it.substringAfterLast('/') }
 
+        override suspend fun revokedIds(tenantId: String) =
+            under("tenants/$tenantId/revoked/").keys.map { it.substringAfterLast('/') }
+
         override suspend fun shareCodeOf(tenantId: String) = docs["tenants/$tenantId"]?.get("shareCode") as String?
 
         override suspend fun deleteAll(paths: List<String>) {
@@ -98,6 +101,7 @@ class AccountDataTest {
         gw.docs["tenants/t1"] = mapOf("name" to "Gold", "shareCode" to "ABC234")
         gw.docs["shareCodes/ABC234"] = mapOf("tenantId" to "t1")
         gw.docs["staffInvites/INV234"] = mapOf("tenantId" to "t1")
+        gw.docs["tenants/t1/revoked/luis"] = mapOf("barberId" to "b1") // A16
         gw.docs["staffInvites/OTR234"] = mapOf("tenantId" to "t2")
 
         assertEquals(AppResult.Success(Unit), repo.deleteBarbershop("t1"))

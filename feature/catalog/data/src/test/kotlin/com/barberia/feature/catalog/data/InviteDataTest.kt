@@ -29,6 +29,12 @@ class InviteDataTest {
             error?.let { throw it }
             redeemed = profileChanges + ("uid" to uid) + ("code" to code)
         }
+        val revokedDocs = mutableMapOf<String, String>()
+        override suspend fun invitesOfTenant(tenantId: String) = docs.values.filter { it["tenantId"] == tenantId }
+        override suspend fun revoke(tenantId: String, uid: String, barberId: String) {
+            error?.let { throw it }
+            revokedDocs["tenants/$tenantId/revoked/$uid"] = barberId
+        }
     }
 
     private val gw = FakeGateway()
@@ -54,5 +60,18 @@ class InviteDataTest {
     @Test fun `si las reglas rechazan al aceptar es invitacion invalida`() = runTest {
         gw.error = GatewayError.PermissionDenied()
         assertEquals(AppResult.Failure(CatalogFailure.InviteInvalid), repo.redeem(invite, "tono"))
+    }
+
+    // ── A16 quitar acceso ─────────────────────────────────────────────────────
+    @Test fun `A16 cuentas ligadas son las que usaron invitaciones de ese barbero`() = runTest {
+        gw.docs["A"] = mapOf("tenantId" to "t1", "barberId" to "b1", "usedBy" to "luis")
+        gw.docs["B"] = mapOf("tenantId" to "t1", "barberId" to "b1", "usedBy" to null)
+        gw.docs["C"] = mapOf("tenantId" to "t1", "barberId" to "b2", "usedBy" to "pepe")
+        assertEquals(com.barberia.core.common.AppResult.Success(setOf("luis")), repo.linkedAccounts("t1", "b1"))
+    }
+
+    @Test fun `A16 revocar escribe en la barberia`() = runTest {
+        repo.revoke("t1", "luis", "b1")
+        assertEquals(mapOf("tenants/t1/revoked/luis" to "b1"), gw.revokedDocs)
     }
 }

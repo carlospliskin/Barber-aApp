@@ -10,6 +10,7 @@ import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
+import com.barberia.feature.booking.domain.model.BookingException
 import com.barberia.feature.booking.domain.model.BookingResult
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
 import com.barberia.feature.booking.domain.usecase.DaySummary
@@ -115,7 +116,11 @@ class AgendaViewModel(
         launchInScope {
             // A3: solo las citas del día consultado.
             query.flatMapLatest { q -> if (q == null) emptyFlow() else observeAgenda(q.tenantId, q.date, q.barberId) }
-                .catch { setState { copy(failure = BookingFailure.NoConnection) } }
+                // A16: si se pierde el acceso no se dejan a la vista las citas que quedaron en caché.
+                .catch { e ->
+                    val f = (e as? BookingException)?.failure ?: BookingFailure.NoConnection
+                    setState { copy(failure = f, appointments = emptyList(), summary = summarize(emptyList())) }
+                }
                 .collect { list -> setState { copy(appointments = list, summary = summarize(list), now = clock.instant()) } }
         }
     }

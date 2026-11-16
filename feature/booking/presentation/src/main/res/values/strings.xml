@@ -88,4 +88,5 @@
     <string name="agenda_penalty_pending">No se pudieron cancelar %1$d citas futuras (¿sin conexión?). Cancélalas desde la agenda de su día.</string>
     <string name="booking_delete_account">Eliminar mi cuenta</string>
     <string name="agenda_deleted_account">Cliente que eliminó su cuenta</string>
+    <string name="booking_error_no_access">Ya no tienes acceso a esta barbería.</string>
 </resources>

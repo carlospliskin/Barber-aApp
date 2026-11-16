@@ -54,6 +54,14 @@ internal class FirestoreInviteRepository(private val gateway: InviteGateway) : I
         )
     }
 
+    override suspend fun linkedAccounts(tenantId: String, barberId: String): CatalogResult<Set<String>> = attempt {
+        gateway.invitesOfTenant(tenantId).filter { it["barberId"] == barberId }.mapNotNull { it["usedBy"] as? String }.toSet()
+    }
+
+    override suspend fun revoke(tenantId: String, uid: String, barberId: String): CatalogResult<Unit> = attempt {
+        gateway.revoke(tenantId, uid, barberId)
+    }
+
     private suspend fun <T> attempt(onDenied: CatalogFailure? = null, block: suspend () -> T): CatalogResult<T> = try {
         AppResult.Success(block())
     } catch (e: CancellationException) {

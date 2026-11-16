@@ -7,6 +7,7 @@ import com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase
 import com.barberia.feature.catalog.domain.usecase.AddServiceUseCase
 import com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase
 import com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase
+import com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
 import com.barberia.feature.catalog.domain.usecase.RenameBarberUseCase
 import com.barberia.feature.catalog.domain.usecase.SetBarberActiveUseCase
@@ -34,5 +35,6 @@ val catalogPresentationModule = module {
     factoryOf(::CreateBarberInviteUseCase)
     factoryOf(::AddTimeOffUseCase)
     factoryOf(::RemoveTimeOffUseCase)
+    factoryOf(::RevokeBarberAccessUseCase)
     viewModelOf(::CatalogViewModel)
 }

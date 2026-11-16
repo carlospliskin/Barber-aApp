@@ -49,6 +49,17 @@ sealed interface CatalogDialog {
         override val errors: Set<CatalogError> = emptySet(),
     ) : CatalogDialog
 
+    /**
+     * A16: quitar el acceso de la app a las cuentas de un barbero. [revoked] null = pidiendo confirmación;
+     * con número = ya se hizo (cuántas cuentas).
+     */
+    data class RevokeAccess(
+        val barberId: String,
+        val barberName: String,
+        val revoked: Int? = null,
+        override val errors: Set<CatalogError> = emptySet(),
+    ) : CatalogDialog
+
     /** N2: día libre de un barbero, o de todos si [barberId] es null (día festivo). Fecha "dd/MM/aaaa". */
     data class TimeOffForm(
         val barberId: String?,
@@ -96,6 +107,7 @@ sealed interface CatalogIntent : UiIntent {
 
     data class OpenSchedule(val barberId: String) : CatalogIntent
     data class InviteBarber(val barberId: String) : CatalogIntent
+    data class OpenRevokeAccess(val barberId: String) : CatalogIntent
     data class DayToggled(val day: DayOfWeek, val enabled: Boolean) : CatalogIntent
     data class DayStartChanged(val day: DayOfWeek, val value: String) : CatalogIntent
     data class DayEndChanged(val day: DayOfWeek, val value: String) : CatalogIntent

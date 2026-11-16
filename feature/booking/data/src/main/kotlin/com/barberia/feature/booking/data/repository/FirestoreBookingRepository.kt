@@ -16,7 +16,9 @@ import com.barberia.feature.booking.domain.model.dayId
 import com.barberia.feature.booking.domain.repository.BookingRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import com.barberia.feature.booking.domain.model.BookingException
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -76,7 +78,7 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
     override fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>> =
         gateway.observeDay(tenantId, date.toString(), barberId).map { docs ->
             docs.mapNotNull { (id, data) -> AppointmentMapper.fromMap(id, tenantId, data) }
-        }
+        }.catch { e -> throw BookingException(e.toBookingFailure()) }
 
     override suspend fun setStatus(
         appointment: Appointment,
@@ -155,4 +157,12 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             },
         )
     }
+}
+
+/** A16: errores de los Flow traducidos a fallas del dominio. */
+internal fun Throwable.toBookingFailure(): BookingFailure = when (this) {
+    is GatewayError.PermissionDenied -> BookingFailure.NoAccess
+    is GatewayError.Network -> BookingFailure.NoConnection
+    is GatewayError -> BookingFailure.Unknown(cause?.message)
+    else -> BookingFailure.Unknown(message)
 }

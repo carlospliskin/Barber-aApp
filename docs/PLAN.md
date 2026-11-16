@@ -200,7 +200,12 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] A7. Eliminar cuenta y datos desde la app, sin Cloud Functions (ver DEUDA_TECNICA «Resueltos»).
 - [x] A7-a. La casilla de confirmación solo respondía al cuadrito.
 - [x] A7-e. Una cita anonimizada se veía como "Sin app" con nombre vacío → "Cliente que eliminó su cuenta" (`isFromDeletedAccount`).
-- [ ] A7-b. Barberos de una barbería borrada quedan con un rol que apunta a nada (P1).
+- [x] A7-b. Barberos de una barbería borrada quedaban con un rol que apuntaba a nada → "Seguir solo como cliente".
+- [x] A16. El dueño no podía quitar el acceso a un barbero → `revoked/{uid}` + reglas; vuelve con invitación nueva.
+- [x] A16-a. La agenda mostraba citas de la caché tras perder el acceso.
+- [x] A16-b. Borrar el modo antes de terminar cancelaba la operación (soltar rol, eliminar cuenta).
+- [x] A16-c. "Sin conexión" en vez de "sin acceso" en la agenda.
+- [ ] A16-d/e/f. Botón de agendar sin acceso, mensajes genéricos en otras pantallas, caché en disco (P3).
 - [ ] A7-c. Clientes de una barbería borrada la conservan en el teléfono con recordatorios (P2).
 - [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
 - [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app).

@@ -82,9 +82,11 @@ class BookingDataTest {
         override suspend fun shareCode(code: String): String? = codes[code]
         override suspend fun tenant(tenantId: String) = tenant
         var dayQuery: Triple<String, String, String?>? = null
+        var dayError: GatewayError? = null
         var status: Pair<String, String>? = null
         override fun observeDay(tenantId: String, date: String, barberId: String?): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
             dayQuery = Triple(tenantId, date, barberId)
+            dayError?.let { e -> return kotlinx.coroutines.flow.flow { throw e } }
             return live
         }
         var client: Map<String, Any?>? = null
@@ -186,6 +188,15 @@ class BookingDataTest {
         val list = repo.observeDay("t", cita.date, "b1").first()
         assertEquals(Triple("t", "2026-11-20", "b1"), gw.dayQuery)
         assertEquals(listOf(AppointmentStatus.CANCELLED), list.map { it.status }) // la agenda sí muestra canceladas
+    }
+
+    @Test fun `A16 sin permiso la agenda dice sin acceso, no sin conexion`() = runTest {
+        gw.dayError = GatewayError.PermissionDenied()
+        val e = runCatching { repo.observeDay("t", cita.date, "b1").first() }.exceptionOrNull()
+        assertEquals(BookingFailure.NoAccess, (e as com.barberia.feature.booking.domain.model.BookingException).failure)
+        gw.dayError = GatewayError.Network()
+        val e2 = runCatching { repo.observeDay("t", cita.date, "b1").first() }.exceptionOrNull()
+        assertEquals(BookingFailure.NoConnection, (e2 as com.barberia.feature.booking.domain.model.BookingException).failure)
     }
 
     @Test fun `A4 P7 cambiar estado escribe la ficha con lo que exigen las reglas`() = runTest {

@@ -77,3 +77,18 @@ class RedeemBarberInviteUseCase(
         }
     }
 }
+
+/**
+ * A16: el dueño quita el acceso de la app a un barbero (renunció, lo despidió o cambió de cuenta).
+ * Revoca todas las cuentas ligadas a ese barbero del catálogo. Devuelve cuántas.
+ */
+class RevokeBarberAccessUseCase(private val invites: InviteRepository) {
+    suspend operator fun invoke(tenantId: String, barberId: String): CatalogResult<Int> {
+        val uids = when (val r = invites.linkedAccounts(tenantId, barberId)) {
+            is AppResult.Success -> r.value
+            is AppResult.Failure -> return r
+        }
+        uids.forEach { uid -> invites.revoke(tenantId, uid, barberId).let { if (it is AppResult.Failure) return it } }
+        return AppResult.Success(uids.size)
+    }
+}

@@ -56,4 +56,14 @@
     <string name="catalog_failure_connection">Sin conexión. Los cambios del catálogo necesitan internet.</string>
     <string name="catalog_failure_owner">No tienes permiso para editar este catálogo.</string>
     <string name="catalog_failure_unknown">No se pudo guardar. Intenta de nuevo.</string>
+    <!-- A16: quitar acceso -->
+    <string name="catalog_revoke">Quitar acceso a la app</string>
+    <string name="catalog_revoke_title">¿Quitar el acceso de %1$s?</string>
+    <string name="catalog_revoke_hint">Las cuentas que entraron con una invitación de este barbero dejan de ver la agenda y las fichas de tus clientes. Sus citas no se borran. Para devolverle el acceso, mándale una invitación nueva.</string>
+    <string name="catalog_revoke_confirm">Quitar acceso</string>
+    <string name="catalog_revoke_none">Este barbero no tiene ninguna cuenta ligada. No había nada que quitar.</string>
+    <plurals name="catalog_revoke_done">
+        <item quantity="one">Listo: se quitó el acceso a %1$d cuenta.</item>
+        <item quantity="other">Listo: se quitó el acceso a %1$d cuentas.</item>
+    </plurals>
 </resources>

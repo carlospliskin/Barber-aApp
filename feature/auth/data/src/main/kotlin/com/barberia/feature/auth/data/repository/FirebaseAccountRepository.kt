@@ -12,6 +12,7 @@ import com.barberia.feature.auth.domain.model.AuthFailure
 import com.barberia.feature.auth.domain.model.AuthUser
 import com.barberia.feature.auth.domain.model.SessionState
 import com.barberia.feature.auth.domain.model.StaffRole
+import com.barberia.feature.auth.domain.model.StaffAccess
 import com.barberia.feature.auth.domain.repository.AuthRepository
 import com.barberia.feature.auth.domain.repository.AuthResult
 import com.barberia.feature.auth.domain.repository.ClientRegistration
@@ -127,6 +128,27 @@ internal class FirebaseAccountRepository(
         return attempt {
             profiles.delete(uid)
             auth.deleteCurrentUser()
+        }
+    }
+
+    override suspend fun staffAccess(tenantId: String): AuthResult<StaffAccess> {
+        val uid = currentUser()?.uid ?: return AppResult.Failure(AuthFailure.NotSignedIn)
+        var access = StaffAccess.ACTIVE
+        val r = attempt {
+            access = when {
+                !profiles.tenantExists(tenantId) -> StaffAccess.SHOP_GONE
+                profiles.isRevoked(tenantId, uid) -> StaffAccess.REVOKED
+                else -> StaffAccess.ACTIVE
+            }
+        }
+        return if (r is AppResult.Failure) r else AppResult.Success(access)
+    }
+
+    override suspend fun leaveStaff(): AuthResult<Unit> {
+        val uid = currentUser()?.uid ?: return AppResult.Failure(AuthFailure.NotSignedIn)
+        return attempt {
+            profiles.leaveStaff(uid)
+            refresh() // la sesión vuelve a leer el perfil: ahora es solo cliente
         }
     }
 

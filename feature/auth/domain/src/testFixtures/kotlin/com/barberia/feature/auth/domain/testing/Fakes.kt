@@ -5,6 +5,7 @@ import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.auth.domain.model.AuthUser
 import com.barberia.feature.auth.domain.model.SessionState
 import com.barberia.feature.auth.domain.model.StaffRole
+import com.barberia.feature.auth.domain.model.StaffAccess
 import com.barberia.feature.auth.domain.repository.AuthRepository
 import com.barberia.feature.auth.domain.repository.AuthResult
 import com.barberia.feature.auth.domain.repository.ClientRegistration
@@ -64,7 +65,21 @@ class FakeAuthRepository(var result: AuthResult<Unit> = AppResult.Success(Unit))
         return reauthResult
     }
     override suspend fun deleteAccount(): AuthResult<Unit> {
+        onCall("deleteAccount")
         calls += "deleteAccount"
+        return result
+    }
+
+    var access = StaffAccess.ACTIVE
+    override suspend fun staffAccess(tenantId: String): AuthResult<StaffAccess> {
+        calls += "staffAccess:$tenantId"
+        return AppResult.Success(access)
+    }
+    /** Para comprobar el orden respecto a la sesión (p. ej. que el modo se borre después). */
+    var onCall: (String) -> Unit = {}
+    override suspend fun leaveStaff(): AuthResult<Unit> {
+        onCall("leaveStaff")
+        calls += "leaveStaff"
         return result
     }
 }
