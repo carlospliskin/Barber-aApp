@@ -87,6 +87,13 @@ class BookAppointmentUseCase(
         if (req.startMinute !in calculator.slots(barber, service, req.date, emptySet(), now)) {
             return AppResult.Failure(BookingFailure.SlotUnavailable)
         }
+        // P2 (B4): penalizado por no-shows
+        when (val client = bookings.client(req.tenantId, req.clientUid)) {
+            is AppResult.Failure -> return client
+            is AppResult.Success -> client.value?.penaltyUntil?.let { until ->
+                if (until.isAfter(clock.instant())) return AppResult.Failure(BookingFailure.Penalized(until))
+            }
+        }
         // B5
         when (val active = bookings.countActive(req.tenantId, req.clientUid, now.toLocalDate())) {
             is AppResult.Failure -> return active

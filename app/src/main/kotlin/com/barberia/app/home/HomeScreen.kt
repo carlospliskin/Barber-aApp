@@ -29,6 +29,7 @@ fun HomeRoute(
     onOpenCatalog: () -> Unit,
     onBook: () -> Unit,
     onOpenAgenda: () -> Unit,
+    onOpenClients: () -> Unit,
     viewModel: HomeViewModel = koinViewModel(),
 ) {
     if (mode == AppMode.CLIENT) {
@@ -57,6 +58,8 @@ fun HomeRoute(
         Spacer(Modifier.height(12.dp))
         if (mode == AppMode.OWNER) {
             BarberButton(text = "Catálogo", onClick = onOpenCatalog)
+            Spacer(Modifier.height(12.dp))
+            BarberButton(text = "Clientes", onClick = onOpenClients)
             Spacer(Modifier.height(12.dp))
         }
         BarberButton(text = "Cerrar sesión", onClick = { viewModel.onIntent(HomeIntent.SignOut) })

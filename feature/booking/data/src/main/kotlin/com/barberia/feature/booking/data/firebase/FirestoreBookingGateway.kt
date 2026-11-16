@@ -121,11 +121,59 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         awaitClose { registration.remove() }
     }
 
-    override suspend fun setStatus(tenantId: String, apptId: String, status: String) {
+    override suspend fun setStatus(
+        tenantId: String,
+        apptId: String,
+        status: String,
+        clientUid: String,
+        updateClient: (Map<String, Any?>?) -> Map<String, Any?>,
+    ) {
         firebaseCall {
-            tenantRef(tenantId).collection("appointments").document(apptId)
-                .update(mapOf("status" to status, "updatedAt" to FieldValue.serverTimestamp()))
-                .await()
+            val apptRef = tenantRef(tenantId).collection("appointments").document(apptId)
+            val clientRef = tenantRef(tenantId).collection("clients").document(clientUid)
+            db.runTransaction { tx ->
+                val current = tx.get(clientRef).data?.fromFirestore()
+                val next = updateClient(current).toFirestore() + ("updatedAt" to FieldValue.serverTimestamp())
+                tx.update(apptRef, mapOf("status" to status, "updatedAt" to FieldValue.serverTimestamp()))
+                tx.set(clientRef, next)
+            }.await()
+        }
+    }
+
+    private fun clientRef(tenantId: String, uid: String) = tenantRef(tenantId).collection("clients").document(uid)
+
+    override suspend fun getClient(tenantId: String, uid: String): Map<String, Any?>? = firebaseCall {
+        clientRef(tenantId, uid).get().await().data?.fromFirestore()
+    }
+
+    override fun observeClient(tenantId: String, uid: String): Flow<Map<String, Any?>?> = callbackFlow {
+        val registration = clientRef(tenantId, uid).addSnapshotListener { snapshot, error ->
+            if (error != null) close(error.toGatewayError()) else trySend(snapshot?.data?.fromFirestore())
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override fun observeClients(tenantId: String): Flow<List<Pair<String, Map<String, Any?>>>> = callbackFlow {
+        val registration = tenantRef(tenantId).collection("clients")
+            .orderBy("updatedAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .limit(MAX_CLIENTS)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error.toGatewayError())
+                } else {
+                    trySend(snapshot?.documents.orEmpty().map { it.id to it.data.orEmpty().fromFirestore() })
+                }
+            }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun updateClient(tenantId: String, uid: String, update: (Map<String, Any?>) -> Map<String, Any?>?) {
+        firebaseCall {
+            val ref = clientRef(tenantId, uid)
+            db.runTransaction { tx ->
+                val current = tx.get(ref).data?.fromFirestore() ?: return@runTransaction
+                update(current)?.let { tx.set(ref, it.toFirestore() + ("updatedAt" to FieldValue.serverTimestamp())) }
+            }.await()
         }
     }
 
@@ -149,6 +197,7 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
 
     private companion object {
         const val MAX_LISTED = 20L
+        const val MAX_CLIENTS = 50L
     }
 }
 

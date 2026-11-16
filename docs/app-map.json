@@ -129,8 +129,8 @@
         ":core:common",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 6,
-      "unitTests": 33
+      "kotlinFiles": 8,
+      "unitTests": 41
     },
     {
       "path": ":feature:booking:data",
@@ -140,8 +140,8 @@
         ":core:firebase",
         ":feature:booking:domain"
       ],
-      "kotlinFiles": 6,
-      "unitTests": 18
+      "kotlinFiles": 7,
+      "unitTests": 20
     },
     {
       "path": ":feature:booking:presentation",
@@ -154,8 +154,8 @@
         ":feature:booking:domain",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 10,
-      "unitTests": 18
+      "kotlinFiles": 12,
+      "unitTests": 21
     }
   ],
   "navigation": {
@@ -184,6 +184,10 @@
       {
         "route": "HomeDest",
         "screen": "HomeRoute"
+      },
+      {
+        "route": "ClientsDest",
+        "screen": "ClientsRoute"
       },
       {
         "route": "AgendaDest",
@@ -223,6 +227,16 @@
         "from": "HomeDest",
         "to": "AgendaDest",
         "trigger": "botón en pantalla"
+      },
+      {
+        "from": "HomeDest",
+        "to": "ClientsDest",
+        "trigger": "botón en pantalla"
+      },
+      {
+        "from": "ClientsDest",
+        "to": "(atrás)",
+        "trigger": "volver"
       },
       {
         "from": "AgendaDest",
@@ -318,6 +332,19 @@
         {
           "to": "HomeDest",
           "how": "la sesión resuelve **OwnerHome**"
+        }
+      ]
+    },
+    {
+      "route": "ClientsDest",
+      "steps": [
+        {
+          "to": "HomeDest",
+          "how": "la sesión resuelve **OwnerHome**"
+        },
+        {
+          "to": "ClientsDest",
+          "how": "tocar el botón que navega"
         }
       ]
     },
@@ -469,6 +496,10 @@
           "viewModel": "ShareCodeViewModel"
         },
         {
+          "component": "LoyaltyCard",
+          "viewModel": "LoyaltyViewModel"
+        },
+        {
           "component": "RedeemInviteCard",
           "viewModel": "RedeemInviteViewModel"
         }
@@ -490,9 +521,29 @@
         "ObserveCurrentUserUseCase",
         "ObserveJoinedBarbershopUseCase",
         "ObserveMyAppointmentsUseCase",
+        "ObserveMyLoyaltyUseCase",
         "RedeemBarberInviteUseCase",
         "RetrySessionUseCase",
         "SignOutUseCase"
+      ]
+    },
+    {
+      "route": "ClientsDest",
+      "screen": "ClientsRoute",
+      "file": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/clients/Clients.kt",
+      "viewModel": "ClientsViewModel",
+      "viewModelFile": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/clients/Clients.kt",
+      "embedded": [],
+      "intents": [
+        "DismissFailure",
+        "Forgive",
+        "Redeem"
+      ],
+      "useCases": [
+        "ForgivePenaltyUseCase",
+        "ObserveClientsUseCase",
+        "ObserveCurrentUserUseCase",
+        "RedeemRewardUseCase"
       ]
     },
     {
@@ -642,6 +693,13 @@
       ]
     },
     {
+      "name": "ForgivePenaltyUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/LoyaltyUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
       "name": "GetAvailableSlotsUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
       "uses": [
@@ -699,6 +757,13 @@
       ]
     },
     {
+      "name": "ObserveClientsUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/LoyaltyUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
       "name": "ObserveCurrentUserUseCase",
       "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
       "uses": [
@@ -720,6 +785,13 @@
       ]
     },
     {
+      "name": "ObserveMyLoyaltyUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/LoyaltyUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
       "name": "ObserveSessionDestinationUseCase",
       "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
       "uses": [
@@ -732,6 +804,13 @@
       "uses": [
         "CatalogRepository",
         "InviteRepository"
+      ]
+    },
+    {
+      "name": "RedeemRewardUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/LoyaltyUseCases.kt",
+      "uses": [
+        "BookingRepository"
       ]
     },
     {
@@ -917,6 +996,16 @@
       ]
     },
     {
+      "path": "/tenants/{tenantId}/clients/{clientUid}",
+      "ops": [
+        "get",
+        "list",
+        "create",
+        "update",
+        "delete ✗"
+      ]
+    },
+    {
       "path": "/staffInvites/{code}",
       "ops": [
         "get",
@@ -927,5 +1016,5 @@
       ]
     }
   ],
-  "rulesTests": 76
+  "rulesTests": 93
 }

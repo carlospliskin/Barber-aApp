@@ -63,7 +63,22 @@ describe("A2 / A3 leer la agenda del día", () => {
 });
 
 describe("A4 / A6 completar y no-show", () => {
-  const mark = (uid, id, status) => updateDoc(doc(db(uid), `tenants/ana/appointments/${id}`), { status, updatedAt: serverTimestamp() });
+  // P7: cita + ficha del cliente en el mismo batch (como la app).
+  const mark = (uid, id, status) => {
+    const d = db(uid);
+    const b = writeBatch(d);
+    b.update(doc(d, `tenants/ana/appointments/${id}`), { status, updatedAt: serverTimestamp() });
+    b.set(doc(d, "tenants/ana/clients/cli"), {
+      name: "C", completed: status === "COMPLETED" ? 1 : 0, noShows: status === "NO_SHOW" ? 1 : 0,
+      rewardsUsed: 0, penaltyUntil: null, lastAppointmentId: id, updatedAt: serverTimestamp(),
+    });
+    return b.commit();
+  };
+
+  test("P7 marcar sin actualizar la ficha del cliente no se permite", async () => {
+    await world();
+    await assertFails(updateDoc(doc(db("luis"), "tenants/ana/appointments/a1"), { status: "COMPLETED", updatedAt: serverTimestamp() }));
+  });
 
   test("el barbero marca completada su cita después de la hora de inicio", async () => {
     await world();

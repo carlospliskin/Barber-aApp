@@ -73,6 +73,9 @@ sealed interface BookingFailure {
     data object InvalidCode : BookingFailure
     data object HasActiveAppointments : BookingFailure
     data object TooEarly : BookingFailure
+    /** P2: penalizado por no-shows hasta [until]. */
+    data class Penalized(val until: Instant) : BookingFailure
+    data object NoRewardAvailable : BookingFailure
     data object NoConnection : BookingFailure
     data class Unknown(val detail: String? = null) : BookingFailure
 }

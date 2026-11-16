@@ -33,8 +33,8 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 4 | Catálogo de servicios y barberos (dueño) | ✅ |
 | 5 | Disponibilidad y reserva sin choques (cliente) | ✅ |
 | 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ✅ |
-| 7 | Clientes, penalizaciones y lealtad | ⏭️ siguiente |
-| 8 | Recordatorios locales, Crashlytics, App Check, versión release | ⏳ |
+| 7 | Clientes, penalizaciones y lealtad | ✅ |
+| 8 | Recordatorios locales, Crashlytics, App Check, versión release | ⏭️ siguiente |
 | 9 | Eliminar cuenta (requisito de Google Play) y publicación | ⏳ |
 
 ## Modelo de datos (pensado para gastar poco)
@@ -86,14 +86,14 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] B1. No permitir reservar en el pasado ni fuera del horario del barbero. → anticipación mínima 30 min.
 - [x] B2. El servicio no puede terminar después del cierre. → el servicio cabe completo en un turno (no cruza el descanso).
 - [x] B3. Dos clientes reservando el mismo horario a la vez (transacción). → mapa de bloques de 5 min por barbero y día; las reglas prohíben sobrescribir un bloque.
-- [ ] B4. Cliente penalizado no puede reservar hasta `penaltyUntil`.
+- [x] B4. Cliente penalizado no puede reservar hasta `penaltyUntil`. → app y reglas (P2).
 - [x] B5. Límite de citas activas por cliente (evita acaparar horarios). → máximo 2 citas activas.
 - [x] B6. Zona horaria: guardar en UTC y mostrar en la de la barbería. → zona horaria de la barbería; `startsAt` en UTC.
 - [x] B7. Cancelación: hasta cuántas horas antes y qué pasa con el horario liberado. → hasta 2 h antes; también lo exigen las reglas (el dueño puede siempre).
 
 ### Operación
-- [ ] C1. Marcar no-show suma al contador y penaliza al llegar al límite.
-- [ ] C2. Los puntos de lealtad se dan una sola vez por cita completada (idempotente).
+- [x] C1. Marcar no-show suma al contador y penaliza al llegar al límite. → al 3er no-show, 14 días (P1).
+- [x] C2. Los puntos de lealtad se dan una sola vez por cita completada (idempotente). → la regla solo suma 1 cuando la cita pasa de BOOKED a COMPLETED (P3).
 - [x] C3. Borrar un servicio que tiene citas futuras. → nunca se borra, se desactiva (sigue existiendo para citas viejas).
 - [x] C4. Desactivar a un barbero con citas futuras. → se desactiva y sale de las reservas.
 - [x] C5. Horarios del barbero: turnos que se enciman, días libres. → rangos válidos en pasos de 5 min, sin encimarse, turno partido permitido.
@@ -112,6 +112,23 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] C16. Vincular un barbero del catálogo con una cuenta → invitaciones de un solo uso (A1).
 - [ ] C17. Editar el catálogo sin red falla con aviso (las transacciones necesitan servidor). Aceptado para el lanzamiento.
 
+### Fase 7 (clientes, lealtad y penalizaciones)
+- [x] W2. Invitación de un barbero que el dueño desactivó después → ya no sirve.
+- [ ] W3. Dos invitaciones para el mismo barbero ligan dos cuentas a él (riesgo bajo).
+- [x] W4. El personal podía cancelar después de la hora y **esconder un no-show** → solo antes de la hora (app y reglas).
+- [x] P1. Al 3er no-show, penalización de 14 días (reglas limitan cuándo y cuánto).
+- [x] P2. Penalizado no reserva (app y reglas; 1 lectura extra por reserva).
+- [x] P3. Cada visita suma una sola vez (solo con la transición BOOKED → COMPLETED de esa cita).
+- [x] P4. Premio cada 10 visitas; no se canjea más de lo ganado.
+- [x] P5. El dueño ve sus clientes (máx. 50) y quita penalizaciones; un barbero no.
+- [x] P6. El cliente ve su progreso y hasta cuándo está penalizado.
+- [x] P7. **Marcar atendida/no-show sin actualizar la ficha del cliente** → las reglas lo exigen en el mismo batch.
+- [x] P8. La ficha solo la ven el cliente y el personal de esa barbería.
+- [x] P9. Transacción: dos citas del mismo cliente marcadas a la vez no pisan el conteo.
+- [x] U9. Etiqueta de estado igual al botón ("No llegó") → "✓ Atendida" / "✗ No llegó".
+- [x] U10. El penalizado hacía todo el flujo y lo rechazaban al confirmar → "Reservar" deshabilitado.
+- [x] U11. "1 visitas · 3 no llegó" → "Visitas: 1 · Faltas: 3 · Premios: 0".
+
 ### Fase 6 (agenda e invitaciones)
 - [x] V1. Salir de la barbería con citas activas las ocultaba → no se permite.
 - [x] V2. La ventana de 30 días solo estaba en la app → las reglas limitan a 31 días.
@@ -129,7 +146,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] A11. **Reloj del teléfono adelantado** (0.4 s en el emulador) hacía que el servidor rechazara invitaciones de 7 días exactos → 5 min de tolerancia en la regla. Lo encontró la prueba de punta a punta.
 - [x] A12. Correr los tests de reglas borraba los datos del emulador que usaba la app → los tests usan el proyecto `demo-rules`.
 - [x] U6. "1 citas" → plurales. U7. Botones de atendida/no-show en citas futuras → solo cuando aplican. U8. "Modo barber" → etiqueta en español.
-- [ ] A13. El dueño en modo Barbero ve la agenda de todos (no está ligado a un barbero del catálogo). Decidir si se liga.
+- [x] A13 / W1. El dueño solo tiene modo Barbero si está ligado a un barbero del catálogo.
 
 ### Revisión de la fase 5 (antes de las pantallas y en la prueba de punta a punta)
 - [x] R1. Una cita podía declarar bloques que no eran de su hora y **bloquear el día entero** del barbero → las reglas exigen que los bloques correspondan a inicio y duración (máx. 8 h).
@@ -155,7 +172,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] B10. La regla de cancelación necesitaba la hora como instante → `startsAt` (UTC) en la cita.
 - [x] B11. Firebase envolvía el "horario tomado" lanzado en la transacción y se veía como error desconocido.
 - [x] B12. `GetAvailableSlots` devolvía lista vacía ante un error de red ("no hay horarios") → ahora devuelve el error.
-- [ ] B4. Cliente penalizado no puede reservar → con la fase 7 (penalizaciones).
+- [x] B4. Cliente penalizado no puede reservar → con la fase 7 (penalizaciones). → app y reglas (P2).
 - [x] B13. Pantallas de reserva (código de barbería, servicio, barbero, día, hora, confirmar, mis citas) + código del dueño.
 - [x] B14. Prueba de punta a punta en emulador con el build QA: dueño arma catálogo y obtiene código; cliente se une, reserva y cancela; un segundo cliente ve el horario ocupado; el día queda liberado al cancelar.
 

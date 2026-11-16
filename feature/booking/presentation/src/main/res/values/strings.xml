@@ -49,8 +49,8 @@
     <string name="agenda_summary">atendidas %1$d · no llegaron %2$d · cobrado %3$s de %4$s</string>
     <string name="agenda_complete">Atendida</string>
     <string name="agenda_no_show">No llegó</string>
-    <string name="agenda_status_completed">Atendida</string>
-    <string name="agenda_status_no_show">No llegó</string>
+    <string name="agenda_status_completed">✓ Atendida</string>
+    <string name="agenda_status_no_show">✗ No llegó</string>
     <string name="booking_error_too_early">Todavía no es la hora de la cita (no-show: 10 min de tolerancia).</string>
 
     <string name="invite_title">¿Eres barbero?</string>
@@ -61,4 +61,16 @@
     <string name="invite_error_invalid">Invitación no válida o ya usada.</string>
     <string name="invite_error_expired">La invitación ya venció. Pide otra al dueño.</string>
     <string name="invite_error_staff">Tu cuenta ya pertenece al personal de una barbería.</string>
+
+    <string name="clients_title">Clientes</string>
+    <string name="clients_empty">Aún no hay clientes atendidos.</string>
+    <string name="clients_line">Visitas: %1$d · Faltas: %2$d · Premios: %3$d</string>
+    <string name="clients_penalized">Penalizado hasta el %1$s</string>
+    <string name="clients_redeem">Canjear premio</string>
+    <string name="clients_forgive">Quitar penalización</string>
+    <string name="loyalty_progress">Visitas: %1$d de %2$d para tu corte gratis</string>
+    <string name="loyalty_reward">Tienes %1$d corte(s) gratis. Pídelo en tu próxima visita.</string>
+    <string name="loyalty_penalized">Por faltas sin avisar no puedes reservar hasta el %1$s.</string>
+    <string name="booking_error_penalized">Por faltas sin avisar no puedes reservar por ahora.</string>
+    <string name="booking_error_no_reward">Este cliente no tiene premios disponibles.</string>
 </resources>

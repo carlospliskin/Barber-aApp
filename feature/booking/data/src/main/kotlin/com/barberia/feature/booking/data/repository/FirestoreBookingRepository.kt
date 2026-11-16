@@ -5,11 +5,13 @@ import com.barberia.core.firebase.GatewayError
 import com.barberia.feature.booking.data.gateway.BookingGateway
 import com.barberia.feature.booking.data.gateway.SlotTakenException
 import com.barberia.feature.booking.data.mapper.AppointmentMapper
+import com.barberia.feature.booking.data.mapper.ClientMapper
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
+import com.barberia.feature.booking.domain.model.ClientRecord
 import com.barberia.feature.booking.domain.model.dayId
 import com.barberia.feature.booking.domain.repository.BookingRepository
 import kotlinx.coroutines.CancellationException
@@ -63,8 +65,44 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             docs.mapNotNull { (id, data) -> AppointmentMapper.fromMap(id, tenantId, data) }
         }
 
-    override suspend fun setStatus(appointment: Appointment, status: AppointmentStatus) =
-        attempt(onDenied = BookingFailure.TooEarly) { gateway.setStatus(appointment.tenantId, appointment.id, status.name) }
+    override suspend fun setStatus(
+        appointment: Appointment,
+        status: AppointmentStatus,
+        updateClient: (ClientRecord?) -> ClientRecord,
+    ) = attempt(onDenied = BookingFailure.TooEarly) {
+        gateway.setStatus(appointment.tenantId, appointment.id, status.name, appointment.clientUid) { raw ->
+            ClientMapper.toMap(updateClient(ClientMapper.fromMap(appointment.clientUid, raw)), lastAppointmentId = appointment.id)
+        }
+    }
+
+    override suspend fun client(tenantId: String, uid: String) = attempt {
+        ClientMapper.fromMap(uid, gateway.getClient(tenantId, uid))
+    }
+
+    override fun observeClient(tenantId: String, uid: String): Flow<ClientRecord?> =
+        gateway.observeClient(tenantId, uid).map { ClientMapper.fromMap(uid, it) }
+
+    override fun observeClients(tenantId: String): Flow<List<ClientRecord>> =
+        gateway.observeClients(tenantId).map { docs -> docs.mapNotNull { (uid, m) -> ClientMapper.fromMap(uid, m) } }
+
+    override suspend fun updateClient(
+        tenantId: String,
+        uid: String,
+        change: (ClientRecord) -> BookingResult<ClientRecord>,
+    ): BookingResult<ClientRecord> {
+        var outcome: BookingResult<ClientRecord> = AppResult.Failure(BookingFailure.NotYours)
+        val written = attempt {
+            gateway.updateClient(tenantId, uid) { raw ->
+                val current = ClientMapper.fromMap(uid, raw) ?: return@updateClient null
+                outcome = change(current)
+                (outcome as? AppResult.Success)?.let {
+                    // Se conserva lastAppointmentId: las reglas lo exigen como texto.
+                    ClientMapper.toMap(it.value, lastAppointmentId = raw["lastAppointmentId"] as? String ?: "")
+                }
+            }
+        }
+        return if (written is AppResult.Failure) written else outcome
+    }
 
     override suspend fun resolveShareCode(code: String) = attempt { gateway.shareCode(code) }
 

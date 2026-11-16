@@ -4,6 +4,7 @@ import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingResult
+import com.barberia.feature.booking.domain.model.ClientRecord
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -35,8 +36,29 @@ interface BookingRepository {
     /** A3: citas de un día (de un barbero, o de todos si [barberId] es null). Nunca todo el historial. */
     fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>>
 
-    /** A4: cambia el estado de una cita BOOKED a COMPLETED o NO_SHOW. */
-    suspend fun setStatus(appointment: Appointment, status: AppointmentStatus): BookingResult<Unit>
+    /**
+     * A4/P7: cambia el estado de una cita BOOKED a COMPLETED o NO_SHOW y actualiza la ficha del cliente
+     * en la MISMA transacción ([updateClient] recibe la ficha actual o null si es su primera vez).
+     */
+    suspend fun setStatus(
+        appointment: Appointment,
+        status: AppointmentStatus,
+        updateClient: (ClientRecord?) -> ClientRecord,
+    ): BookingResult<Unit>
+
+    suspend fun client(tenantId: String, uid: String): BookingResult<ClientRecord?>
+
+    fun observeClient(tenantId: String, uid: String): Flow<ClientRecord?>
+
+    /** P5: clientes de la barbería (máx. 50, los más recientes). */
+    fun observeClients(tenantId: String): Flow<List<ClientRecord>>
+
+    /** Cambia la ficha en una transacción (premios, perdonar). Si [change] falla no se guarda nada. */
+    suspend fun updateClient(
+        tenantId: String,
+        uid: String,
+        change: (ClientRecord) -> BookingResult<ClientRecord>,
+    ): BookingResult<ClientRecord>
 
     /** Barbería a la que apunta un código para compartir (B0), o null. */
     suspend fun resolveShareCode(code: String): BookingResult<String?>

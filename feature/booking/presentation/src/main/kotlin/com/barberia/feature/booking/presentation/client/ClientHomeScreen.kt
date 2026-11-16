@@ -27,6 +27,8 @@ import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.presentation.R
 import com.barberia.feature.booking.presentation.common.messageRes
 import com.barberia.feature.booking.presentation.invite.RedeemInviteCard
+import com.barberia.feature.booking.presentation.loyalty.LoyaltyCard
+import com.barberia.feature.booking.presentation.loyalty.LoyaltyViewModel
 import com.barberia.feature.booking.presentation.common.shortLabel
 import com.barberia.feature.catalog.domain.model.TimeRange
 import org.koin.androidx.compose.koinViewModel
@@ -59,7 +61,10 @@ fun ClientHomeScreen(
             BarberButton(stringResource(R.string.booking_join), { onIntent(ClientHomeIntent.Join) }, isLoading = state.joining)
         } else {
             Text(shop.name, style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-            BarberButton(stringResource(R.string.booking_book), onBook)
+            val loyalty: LoyaltyViewModel = koinViewModel()
+            val loyaltyState by loyalty.state.collectAsStateWithLifecycle()
+            LoyaltyCard(viewModel = loyalty)
+            BarberButton(stringResource(R.string.booking_book), onBook, enabled = loyaltyState.canBook) // U10
             Spacer(Modifier.height(8.dp))
             Text(stringResource(R.string.booking_my_appointments), style = MaterialTheme.typography.titleMedium)
             state.failure?.let { Text(stringResource(it.messageRes()), color = MaterialTheme.colorScheme.error) }

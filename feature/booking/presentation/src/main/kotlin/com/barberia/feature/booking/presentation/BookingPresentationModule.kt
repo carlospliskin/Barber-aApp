@@ -1,6 +1,13 @@
 package com.barberia.feature.booking.presentation
 
 import com.barberia.feature.booking.domain.model.BookingPolicy
+import com.barberia.feature.booking.domain.model.LoyaltyPolicy
+import com.barberia.feature.booking.domain.usecase.ForgivePenaltyUseCase
+import com.barberia.feature.booking.domain.usecase.ObserveClientsUseCase
+import com.barberia.feature.booking.domain.usecase.ObserveMyLoyaltyUseCase
+import com.barberia.feature.booking.domain.usecase.RedeemRewardUseCase
+import com.barberia.feature.booking.presentation.clients.ClientsViewModel
+import com.barberia.feature.booking.presentation.loyalty.LoyaltyViewModel
 import com.barberia.feature.booking.domain.usecase.BookAppointmentUseCase
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
@@ -47,9 +54,18 @@ val bookingPresentationModule = module {
     factoryOf(::GetBarbershopUseCase)
     factoryOf(::ObserveAgendaUseCase)
     factoryOf(::MarkCompletedUseCase)
-    factoryOf(::MarkNoShowUseCase)
+    factory { MarkNoShowUseCase(get(), get(), get()) }
     factoryOf(::CancelByStaffUseCase)
     factoryOf(::RedeemBarberInviteUseCase)
     viewModelOf(::AgendaViewModel)
     viewModelOf(::RedeemInviteViewModel)
+
+    // Fase 7: clientes, lealtad y penalizaciones
+    single { LoyaltyPolicy() }
+    factoryOf(::RedeemRewardUseCase)
+    factoryOf(::ForgivePenaltyUseCase)
+    factoryOf(::ObserveClientsUseCase)
+    factoryOf(::ObserveMyLoyaltyUseCase)
+    viewModelOf(::ClientsViewModel)
+    viewModelOf(::LoyaltyViewModel)
 }

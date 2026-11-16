@@ -5,6 +5,8 @@ import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
+import com.barberia.feature.booking.domain.model.ClientRecord
+import com.barberia.feature.booking.domain.model.LoyaltyPolicy
 import com.barberia.feature.booking.domain.repository.BookingRepository
 import com.barberia.feature.catalog.domain.model.Money
 import kotlinx.coroutines.flow.Flow
@@ -25,14 +27,20 @@ class ObserveAgendaUseCase(private val bookings: BookingRepository) {
 
 class MarkCompletedUseCase(private val bookings: BookingRepository, private val clock: Clock) {
     suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> =
-        markStatus(bookings, appointment, AppointmentStatus.COMPLETED, earliest = appointment.startsAt, clock)
+        markStatus(bookings, appointment, AppointmentStatus.COMPLETED, earliest = appointment.startsAt, clock) { c ->
+            (c ?: ClientRecord.new(appointment.clientUid, appointment.clientName)).afterCompleted() // P3
+        }
 }
 
-class MarkNoShowUseCase(private val bookings: BookingRepository, private val clock: Clock) {
+class MarkNoShowUseCase(
+    private val bookings: BookingRepository,
+    private val clock: Clock,
+    private val loyalty: LoyaltyPolicy = LoyaltyPolicy(),
+) {
     suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> = markStatus(
         bookings, appointment, AppointmentStatus.NO_SHOW,
         earliest = appointment.startsAt.plus(NO_SHOW_GRACE), clock,
-    )
+    ) { c -> (c ?: ClientRecord.new(appointment.clientUid, appointment.clientName)).afterNoShow(clock.instant(), loyalty) } // P1
 
     companion object {
         /** A4: tolerancia antes de marcar que el cliente no llegó. */
@@ -58,10 +66,11 @@ private suspend fun markStatus(
     status: AppointmentStatus,
     earliest: java.time.Instant,
     clock: Clock,
+    updateClient: (ClientRecord?) -> ClientRecord,
 ): BookingResult<Unit> {
     if (appointment.status != AppointmentStatus.BOOKED) return AppResult.Failure(BookingFailure.AlreadyClosed) // A6
     if (clock.instant().isBefore(earliest)) return AppResult.Failure(BookingFailure.TooEarly) // A4
-    return bookings.setStatus(appointment, status)
+    return bookings.setStatus(appointment, status, updateClient)
 }
 
 /** A7: resumen del día. Las canceladas no cuentan. */

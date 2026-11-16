@@ -9,6 +9,7 @@ import com.barberia.feature.booking.data.repository.FirestoreBookingRepository
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.BookingFailure
+import com.barberia.feature.booking.domain.model.ClientRecord
 import com.barberia.feature.catalog.domain.model.Money
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -70,8 +71,20 @@ class BookingDataTest {
             dayQuery = Triple(tenantId, date, barberId)
             return live
         }
-        override suspend fun setStatus(tenantId: String, apptId: String, status: String) {
+        var client: Map<String, Any?>? = null
+        var clientWritten: Map<String, Any?>? = null
+        override suspend fun setStatus(
+            tenantId: String, apptId: String, status: String, clientUid: String,
+            updateClient: (Map<String, Any?>?) -> Map<String, Any?>,
+        ) {
             this.status = apptId to status
+            clientWritten = updateClient(client)
+        }
+        override suspend fun getClient(tenantId: String, uid: String) = client
+        override fun observeClient(tenantId: String, uid: String) = kotlinx.coroutines.flow.flowOf(client)
+        override fun observeClients(tenantId: String) = kotlinx.coroutines.flow.flowOf(listOfNotNull(client?.let { "cli" to it }))
+        override suspend fun updateClient(tenantId: String, uid: String, update: (Map<String, Any?>) -> Map<String, Any?>?) {
+            client?.let { c -> update(c)?.let { clientWritten = it } }
         }
         override suspend fun claimShareCode(tenantId: String, code: String): Boolean {
             if (code in codes) return false
@@ -137,9 +150,30 @@ class BookingDataTest {
         assertEquals(listOf(AppointmentStatus.CANCELLED), list.map { it.status }) // la agenda sí muestra canceladas
     }
 
-    @Test fun `A4 cambiar estado`() = runTest {
-        assertEquals(AppResult.Success(Unit), repo.setStatus(cita, AppointmentStatus.NO_SHOW))
-        assertEquals("a1" to "NO_SHOW", gw.status)
+    @Test fun `A4 P7 cambiar estado escribe la ficha con lo que exigen las reglas`() = runTest {
+        val r = repo.setStatus(cita, AppointmentStatus.COMPLETED) { (it ?: ClientRecord.new("cli", "Ana")).afterCompleted() }
+        assertEquals(AppResult.Success(Unit), r)
+        assertEquals("a1" to "COMPLETED", gw.status)
+        assertEquals(
+            mapOf(
+                "name" to "Ana", "completed" to 1L, "noShows" to 0L, "rewardsUsed" to 0L,
+                "penaltyUntil" to null, "lastAppointmentId" to "a1",
+            ),
+            gw.clientWritten,
+        )
+    }
+
+    @Test fun `ficha ida y vuelta con penalizacion`() = runTest {
+        val until = Instant.parse("2026-12-01T00:00:00Z")
+        gw.client = mapOf("name" to "Ana", "completed" to 3L, "noShows" to 3L, "rewardsUsed" to 0L, "penaltyUntil" to until, "lastAppointmentId" to "a9")
+        assertEquals(AppResult.Success(ClientRecord("cli", "Ana", 3, 3, 0, until)), repo.client("t", "cli"))
+    }
+
+    @Test fun `P5 cambiar la ficha conserva lastAppointmentId (lo exige la regla)`() = runTest {
+        gw.client = mapOf("name" to "Ana", "completed" to 10L, "noShows" to 0L, "rewardsUsed" to 0L, "penaltyUntil" to null, "lastAppointmentId" to "a9")
+        repo.updateClient("t", "cli") { AppResult.Success(it.copy(rewardsUsed = 1)) }
+        assertEquals("a9", gw.clientWritten!!["lastAppointmentId"])
+        assertEquals(1L, gw.clientWritten!!["rewardsUsed"])
     }
 
     @Test fun `R6 datos de la barberia, con zona por defecto si viene mal`() = runTest {

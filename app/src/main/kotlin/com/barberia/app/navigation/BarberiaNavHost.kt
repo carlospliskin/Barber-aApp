@@ -20,6 +20,7 @@ import com.barberia.feature.auth.presentation.session.SessionViewModel
 import com.barberia.feature.auth.presentation.session.SplashScreen
 import com.barberia.feature.booking.presentation.agenda.AgendaRoute
 import com.barberia.feature.booking.presentation.book.BookingRoute
+import com.barberia.feature.booking.presentation.clients.ClientsRoute
 import com.barberia.feature.catalog.presentation.CatalogRoute
 import kotlinx.serialization.Serializable
 import org.koin.androidx.compose.koinViewModel
@@ -33,6 +34,7 @@ import org.koin.androidx.compose.koinViewModel
 @Serializable data object CatalogDest
 @Serializable data object BookingDest
 @Serializable data object AgendaDest
+@Serializable data object ClientsDest
 
 /**
  * La sesión manda: cuando cambia el destino (login, registro, elegir modo, cerrar sesión, sesión
@@ -67,8 +69,10 @@ fun BarberiaNavHost(
                 onOpenCatalog = { navController.navigate(CatalogDest) },
                 onBook = { navController.navigate(BookingDest) },
                 onOpenAgenda = { navController.navigate(AgendaDest) },
+                onOpenClients = { navController.navigate(ClientsDest) },
             )
         }
+        composable<ClientsDest> { ClientsRoute(onBack = { navController.popBackStack() }) }
         composable<AgendaDest> { AgendaRoute(onBack = { navController.popBackStack() }) }
         composable<BookingDest> {
             BookingRoute(onDone = { navController.popBackStack() }, onBack = { navController.popBackStack() })

@@ -174,7 +174,16 @@ service cloud.firestore {
           && startsAtMatches(data)
           && data.dayId == data.barberId + '_' + data.date
           && data.createdAt == request.time
-          && dayAfter(data).lastOp == apptId;
+          && dayAfter(data).lastOp == apptId
+          && notPenalized();
+      }
+
+      // P2: un cliente con penalización vigente no reserva (1 lectura extra por reserva).
+      function notPenalized() {
+        let client = /databases/$(database)/documents/tenants/$(tenantId)/clients/$(request.auth.uid);
+        return !exists(client)
+          || get(client).data.get('penaltyUntil', null) == null
+          || get(client).data.penaltyUntil < request.time;
       }
 
       function isStaffFor(data) {
@@ -198,7 +207,10 @@ service cloud.firestore {
           // A4: completar / no-show solo el personal y después de la hora de inicio. A6: solo desde BOOKED.
           (request.resource.data.status in ['COMPLETED', 'NO_SHOW']
             && isStaffFor(resource.data)
-            && request.time >= resource.data.startsAt)
+            && request.time >= resource.data.startsAt
+            // P7: la ficha del cliente se actualiza en el mismo batch (no se esquivan contadores)
+            && getAfter(/databases/$(database)/documents/tenants/$(tenantId)/clients/$(resource.data.clientUid))
+                 .data.lastAppointmentId == apptId)
         );
       allow delete: if false;
     }
@@ -250,6 +262,86 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && code.size() == 6;
       allow update, delete: if false;
+    }
+
+    // ── tenants/{t}/clients/{uid} (fase 7) ───────────────────────────────────
+    // Sin Cloud Functions: los contadores se escriben en el MISMO batch que el cambio de la cita,
+    // y estas reglas verifican que solo suban de 1 en 1 según la transición real de la cita (P3, P7).
+    match /tenants/{tenantId}/clients/{clientUid} {
+      function prev(field) {
+        return resource == null ? 0 : resource.data.get(field, 0);
+      }
+
+      function prevPenalty() {
+        return resource == null ? null : resource.data.get('penaltyUntil', null);
+      }
+
+      function isTenantStaff() {
+        return isSelf(tenantId)
+          || (signedIn()
+              && myProfile().get('staffRole', null) == 'BARBER'
+              && myProfile().get('staffTenantId', null) == tenantId);
+      }
+
+      function validShape(d) {
+        return d.keys().hasOnly(['name', 'completed', 'noShows', 'rewardsUsed', 'penaltyUntil', 'lastAppointmentId', 'updatedAt'])
+          && isText(d.name, 1, 80)
+          && d.completed is int && d.noShows is int && d.rewardsUsed is int
+          && d.lastAppointmentId is string
+          && d.updatedAt == request.time;
+      }
+
+      function apptPath(d) {
+        return /databases/$(database)/documents/tenants/$(tenantId)/appointments/$(d.lastAppointmentId);
+      }
+
+      // Atendida o no-show de una cita BOOKED de este cliente, en el mismo batch.
+      function marksAppointment(d) {
+        let before = get(apptPath(d)).data;
+        let after = getAfter(apptPath(d)).data;
+        return before.status == 'BOOKED'
+          && before.clientUid == clientUid
+          && (isSelf(tenantId) || isBarberOf(tenantId, before.barberId))
+          && d.rewardsUsed == prev('rewardsUsed')
+          && (
+            (after.status == 'COMPLETED'
+              && d.completed == prev('completed') + 1
+              && d.noShows == prev('noShows')
+              && d.penaltyUntil == prevPenalty())
+            ||
+            (after.status == 'NO_SHOW'
+              && d.completed == prev('completed')
+              && d.noShows == prev('noShows') + 1
+              // P1: penalización solo desde 3 no-shows y máximo 14 días (+5 min de reloj, A11)
+              && (d.penaltyUntil == prevPenalty()
+                  || (d.noShows >= 3 && d.penaltyUntil is timestamp
+                      && d.penaltyUntil <= request.time + duration.value(14, 'd') + duration.value(5, 'm'))))
+          );
+      }
+
+      // P4: canjear un premio (cada 10 visitas). Cualquier personal de la barbería.
+      function redeemsReward(d) {
+        return resource != null && isTenantStaff()
+          && d.completed == prev('completed') && d.noShows == prev('noShows') && d.penaltyUntil == prevPenalty()
+          && d.rewardsUsed == prev('rewardsUsed') + 1
+          && d.rewardsUsed * 10 <= d.completed;
+      }
+
+      // P5: solo el dueño perdona: quita la penalización y reinicia los no-shows.
+      function forgives(d) {
+        return resource != null && isSelf(tenantId)
+          && d.completed == prev('completed') && d.rewardsUsed == prev('rewardsUsed')
+          && d.noShows == 0 && d.penaltyUntil == null;
+      }
+
+      allow get: if (signedIn() && request.auth.uid == clientUid) || isTenantStaff();
+      allow list: if isSelf(tenantId);
+      allow create, update: if validShape(request.resource.data) && (
+        redeemsReward(request.resource.data)
+        || forgives(request.resource.data)
+        || (exists(apptPath(request.resource.data)) && marksAppointment(request.resource.data))
+      );
+      allow delete: if false;
     }
 
     // ── staffInvites/{code} (A1) ─────────────────────────────────────────────

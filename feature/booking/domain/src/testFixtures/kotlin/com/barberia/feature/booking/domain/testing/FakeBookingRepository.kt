@@ -6,6 +6,7 @@ import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingResult
+import com.barberia.feature.booking.domain.model.ClientRecord
 import com.barberia.feature.booking.domain.model.dayId
 import com.barberia.feature.booking.domain.repository.BookingRepository
 import kotlinx.coroutines.flow.Flow
@@ -64,10 +65,46 @@ class FakeBookingRepository : BookingRepository {
         return all.map { list -> list.filter { it.date == date && (barberId == null || it.barberId == barberId) } }
     }
 
-    override suspend fun setStatus(appointment: Appointment, status: AppointmentStatus): BookingResult<Unit> {
+    val clients = mutableMapOf<String, ClientRecord>()
+    private val clientsFlow = MutableStateFlow<Map<String, ClientRecord>>(emptyMap())
+    private fun publishClients() { clientsFlow.value = clients.toMap() }
+
+    override suspend fun setStatus(
+        appointment: Appointment,
+        status: AppointmentStatus,
+        updateClient: (ClientRecord?) -> ClientRecord,
+    ): BookingResult<Unit> {
         lastStatus = status
         all.value = all.value.map { if (it.id == appointment.id) it.copy(status = status) else it }
+        clients[appointment.clientUid] = updateClient(clients[appointment.clientUid])
+        publishClients()
         return AppResult.Success(Unit)
+    }
+
+    override suspend fun client(tenantId: String, uid: String): BookingResult<ClientRecord?> = AppResult.Success(clients[uid])
+
+    override fun observeClient(tenantId: String, uid: String): Flow<ClientRecord?> {
+        publishClients()
+        return clientsFlow.map { it[uid] }
+    }
+
+    override fun observeClients(tenantId: String): Flow<List<ClientRecord>> {
+        publishClients()
+        return clientsFlow.map { it.values.toList() }
+    }
+
+    override suspend fun updateClient(
+        tenantId: String,
+        uid: String,
+        change: (ClientRecord) -> BookingResult<ClientRecord>,
+    ): BookingResult<ClientRecord> {
+        val current = clients[uid] ?: return AppResult.Failure(BookingFailure.NotYours)
+        val r = change(current)
+        if (r is AppResult.Success) {
+            clients[uid] = r.value
+            publishClients()
+        }
+        return r
     }
 
     override suspend fun resolveShareCode(code: String): BookingResult<String?> = AppResult.Success(shareCodes[code])
