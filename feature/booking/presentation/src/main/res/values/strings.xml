@@ -77,4 +77,5 @@
         <item quantity="one">Cliente penalizado 14 días por 3 faltas. Se canceló %1$d cita futura.</item>
         <item quantity="other">Cliente penalizado 14 días por 3 faltas. Se cancelaron %1$d citas futuras.</item>
     </plurals>
+    <string name="agenda_penalty_pending">No se pudieron cancelar %1$d citas futuras (¿sin conexión?). Cancélalas desde la agenda de su día.</string>
 </resources>

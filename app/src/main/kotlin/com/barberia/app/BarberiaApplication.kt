@@ -22,6 +22,8 @@ class BarberiaApplication : Application() {
             applicationId = BuildConfig.FIREBASE_APP_ID,
             apiKey = BuildConfig.FIREBASE_API_KEY,
             emulatorHost = BuildConfig.FIREBASE_EMULATOR_HOST.ifBlank { null },
+            crashReports = BuildConfig.CRASH_REPORTS,
+            appCheckInstaller = appCheckInstaller(), // por build type: src/release, src/debug, src/qa
         )
         startKoin {
             androidContext(this@BarberiaApplication)

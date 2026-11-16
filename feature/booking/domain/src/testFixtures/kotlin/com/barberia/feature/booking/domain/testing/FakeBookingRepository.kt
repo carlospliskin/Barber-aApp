@@ -29,6 +29,9 @@ class FakeBookingRepository : BookingRepository {
 
     var activeOverride: Int? = null
 
+    override suspend fun appointment(tenantId: String, id: String): BookingResult<Appointment?> =
+        AppResult.Success(all.value.find { it.id == id })
+
     override suspend fun activeAppointments(tenantId: String, clientUid: String): BookingResult<List<Appointment>> =
         AppResult.Success(all.value.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED })
 

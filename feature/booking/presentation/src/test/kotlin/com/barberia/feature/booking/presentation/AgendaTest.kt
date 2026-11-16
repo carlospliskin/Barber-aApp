@@ -128,6 +128,12 @@ class AgendaTest {
         assertEquals(AppointmentStatus.CANCELLED, vm.state.value.appointments.first { it.id == "a2" }.status)
     }
 
+    @Test fun `X2 si alguna cita futura no se pudo cancelar se avisa`() {
+        val outcome = com.barberia.feature.booking.domain.usecase.NoShowOutcome(penalized = true, cancelledFuture = 1, failedToCancel = 2)
+        val state = com.barberia.feature.booking.presentation.agenda.AgendaState(penaltyNotice = outcome)
+        assertTrue(state.hasPendingCancellations)
+    }
+
     @Test fun `A7 resumen y cambiar de dia`() {
         val vm = vm(StaffRole.OWNER)
         assertEquals(2, vm.state.value.summary.total)

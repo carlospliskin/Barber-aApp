@@ -129,8 +129,8 @@
         ":core:common",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 8,
-      "unitTests": 44
+      "kotlinFiles": 11,
+      "unitTests": 50
     },
     {
       "path": ":feature:booking:data",
@@ -140,8 +140,8 @@
         ":core:firebase",
         ":feature:booking:domain"
       ],
-      "kotlinFiles": 7,
-      "unitTests": 21
+      "kotlinFiles": 8,
+      "unitTests": 22
     },
     {
       "path": ":feature:booking:presentation",
@@ -154,8 +154,8 @@
         ":feature:booking:domain",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 12,
-      "unitTests": 22
+      "kotlinFiles": 13,
+      "unitTests": 25
     }
   ],
   "navigation": {
@@ -521,6 +521,7 @@
       ],
       "useCases": [
         "CancelAppointmentUseCase",
+        "CancelReminderUseCase",
         "CheckEmailVerifiedUseCase",
         "EnsureShareCodeUseCase",
         "JoinBarbershopUseCase",
@@ -532,7 +533,8 @@
         "RedeemBarberInviteUseCase",
         "ResendVerificationEmailUseCase",
         "RetrySessionUseCase",
-        "SignOutUseCase"
+        "SignOutUseCase",
+        "SyncRemindersUseCase"
       ]
     },
     {
@@ -684,6 +686,11 @@
       "uses": [
         "BookingRepository"
       ]
+    },
+    {
+      "name": "CancelReminderUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/ReminderUseCases.kt",
+      "uses": []
     },
     {
       "name": "CheckEmailVerifiedUseCase",
@@ -916,6 +923,11 @@
         "AuthRepository",
         "SessionRepository"
       ]
+    },
+    {
+      "name": "SyncRemindersUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/ReminderUseCases.kt",
+      "uses": []
     },
     {
       "name": "UpdateServiceUseCase",

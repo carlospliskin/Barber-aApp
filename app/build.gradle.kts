@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 // Release: valores reales de Firebase en `firebase.properties` (fuera de git). Ver docs/FIREBASE.md.
@@ -27,6 +28,7 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
+            buildConfigField("boolean", "CRASH_REPORTS", "false")
             // Proyecto demo + Emulator Suite: no existe en la nube, no gasta cuota.
             buildConfigField("String", "FIREBASE_PROJECT_ID", "\"demo-barberia\"")
             buildConfigField("String", "FIREBASE_APP_ID", "\"1:000000000000:android:0000000000000000\"")
@@ -36,6 +38,11 @@ android {
         }
         release {
             isMinifyEnabled = true
+            // Subir el mapa de R8 necesita el proyecto real de Firebase (L1). Se activa entonces.
+            (this as ExtensionAware).extensions.configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                mappingFileUploadEnabled = false
+            }
+            buildConfigField("boolean", "CRASH_REPORTS", "true")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("String", "FIREBASE_PROJECT_ID", firebase("projectId"))
             buildConfigField("String", "FIREBASE_APP_ID", firebase("appId"))
@@ -47,6 +54,10 @@ android {
         create("qa") {
             initWith(getByName("release"))
             applicationIdSuffix = ".qa"
+            buildConfigField("boolean", "CRASH_REPORTS", "false")
+            (this as ExtensionAware).extensions.configure<com.google.firebase.crashlytics.buildtools.gradle.CrashlyticsExtension> {
+                mappingFileUploadEnabled = false // initWith no copia esta extensión
+            }
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "release"
             buildConfigField("String", "FIREBASE_PROJECT_ID", "\"demo-barberia\"")
@@ -73,6 +84,8 @@ dependencies {
     implementation(project(":core:mvi"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:firebase"))
+    implementation(platform(libs.firebase.bom))
+    releaseImplementation(libs.firebase.appcheck.playintegrity)
     implementation(project(":feature:auth:domain"))
     implementation(project(":feature:auth:data"))
     implementation(project(":feature:auth:presentation"))

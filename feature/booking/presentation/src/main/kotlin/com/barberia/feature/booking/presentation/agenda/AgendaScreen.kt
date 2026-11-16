@@ -76,6 +76,9 @@ fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: (
                 pluralStringResource(R.plurals.agenda_penalty_notice, n.cancelledFuture, n.cancelledFuture),
                 color = MaterialTheme.colorScheme.error,
             )
+            if (state.hasPendingCancellations) {
+                Text(stringResource(R.string.agenda_penalty_pending, n.failedToCancel), color = MaterialTheme.colorScheme.error)
+            }
         }
         if (state.appointments.isEmpty()) {
             Text(stringResource(R.string.agenda_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)

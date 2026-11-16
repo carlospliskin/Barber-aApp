@@ -40,7 +40,10 @@ Así se prueban los problemas de R8 antes de publicar.
    apiKey=AIza...
    ```
 3. Publicar reglas e índices: `firebase deploy --only firestore --project tu-proyecto`.
-4. Activar App Check (Play Integrity) antes de abrir la app al público.
+4. **App Check (V3):** en la consola → App Check → registrar la app Android con Play Integrity (huella SHA-256 de la firma de release).
+   Dejarlo unos días en **modo monitor** para ver que las peticiones legítimas llegan con token; luego **Enforce** para Firestore.
+   El código ya instala Play Integrity en release (`app/src/release/.../AppCheckSetup.kt`); debug y QA no, porque usan el emulador.
+5. **Crashlytics:** activar `mappingFileUploadEnabled = true` en `app/build.gradle.kts` para ver los fallos sin ofuscar.
 
 ## Reglas para no gastar cuota
 - Leer catálogos y configuración como **un documento** por barbería, no una colección.

@@ -36,6 +36,7 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun ClientHomeRoute(onBook: () -> Unit, onSignOut: () -> Unit, viewModel: ClientHomeViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    AskNotificationPermissionOnce()
     ClientHomeScreen(state, viewModel::onIntent, onBook, onSignOut)
 }
 

@@ -38,7 +38,7 @@ Encontrados revisando el código ya implementado.
 
 | ID | Prioridad | Esfuerzo | Hueco | Cómo resolverlo |
 |---|---|---|---|---|
-| V3 | **P0** | M | **Abusos saltándose la app.** Las reglas no pueden recorrer listas: alguien con un script puede reservar fuera del horario del barbero, saltarse el límite de 2 citas (B5) o crear muchas citas. | **App Check con Play Integrity** (gratis en Spark) y exigirlo en Firestore. Probar primero en modo "monitor". |
+| V3 | **P0 · parcial** | M | **Abusos saltándose la app.** Las reglas no pueden recorrer listas: alguien con un script puede reservar fuera del horario del barbero, saltarse el límite de 2 citas (B5) o crear muchas citas. | **App Check con Play Integrity** (gratis en Spark) y exigirlo en Firestore. Probar primero en modo "monitor". |
 | A14 | ✅ | S | **Verificación de email.** Se envía el correo pero no se exige. **Decisión:** ¿el dueño debe verificar antes de operar? | Si sí: bloquear catálogo y código hasta `emailVerified`, con botón "ya verifiqué" que recargue el usuario. |
 | R2 | P2 | S | **Precio escrito por el cliente.** La regla solo pide entero ≥ 0; podría guardar $0. Hoy se cobra en el local con el precio real. | Si algún día se cobra en la app: guardar los servicios como mapa por id en el catálogo para que la regla compare el precio. |
 | W3 | P3 | S | **Dos invitaciones para el mismo barbero** ligan dos cuentas a él. | Al crear una invitación, avisar si ya hay una cuenta ligada a ese barbero. |
@@ -49,9 +49,10 @@ Encontrados revisando el código ya implementado.
 |---|---|---|---|---|
 | A7 | **P0** | M | **Eliminar cuenta y datos** (obligatorio en Google Play). | Fase 9. Sin Cloud Functions: borrar desde la app el perfil y las fichas; las citas pasadas se anonimizan. Regla nueva de `delete`. |
 | PLAY-1 | **P0** | S | **Política de privacidad y formulario de "Seguridad de los datos"** en Play Console. | Datos que se guardan: email, nombre, teléfono, citas. |
+| X3 | P2 | S | **El ícono es provisional** (tijeras vectoriales). | Reemplazar por el ícono de marca cuando exista. |
 | N1 | P1 | L | **El personal no puede reservar por un cliente** (por teléfono o de mostrador). Hoy la regla exige `clientUid == auth.uid`. | Cita "a nombre de" un cliente sin cuenta (`clientUid = null`, nombre y teléfono). Nueva regla para el personal. Es la falta de negocio más grande. |
 | N2 | P1 | M | **Sin excepciones de horario.** No hay vacaciones, días festivos ni "hoy salgo temprano"; si el barbero falta, los clientes reservan igual. | `blockedRanges` por fecha en el catálogo, y que el calculador de disponibilidad los respete. |
-| N3 | P1 | M | **Recordatorios de cita** (fase 8). | Notificaciones locales con WorkManager. Push del servidor requiere Blaze (no). |
+| N3 | ✅ | M | **Recordatorios de cita** (fase 8). | Notificaciones locales con WorkManager. Push del servidor requiere Blaze (no). |
 | N4 | P2 | M | **Reagendar.** Hoy es cancelar y volver a reservar, y pierde la regla de 2 h. | Caso de uso que haga las dos cosas en una transacción. |
 | N5 | P2 | S | **Zona horaria fija** (America/Mexico_City); no hay pantalla para cambiarla. | Selector en la configuración del dueño; la regla ya permite `timezone`. |
 | N6 | P3 | M | Iniciar sesión con Google. | Credential Manager + Firebase Auth (gratis). |
@@ -84,8 +85,8 @@ Encontrados revisando el código ya implementado.
 |---|---|---|---|---|
 | L1 | **P0** | S | **Proyecto real de Firebase** (Spark), `firebase.properties` y publicar reglas e índices. | Pasos en [FIREBASE.md](FIREBASE.md). Lo hace el dueño de la cuenta de Google. |
 | L2 | **P0** | S | **Firma de release:** `release` no tiene `signingConfig` y no se puede publicar. | Keystore fuera de git (`keystore.properties`), como en pos-farmacia. |
-| L3 | P1 | S | **Ícono de la app y fuentes:** no hay `mipmap`, se ve el ícono por defecto. Faltan Playfair Display y DM Sans. | Ícono adaptativo y fuentes en `core:designsystem`. |
-| L4 | P1 | S | **Crashlytics y Analytics** (fase 8). | Gratis en Spark. Sin datos personales en los eventos. |
+| L3 | P1 · parcial | S | **Ícono de la app ✅ y fuentes:** no hay `mipmap`, se ve el ícono por defecto. Faltan Playfair Display y DM Sans. | Ícono adaptativo y fuentes en `core:designsystem`. |
+| L4 | ✅ | S | **Crashlytics y Analytics** (fase 8). | Gratis en Spark. Sin datos personales en los eventos. |
 
 ---
 
@@ -113,3 +114,9 @@ Encontrados revisando el código ya implementado.
 | A14 | Sí (gratis en Spark: 1,000 correos de verificación al día) | El dueño ve "Verifica tu correo" con "Ya lo verifiqué" y "Reenviar" (máx. 1 cada 60 s). Catálogo, agenda, clientes y código quedan bloqueados hasta verificar; las reglas exigen `email_verified` para catálogo, códigos e invitaciones. |
 | A15 | (nuevo) | Tras verificar se fuerza un token nuevo (`getIdToken(true)`); si no, las reglas veían "no verificado" hasta 1 hora. |
 | AR1 | — | Los textos del home pasaron a `strings.xml`. |
+| X1 | (nuevo) | El home del dueño arrancaba suponiendo "verificado": mostraba un instante el código e intentaba crearlo (rechazado) y podía no reintentar al verificar. Ahora espera a cargar el usuario y el código se crea solo con el correo verificado. |
+| X2 | (nuevo) | Si fallaba cancelar alguna cita futura del penalizado, el aviso lo callaba. Ahora dice cuántas faltan. |
+| N3 | Fase 8 | Recordatorio local 3 h antes (todavía se puede cancelar). Revisa que la cita siga vigente y no haya empezado (R2, R6); se sincroniza al abrir el home (R3, otro teléfono o reinstalación); se pide permiso en Android 13+ (R4); se borra al cancelar (R5). |
+| L4 | Fase 8 | Crashlytics: solo envía en release (debug/QA apagado). Subir el mapa de R8 queda para cuando exista el proyecto real (L1). Declarar en Play (PLAY-1). |
+| V3 (parcial) | Fase 8 | App Check con Play Integrity instalado en release. **Falta:** registrar la app en App Check y activar "Enforce" en la consola (primero modo monitor), cuando exista el proyecto real. |
+| L3 (parcial) | Fase 8 | Ícono adaptativo (con versión monocromática). **Faltan** las fuentes Playfair/DM Sans: hay que agregar los archivos (licencia OFL) o usar fuentes descargables. |

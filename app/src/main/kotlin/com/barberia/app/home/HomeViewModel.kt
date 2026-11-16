@@ -7,7 +7,12 @@ import com.barberia.core.mvi.UiState
 import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
 import com.barberia.feature.auth.domain.usecase.SignOutUseCase
 
-data class HomeState(val displayName: String = "", val email: String = "", val emailVerified: Boolean = true) : UiState
+data class HomeState(
+    val loaded: Boolean = false,
+    val displayName: String = "",
+    val email: String = "",
+    val emailVerified: Boolean = false,
+) : UiState
 
 sealed interface HomeIntent : UiIntent {
     data object SignOut : HomeIntent
@@ -24,7 +29,7 @@ class HomeViewModel(
     init {
         launchInScope {
             observeUser().collect { u ->
-                if (u != null) setState { copy(displayName = u.displayName, email = u.email, emailVerified = u.emailVerified) }
+                if (u != null) setState { copy(loaded = true, displayName = u.displayName, email = u.email, emailVerified = u.emailVerified) }
             }
         }
     }

@@ -86,6 +86,8 @@ class BookingDataTest {
             clientWritten = updateClient(client)
         }
         override suspend fun getClient(tenantId: String, uid: String) = client
+        val appointments = mutableMapOf<String, Map<String, Any?>>()
+        override suspend fun getAppointment(tenantId: String, id: String) = appointments[id]
         override fun observeClient(tenantId: String, uid: String) = kotlinx.coroutines.flow.flowOf(client)
         override fun observeClients(tenantId: String) = kotlinx.coroutines.flow.flowOf(listOfNotNull(client?.let { "cli" to it }))
         override suspend fun updateClient(tenantId: String, uid: String, update: (Map<String, Any?>) -> Map<String, Any?>?) {
@@ -214,6 +216,12 @@ class BookingDataTest {
             com.barberia.feature.booking.data.firebase.unwrapSlotTaken<Unit> { throw GatewayError.Network() }
         }.exceptionOrNull()
         assertEquals(GatewayError.Network::class, other!!::class)
+    }
+
+    @Test fun `R2 leer una cita por id`() = runTest {
+        gw.appointments["a1"] = AppointmentMapper.toMap(cita)
+        assertEquals(AppResult.Success(cita), repo.appointment("t", "a1"))
+        assertEquals(AppResult.Success(null), repo.appointment("t", "zz"))
     }
 
     @Test fun `codigo para compartir`() = runTest {

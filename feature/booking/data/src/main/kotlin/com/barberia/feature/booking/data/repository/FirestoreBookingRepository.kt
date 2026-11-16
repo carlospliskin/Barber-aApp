@@ -34,6 +34,10 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             .count { !it.date.isBefore(from) }
     }
 
+    override suspend fun appointment(tenantId: String, id: String) = attempt {
+        gateway.getAppointment(tenantId, id)?.let { AppointmentMapper.fromMap(id, tenantId, it) }
+    }
+
     override suspend fun activeAppointments(tenantId: String, clientUid: String) = attempt {
         gateway.activeAppointments(tenantId, clientUid).mapNotNull { (id, m) -> AppointmentMapper.fromMap(id, tenantId, m) }
     }

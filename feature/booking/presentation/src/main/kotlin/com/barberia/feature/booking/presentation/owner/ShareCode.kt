@@ -44,7 +44,8 @@ class ShareCodeViewModel(
     init {
         launchInScope {
             observeUser()
-                .map { u -> u?.staffTenantId.takeIf { u?.staffRole == StaffRole.OWNER } }
+                // X1: solo con el correo verificado (las reglas lo exigen); reacciona cuando se verifica.
+                .map { u -> u?.staffTenantId.takeIf { u?.staffRole == StaffRole.OWNER && u.emailVerified } }
                 .distinctUntilChanged()
                 .collect { tenantId ->
                     if (tenantId == null) return@collect

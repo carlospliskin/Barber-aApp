@@ -10,6 +10,8 @@ import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.usecase.CancelAppointmentUseCase
+import com.barberia.feature.booking.domain.usecase.CancelReminderUseCase
+import com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase
 import com.barberia.feature.booking.domain.usecase.JoinBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.LeaveBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.ObserveJoinedBarbershopUseCase
@@ -53,6 +55,8 @@ class ClientHomeViewModel(
     observeMine: ObserveMyAppointmentsUseCase,
     private val cancel: CancelAppointmentUseCase,
     private val clock: Clock,
+    private val syncReminders: SyncRemindersUseCase,
+    private val cancelReminder: CancelReminderUseCase,
 ) : MviViewModel<ClientHomeState, ClientHomeIntent, ClientHomeEffect>(ClientHomeState()) {
 
     init {
@@ -75,7 +79,10 @@ class ClientHomeViewModel(
                     }
                     if (uid == null || shop == null) flowOf(emptyList()) else observeMine(shop.id, uid, shop.zone)
                 }
-                .collect { list -> setState { copy(appointments = list) } }
+                .collect { list ->
+                    setState { copy(appointments = list) }
+                    syncReminders(list) // R3: también en un teléfono nuevo o tras reinstalar
+                }
         }
     }
 
@@ -107,6 +114,7 @@ class ClientHomeViewModel(
                 val uid = currentState.uid ?: return
                 setState { copy(cancellingId = appt.id) }
                 val r = cancel(appt, shop.zone, uid)
+                if (r is AppResult.Success) cancelReminder(appt.id) // R5
                 setState { copy(cancellingId = null, failure = (r as? AppResult.Failure)?.error) }
             }
         }

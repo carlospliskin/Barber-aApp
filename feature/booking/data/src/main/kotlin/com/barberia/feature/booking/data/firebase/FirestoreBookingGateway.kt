@@ -145,6 +145,10 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         }
     }
 
+    override suspend fun getAppointment(tenantId: String, id: String): Map<String, Any?>? = firebaseCall {
+        tenantRef(tenantId).collection("appointments").document(id).get().await().data?.fromFirestore()
+    }
+
     private fun clientRef(tenantId: String, uid: String) = tenantRef(tenantId).collection("clients").document(uid)
 
     override suspend fun getClient(tenantId: String, uid: String): Map<String, Any?>? = firebaseCall {

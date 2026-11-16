@@ -1,0 +1,5 @@
+<resources>
+    <string name="reminder_channel">Recordatorios de cita</string>
+    <string name="reminder_title">Tu cita es hoy a las %1$s</string>
+    <string name="reminder_text">%1$s con %2$s. ¿No puedes ir? Cancela antes de que falten 2 horas.</string>
+</resources>

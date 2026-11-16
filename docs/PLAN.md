@@ -36,8 +36,8 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 5 | Disponibilidad y reserva sin choques (cliente) | ✅ |
 | 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ✅ |
 | 7 | Clientes, penalizaciones y lealtad | ✅ |
-| 8 | Recordatorios locales, Crashlytics, App Check, versión release | ⏭️ siguiente |
-| 9 | Eliminar cuenta (requisito de Google Play) y publicación | ⏳ |
+| 8 | Recordatorios locales, Crashlytics, App Check, versión release | ✅ (App Check se activa con el proyecto real) |
+| 9 | Eliminar cuenta (requisito de Google Play) y publicación | ⏭️ siguiente |
 
 ## Modelo de datos (pensado para gastar poco)
 

@@ -7,6 +7,8 @@ dependencies {
     implementation(project(":core:mvi"))
     implementation(project(":core:designsystem"))
     implementation(libs.koin.androidx.compose)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.ktx)
 
     testImplementation(testFixtures(project(":feature:booking:domain")))
     testImplementation(testFixtures(project(":feature:catalog:domain")))

@@ -72,6 +72,7 @@ class BookingPresentationTest {
     private val store = FakeJoinedStore()
     private val session = FakeSessionRepository(SessionState.SignedIn(user()))
     private var n = 0
+    private val reminders = com.barberia.feature.booking.domain.testing.FakeReminderScheduler()
 
     private fun clientHome() = ClientHomeViewModel(
         ObserveCurrentUserUseCase(session),
@@ -81,6 +82,8 @@ class BookingPresentationTest {
         ObserveMyAppointmentsUseCase(bookings, clock),
         CancelAppointmentUseCase(bookings, policy, clock),
         clock,
+        com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase(reminders, clock),
+        com.barberia.feature.booking.domain.usecase.CancelReminderUseCase(reminders),
     )
 
     private fun booking() = BookingViewModel(
@@ -199,6 +202,21 @@ class BookingPresentationTest {
         assertNull(vm.state.value.selectedDate)
     }
 
+    @Test fun `R3 R5 mis citas programa el recordatorio y cancelar lo borra`() = runTest {
+        store.save("uid-1", "t1")
+        val vm = clientHome()
+        val b = booking()
+        b.onIntent(BookingIntent.SelectService("s1"))
+        b.onIntent(BookingIntent.SelectBarber("b1"))
+        b.onIntent(BookingIntent.SelectDate(monday))
+        b.onIntent(BookingIntent.SelectSlot(TimeRange.parse("11:30"))) // 11:30 CDMX = 17:30 UTC; ahora 14:00 UTC
+        b.onIntent(BookingIntent.Confirm)
+        assertEquals(setOf("cita-1"), reminders.scheduled.keys) // aviso a las 14:30 UTC (3 h antes)
+
+        vm.onIntent(ClientHomeIntent.Cancel("cita-1"))
+        assertTrue(reminders.scheduled.isEmpty())
+    }
+
     @Test fun `U4 mis citas no muestra las canceladas`() = runTest {
         store.save("uid-1", "t1")
         val vm = clientHome()
@@ -213,8 +231,20 @@ class BookingPresentationTest {
     }
 
     // ── Código del dueño ──────────────────────────────────────────────────────
+    @Test fun `X1 sin correo verificado no intenta crear el codigo y lo crea al verificar`() {
+        val owner = FakeSessionRepository(
+            SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1", emailVerified = false)),
+        )
+        val vm = ShareCodeViewModel(ObserveCurrentUserUseCase(owner), EnsureShareCodeUseCase(bookings, Random(3)))
+        assertEquals(0, bookings.claims) // no se gasta una escritura que las reglas rechazarían
+        assertNull(vm.state.value.failure)
+
+        owner.sessionFlow.value = SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1", emailVerified = true))
+        assertEquals(6, vm.state.value.code?.length)
+    }
+
     @Test fun `R7 el duenio ve su codigo para compartir`() {
-        val owner = FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1")))
+        val owner = FakeSessionRepository(SessionState.SignedIn(user(StaffRole.OWNER).copy(uid = "t1", staffTenantId = "t1", emailVerified = true)))
         val vm = ShareCodeViewModel(ObserveCurrentUserUseCase(owner), EnsureShareCodeUseCase(bookings, Random(3)))
         assertEquals(bookings.barbershops["t1"]?.shareCode, vm.state.value.code)
         assertEquals(6, vm.state.value.code?.length)

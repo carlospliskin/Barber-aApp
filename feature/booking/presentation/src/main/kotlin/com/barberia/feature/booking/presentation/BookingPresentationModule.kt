@@ -9,6 +9,8 @@ import com.barberia.feature.booking.domain.usecase.RedeemRewardUseCase
 import com.barberia.feature.booking.presentation.clients.ClientsViewModel
 import com.barberia.feature.booking.presentation.loyalty.LoyaltyViewModel
 import com.barberia.feature.booking.domain.usecase.BookAppointmentUseCase
+import com.barberia.feature.booking.domain.usecase.CancelReminderUseCase
+import com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
 import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
 import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
@@ -67,5 +69,9 @@ val bookingPresentationModule = module {
     factoryOf(::ObserveClientsUseCase)
     factoryOf(::ObserveMyLoyaltyUseCase)
     viewModelOf(::ClientsViewModel)
+
+    // Fase 8: recordatorios
+    factoryOf(::SyncRemindersUseCase)
+    factoryOf(::CancelReminderUseCase)
     viewModelOf(::LoyaltyViewModel)
 }

@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestoreSettings
 import com.google.firebase.firestore.persistentCacheSettings
@@ -21,12 +22,21 @@ data class FirebaseConfig(
     val emulatorHost: String?,
     val authPort: Int = 9199,
     val firestorePort: Int = 8085,
+    /** Solo release envía fallos (debug/QA no ensucian los reportes). */
+    val crashReports: Boolean = false,
+    /** Instala App Check (Play Integrity en release). Null con el emulador: no lo exige. */
+    val appCheckInstaller: ((FirebaseApp) -> Unit)? = null,
 ) {
     val usesEmulator: Boolean get() = emulatorHost != null
 }
 
 fun firebaseModule(config: FirebaseConfig) = module {
-    single { initFirebase(androidContext(), config) }
+    single {
+        initFirebase(androidContext(), config).also { app ->
+            FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(config.crashReports)
+            config.appCheckInstaller?.invoke(app)
+        }
+    }
     single {
         FirebaseAuth.getInstance(get<FirebaseApp>()).apply {
             config.emulatorHost?.let { useEmulator(it, config.authPort) }

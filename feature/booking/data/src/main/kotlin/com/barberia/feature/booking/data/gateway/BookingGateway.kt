@@ -47,6 +47,8 @@ internal interface BookingGateway {
         updateClient: (Map<String, Any?>?) -> Map<String, Any?>,
     )
 
+    suspend fun getAppointment(tenantId: String, id: String): Map<String, Any?>?
+
     suspend fun getClient(tenantId: String, uid: String): Map<String, Any?>?
 
     fun observeClient(tenantId: String, uid: String): Flow<Map<String, Any?>?>

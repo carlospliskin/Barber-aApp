@@ -39,6 +39,7 @@ fun HomeRoute(
         return
     }
     val state by viewModel.state.collectAsStateWithLifecycle()
+    if (!state.loaded) return // X1: no se decide nada (ni se crean códigos) hasta conocer al usuario
     Column(
         Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
         verticalArrangement = Arrangement.Center,

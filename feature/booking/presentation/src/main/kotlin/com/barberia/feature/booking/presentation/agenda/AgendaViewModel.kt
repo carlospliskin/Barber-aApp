@@ -52,6 +52,9 @@ data class AgendaState(
     /** Momento en que se calculó la vista; decide qué acciones se ofrecen (U7). */
     val now: Instant = Instant.EPOCH,
 ) : UiState {
+    /** X2: quedaron citas futuras del penalizado sin cancelar (p. ej. sin red). */
+    val hasPendingCancellations: Boolean get() = (penaltyNotice?.failedToCancel ?: 0) > 0
+
     fun canComplete(a: Appointment) = a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt)
     /** W4: cancelar solo antes de la hora. */
     fun canCancel(a: Appointment) = a.status == AppointmentStatus.BOOKED && now.isBefore(a.startsAt)
