@@ -125,6 +125,15 @@ class FirebaseAccountRepositoryTest {
         assertEquals(state.user, repo.currentUser())
     }
 
+    @Test fun `A10 un barbero trae el barbero del catalogo al que esta ligado`() = runTest {
+        profiles.profiles["u1"] = ProfileRecord("Luis", "luis@mail.com", null, "t1", "BARBER", staffBarberId = "b1")
+        val repo = repo()
+        repo.signIn("luis@mail.com", "x")
+        val state = repo.session.first { it is SessionState.SignedIn } as SessionState.SignedIn
+        assertEquals("b1", state.user.staffBarberId)
+        assertEquals(StaffRole.BARBER, state.user.staffRole)
+    }
+
     @Test fun `usuario sin documento de perfil se trata como cliente`() = runTest {
         val repo = repo()
         repo.signIn("ana@mail.com", "x")

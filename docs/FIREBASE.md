@@ -24,7 +24,8 @@ La app en el emulador de Android llega a la Mac por `10.0.2.2` (ver `FIREBASE_EM
 cd firebase && npm install && npm test
 ```
 Levanta el emulador de Firestore, corre `firebase/test/*.test.js` y lo apaga.
-Si ya tienes los emuladores corriendo, usa `node --test firebase/test/*.test.js` desde la raíz.
+Si ya tienes los emuladores corriendo, usa `node --test --test-concurrency=1 firebase/test/*.test.js` desde la raíz.
+Los tests usan el proyecto `demo-rules`: no borran los datos de la app (`demo-barberia`).
 
 ## Build QA
 `./gradlew :app:assembleQa` genera el mismo APK que release (con R8) pero apuntando al emulador.

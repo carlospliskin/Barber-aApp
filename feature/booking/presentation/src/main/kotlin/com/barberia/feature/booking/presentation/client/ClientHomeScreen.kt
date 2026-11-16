@@ -26,6 +26,7 @@ import com.barberia.core.designsystem.component.BarberTextField
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.presentation.R
 import com.barberia.feature.booking.presentation.common.messageRes
+import com.barberia.feature.booking.presentation.invite.RedeemInviteCard
 import com.barberia.feature.booking.presentation.common.shortLabel
 import com.barberia.feature.catalog.domain.model.TimeRange
 import org.koin.androidx.compose.koinViewModel
@@ -68,6 +69,7 @@ fun ClientHomeScreen(
             state.appointments.forEach { AppointmentCard(it, state.cancellingId == it.id, onIntent) }
             TextButton(onClick = { onIntent(ClientHomeIntent.Leave) }) { Text(stringResource(R.string.booking_change_shop)) }
         }
+        RedeemInviteCard()
         TextButton(onClick = onSignOut) { Text(stringResource(R.string.booking_sign_out)) }
     }
 }

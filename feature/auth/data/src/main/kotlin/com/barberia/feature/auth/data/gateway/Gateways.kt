@@ -32,6 +32,7 @@ internal data class ProfileRecord(
     val phone: String?,
     val staffTenantId: String?,
     val staffRole: String?,
+    val staffBarberId: String? = null,
 )
 
 /** Documento `tenants/{ownerUid}`. */

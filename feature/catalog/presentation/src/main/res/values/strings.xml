@@ -27,6 +27,10 @@
     <string name="catalog_save">Guardar</string>
     <string name="catalog_cancel">Cancelar</string>
     <string name="catalog_inactive">Inactivo</string>
+    <string name="catalog_invite">Invitar</string>
+    <string name="catalog_invite_title">Invitación para %1$s</string>
+    <string name="catalog_invite_hint">Mándale este código. En la app: "¿Eres barbero?" → escribe el código. Sirve una vez y vence en 7 días.</string>
+    <string name="catalog_done">Listo</string>
     <string name="catalog_extra_shift">También trabaja de %1$s a %2$s</string>
 
     <string name="catalog_error_name">Escribe un nombre</string>

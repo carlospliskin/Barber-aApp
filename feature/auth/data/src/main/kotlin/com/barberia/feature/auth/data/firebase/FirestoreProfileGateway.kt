@@ -23,6 +23,7 @@ internal class FirestoreProfileGateway(private val db: FirebaseFirestore) : Prof
             phone = doc.getString("phone"),
             staffTenantId = doc.getString("staffTenantId"),
             staffRole = doc.getString("staffRole"),
+            staffBarberId = doc.getString("staffBarberId"),
         )
     }
 

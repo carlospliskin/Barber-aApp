@@ -130,6 +130,19 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
         is ServiceForm -> ServiceDialog(d, state.isSaving, onIntent)
         is BarberForm -> BarberDialog(d, state.isSaving, onIntent)
         is Schedule -> ScheduleDialog(d, state.isSaving, onIntent)
+        is CatalogDialog.Invite -> AlertDialog(
+            onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
+            title = { Text(stringResource(R.string.catalog_invite_title, d.barberName)) },
+            text = {
+                Column {
+                    Text(d.code, style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.primary)
+                    Text(stringResource(R.string.catalog_invite_hint))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { onIntent(CatalogIntent.DismissDialog) }) { Text(stringResource(R.string.catalog_done)) }
+            },
+        )
         null -> Unit
     }
 }
@@ -172,6 +185,9 @@ private fun BarbersList(barbers: List<Barber>, canEdit: Boolean, onIntent: (Cata
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(onClick = { onIntent(CatalogIntent.OpenSchedule(b.id)) }, enabled = canEdit) {
                             Text(stringResource(R.string.catalog_schedule))
+                        }
+                        TextButton(onClick = { onIntent(CatalogIntent.InviteBarber(b.id)) }, enabled = canEdit && b.active) {
+                            Text(stringResource(R.string.catalog_invite))
                         }
                         Switch(b.active, { onIntent(CatalogIntent.SetBarberActive(b.id, it)) }, enabled = canEdit)
                     }

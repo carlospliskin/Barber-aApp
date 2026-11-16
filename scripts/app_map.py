@@ -191,11 +191,16 @@ def screens(nav: dict) -> list[dict]:
         if vm is None and d["route"] in ("SplashDest", "OfflineDest"):
             vm = "SessionViewModel"
         # Componentes con su propio ViewModel dentro de la pantalla (p. ej. HomeRoute → ClientHomeRoute, ShareCodeCard).
-        embedded = []
-        for call in sorted(set(re.findall(r"\b([A-Z]\w*(?:Route|Card|Section))\(", body)) - {screen}):
-            _, child_vm, _ = composable_info(call, files)
-            if child_vm:
-                embedded.append({"component": call, "viewModel": child_vm})
+        embedded, seen, pending = [], {screen}, [body]
+        while pending and len(seen) < 20:  # recorre componentes anidados (HomeRoute → ClientHomeRoute → RedeemInviteCard)
+            current = pending.pop()
+            for call in sorted(set(re.findall(r"\b([A-Z]\w*(?:Route|Card|Section))\(", current)) - seen):
+                seen.add(call)
+                _, child_vm, child_body = composable_info(call, files)
+                if child_vm:
+                    embedded.append({"component": call, "viewModel": child_vm})
+                if child_body:
+                    pending.append(child_body)
         vms = [v for v in [vm] + [e["viewModel"] for e in embedded] if v]
         use_cases, intents = set(), set()
         for v in vms:
@@ -355,7 +360,8 @@ def render(data: dict) -> str:
     orphans = [u["name"] for u in data["useCases"] if u["name"] not in used_by]
     out += ["", "## 5. Casos de uso → repositorios", ""]
     if orphans:
-        out += [f"⚠️ **{len(orphans)} casos de uso sin pantalla** (lógica lista que nadie usa todavía): "
+        label = "caso de uso sin pantalla" if len(orphans) == 1 else "casos de uso sin pantalla"
+        out += [f"⚠️ **{len(orphans)} {label}** (lógica lista que nadie usa todavía): "
                 + ", ".join(f"`{o}`" for o in orphans), ""]
     out += ["| Caso de uso | Usa | Lo usan las pantallas | Archivo |", "|---|---|---|---|"]
     for u in data["useCases"]:

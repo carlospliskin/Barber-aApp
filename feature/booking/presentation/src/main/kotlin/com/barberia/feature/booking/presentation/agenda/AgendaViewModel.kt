@@ -1,0 +1,145 @@
+package com.barberia.feature.booking.presentation.agenda
+
+import com.barberia.core.common.AppResult
+import com.barberia.core.mvi.MviViewModel
+import com.barberia.core.mvi.UiEffect
+import com.barberia.core.mvi.UiIntent
+import com.barberia.core.mvi.UiState
+import com.barberia.feature.auth.domain.model.StaffRole
+import com.barberia.feature.auth.domain.usecase.ObserveCurrentUserUseCase
+import com.barberia.feature.booking.domain.model.Appointment
+import com.barberia.feature.booking.domain.model.AppointmentStatus
+import com.barberia.feature.booking.domain.model.BookingFailure
+import com.barberia.feature.booking.domain.model.BookingResult
+import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
+import com.barberia.feature.booking.domain.usecase.DaySummary
+import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
+import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
+import com.barberia.feature.booking.domain.usecase.MarkNoShowUseCase
+import com.barberia.feature.booking.domain.usecase.ObserveAgendaUseCase
+import com.barberia.feature.booking.domain.usecase.summarize
+import com.barberia.feature.catalog.domain.model.Barber
+import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+
+data class AgendaState(
+    val tenantId: String? = null,
+    /** Dueño: puede ver a todos y filtrar. Barbero: solo lo suyo (A2). */
+    val canFilter: Boolean = false,
+    val barbers: List<Barber> = emptyList(),
+    val barberFilter: String? = null,
+    val date: LocalDate? = null,
+    val appointments: List<Appointment> = emptyList(),
+    val summary: DaySummary = summarize(emptyList()),
+    val busyId: String? = null,
+    val failure: BookingFailure? = null,
+    /** Momento en que se calculó la vista; decide qué acciones se ofrecen (U7). */
+    val now: Instant = Instant.EPOCH,
+) : UiState {
+    fun canComplete(a: Appointment) = a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt)
+    fun canNoShow(a: Appointment) =
+        a.status == AppointmentStatus.BOOKED && !now.isBefore(a.startsAt.plus(MarkNoShowUseCase.NO_SHOW_GRACE))
+}
+
+sealed interface AgendaIntent : UiIntent {
+    data object PreviousDay : AgendaIntent
+    data object NextDay : AgendaIntent
+    data object Today : AgendaIntent
+    data class FilterBarber(val barberId: String?) : AgendaIntent
+    data class Complete(val id: String) : AgendaIntent
+    data class NoShow(val id: String) : AgendaIntent
+    data class Cancel(val id: String) : AgendaIntent
+    data object DismissFailure : AgendaIntent
+}
+
+sealed interface AgendaEffect : UiEffect
+
+private data class Query(val tenantId: String, val date: LocalDate, val barberId: String?)
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class AgendaViewModel(
+    observeUser: ObserveCurrentUserUseCase,
+    private val getBarbershop: GetBarbershopUseCase,
+    observeCatalog: ObserveCatalogUseCase,
+    observeAgenda: ObserveAgendaUseCase,
+    private val complete: MarkCompletedUseCase,
+    private val noShow: MarkNoShowUseCase,
+    private val cancel: CancelByStaffUseCase,
+    private val clock: Clock,
+) : MviViewModel<AgendaState, AgendaIntent, AgendaEffect>(AgendaState()) {
+
+    private var zone: ZoneId = ZoneId.of("America/Mexico_City")
+    private val query = MutableStateFlow<Query?>(null)
+
+    init {
+        launchInScope {
+            observeUser()
+                .map { u -> Triple(u?.staffTenantId, u?.staffRole, u?.staffBarberId) }
+                .distinctUntilChanged()
+                .collect { (tenantId, role, barberId) ->
+                    if (tenantId == null || role == null) return@collect
+                    (getBarbershop(tenantId) as? AppResult.Success)?.value?.let { zone = it.zone }
+                    val isOwner = role == StaffRole.OWNER
+                    val filter = if (isOwner) null else barberId
+                    setState { copy(tenantId = tenantId, canFilter = isOwner, barberFilter = filter, date = today()) }
+                    query.value = Query(tenantId, today(), filter)
+                }
+        }
+        launchInScope {
+            query.flatMapLatest { q -> if (q == null) emptyFlow() else observeCatalog(q.tenantId) }
+                .catch { }
+                .collect { c -> setState { copy(barbers = c.barbers) } }
+        }
+        launchInScope {
+            // A3: solo las citas del día consultado.
+            query.flatMapLatest { q -> if (q == null) emptyFlow() else observeAgenda(q.tenantId, q.date, q.barberId) }
+                .catch { setState { copy(failure = BookingFailure.NoConnection) } }
+                .collect { list -> setState { copy(appointments = list, summary = summarize(list), now = clock.instant()) } }
+        }
+    }
+
+    override suspend fun handleIntent(intent: AgendaIntent) {
+        when (intent) {
+            AgendaIntent.PreviousDay -> moveTo { it.minusDays(1) }
+            AgendaIntent.NextDay -> moveTo { it.plusDays(1) }
+            AgendaIntent.Today -> moveTo { today() }
+            is AgendaIntent.FilterBarber -> if (currentState.canFilter) {
+                setState { copy(barberFilter = intent.barberId) }
+                query.value = query.value?.copy(barberId = intent.barberId)
+            }
+            is AgendaIntent.Complete -> act(intent.id) { complete(it) }
+            is AgendaIntent.NoShow -> act(intent.id) { noShow(it) }
+            is AgendaIntent.Cancel -> act(intent.id) { cancel(it) }
+            AgendaIntent.DismissFailure -> setState { copy(failure = null) }
+        }
+    }
+
+    private fun today(): LocalDate = LocalDateTime.ofInstant(clock.instant(), zone).toLocalDate()
+
+    private fun moveTo(change: (LocalDate) -> LocalDate) {
+        val current = currentState.date ?: return
+        val next = change(current)
+        setState { copy(date = next) }
+        query.value = query.value?.copy(date = next)
+    }
+
+    private suspend fun act(id: String, action: suspend (Appointment) -> BookingResult<Unit>) {
+        val appointment = currentState.appointments.find { it.id == id } ?: return
+        setState { copy(busyId = id, failure = null) }
+        val r = action(appointment)
+        setState { copy(busyId = null, failure = (r as? AppResult.Failure)?.error) }
+    }
+}

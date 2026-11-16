@@ -1,6 +1,7 @@
 package com.barberia.feature.booking.domain.repository
 
 import com.barberia.feature.booking.domain.model.Appointment
+import com.barberia.feature.booking.domain.model.AppointmentStatus
 import com.barberia.feature.booking.domain.model.Barbershop
 import com.barberia.feature.booking.domain.model.BookingResult
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +31,12 @@ interface BookingRepository {
 
     /** R7: reserva [code] para la barbería. `false` si ya lo tiene otra. */
     suspend fun claimShareCode(tenantId: String, code: String): BookingResult<Boolean>
+
+    /** A3: citas de un día (de un barbero, o de todos si [barberId] es null). Nunca todo el historial. */
+    fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>>
+
+    /** A4: cambia el estado de una cita BOOKED a COMPLETED o NO_SHOW. */
+    suspend fun setStatus(appointment: Appointment, status: AppointmentStatus): BookingResult<Unit>
 
     /** Barbería a la que apunta un código para compartir (B0), o null. */
     suspend fun resolveShareCode(code: String): BookingResult<String?>

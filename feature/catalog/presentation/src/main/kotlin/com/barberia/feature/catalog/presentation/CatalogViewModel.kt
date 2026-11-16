@@ -13,6 +13,7 @@ import com.barberia.feature.catalog.domain.model.ServiceDraft
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.usecase.AddBarberUseCase
+import com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase
 import com.barberia.feature.catalog.domain.usecase.AddServiceUseCase
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
 import com.barberia.feature.catalog.domain.usecase.RenameBarberUseCase
@@ -42,6 +43,7 @@ class CatalogViewModel(
     private val renameBarber: RenameBarberUseCase,
     private val setBarberActive: SetBarberActiveUseCase,
     private val setSchedule: SetBarberScheduleUseCase,
+    private val createInvite: CreateBarberInviteUseCase,
 ) : MviViewModel<CatalogState, CatalogIntent, CatalogEffect>(CatalogState()) {
 
     init {
@@ -95,6 +97,19 @@ class CatalogViewModel(
             is CatalogIntent.DayEndChanged -> editDay(intent.day) { copy(end = intent.value) }
 
             CatalogIntent.SaveDialog -> saveDialog()
+            is CatalogIntent.InviteBarber -> invite(intent.barberId)
+        }
+    }
+
+    private suspend fun invite(barberId: String) {
+        val tenantId = currentState.tenantId
+        if (!currentState.canEdit || tenantId == null) return
+        setState { copy(isSaving = true, failure = null) }
+        when (val r = createInvite(tenantId, barberId)) {
+            is AppResult.Success -> setState {
+                copy(isSaving = false, dialog = CatalogDialog.Invite(r.value.barberName, r.value.code, r.value.expiresAt))
+            }
+            is AppResult.Failure -> setState { copy(isSaving = false, failure = r.error) }
         }
     }
 
@@ -119,7 +134,7 @@ class CatalogViewModel(
                     ?: return setState { copy(dialog = d.copy(errors = setOf(CatalogError.SCHEDULE_RANGE_INVALID))) }
                 save { t -> setSchedule(t, d.barberId, schedule) }
             }
-            null -> Unit
+            is CatalogDialog.Invite, null -> setState { copy(dialog = null) }
         }
     }
 
@@ -171,6 +186,7 @@ class CatalogViewModel(
         is ServiceForm -> copy(errors = errors)
         is BarberForm -> copy(errors = errors)
         is Schedule -> copy(errors = errors)
+        is CatalogDialog.Invite -> copy(errors = errors)
     }
 
     private companion object {

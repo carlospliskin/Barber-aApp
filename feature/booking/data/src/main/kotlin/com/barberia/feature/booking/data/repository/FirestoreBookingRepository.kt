@@ -58,6 +58,14 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
                 .sortedWith(compareBy({ it.date }, { it.startMinute }))
         }
 
+    override fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>> =
+        gateway.observeDay(tenantId, date.toString(), barberId).map { docs ->
+            docs.mapNotNull { (id, data) -> AppointmentMapper.fromMap(id, tenantId, data) }
+        }
+
+    override suspend fun setStatus(appointment: Appointment, status: AppointmentStatus) =
+        attempt(onDenied = BookingFailure.TooEarly) { gateway.setStatus(appointment.tenantId, appointment.id, status.name) }
+
     override suspend fun resolveShareCode(code: String) = attempt { gateway.shareCode(code) }
 
     override suspend fun barbershop(tenantId: String) = attempt {

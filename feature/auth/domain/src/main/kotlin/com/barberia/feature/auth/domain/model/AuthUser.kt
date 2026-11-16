@@ -15,6 +15,8 @@ data class AuthUser(
     val phone: String? = null,
     val staffTenantId: String? = null,
     val staffRole: StaffRole? = null,
+    /** A10: barbero del catálogo al que está ligada esta cuenta (solo rol BARBER). */
+    val staffBarberId: String? = null,
 ) {
     /** Todo el personal también puede reservar como cliente (A6). El dueño también corta (barbero). */
     val availableModes: List<AppMode>

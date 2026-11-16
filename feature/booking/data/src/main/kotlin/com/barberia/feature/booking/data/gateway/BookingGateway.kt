@@ -21,6 +21,11 @@ internal interface BookingGateway {
     /** R4: citas del cliente con `date >= fromDate` (yyyy-MM-dd), ordenadas por fecha, máx. 20. */
     fun observeUpcoming(tenantId: String, clientUid: String, fromDate: String): Flow<List<Pair<String, Map<String, Any?>>>>
 
+    /** A3: citas de un día (`date ==`, y `barberId ==` si se da). Solo igualdades: sin índice compuesto. */
+    fun observeDay(tenantId: String, date: String, barberId: String?): Flow<List<Pair<String, Map<String, Any?>>>>
+
+    suspend fun setStatus(tenantId: String, apptId: String, status: String)
+
     suspend fun shareCode(code: String): String?
 
     /** Documento `tenants/{id}` o null. */

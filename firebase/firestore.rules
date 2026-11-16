@@ -22,6 +22,19 @@ service cloud.firestore {
       return value == null || (value is string && value.size() <= max);
     }
 
+    // Perfil de quien hace la petición (1 lectura, se reutiliza dentro de la misma petición).
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // A2: barbero ligado a esta barbería y a este barbero del catálogo.
+    function isBarberOf(tenantId, barberId) {
+      return signedIn()
+        && myProfile().get('staffRole', null) == 'BARBER'
+        && myProfile().get('staffTenantId', null) == tenantId
+        && myProfile().get('staffBarberId', null) == barberId;
+    }
+
     // ── users/{uid} ──────────────────────────────────────────────────────────
     match /users/{uid} {
       function validProfile(data) {
@@ -43,10 +56,27 @@ service cloud.firestore {
 
       allow read: if isSelf(uid);
       allow create: if isSelf(uid) && validProfile(request.resource.data) && validRole(request.resource.data);
-      allow update: if isSelf(uid)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'phone'])
-        && isText(request.resource.data.displayName, 1, 80)
-        && isOptionalText(request.resource.data.phone, 20);
+      function inviteAfter() {
+        return getAfter(/databases/$(database)/documents/staffInvites/$(request.resource.data.staffInviteCode)).data;
+      }
+
+      // A1/A8: un cliente (sin rol) se vuelve barbero solo con una invitación válida que usa en el mismo batch.
+      function redeemsInvite() {
+        return resource.data.staffRole == null
+          && request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['staffTenantId', 'staffRole', 'staffBarberId', 'staffInviteCode'])
+          && request.resource.data.staffRole == 'BARBER'
+          && inviteAfter().usedBy == uid
+          && inviteAfter().tenantId == request.resource.data.staffTenantId
+          && inviteAfter().barberId == request.resource.data.staffBarberId;
+      }
+
+      allow update: if isSelf(uid) && (
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'phone'])
+          && isText(request.resource.data.displayName, 1, 80)
+          && isOptionalText(request.resource.data.phone, 20))
+        || redeemsInvite()
+      );
       allow delete: if false; // Fase 9: eliminar cuenta
     }
 
@@ -147,15 +177,28 @@ service cloud.firestore {
           && dayAfter(data).lastOp == apptId;
       }
 
-      allow get, list: if isMine() || isSelf(tenantId);
+      function isStaffFor(data) {
+        return isSelf(tenantId) || isBarberOf(tenantId, data.barberId);
+      }
+
+      // A2/A3: cliente sus citas; dueño todas; barbero las suyas (la consulta debe filtrar por barberId).
+      allow get, list: if isMine() || isStaffFor(resource.data);
       allow create: if signedIn() && validNew(request.resource.data);
       // Cancelar: el cliente hasta 2 h antes (B7); el dueño cuando sea. Se liberan los bloques en el mismo batch.
-      allow update: if (isMine() || isSelf(tenantId))
-        && resource.data.status == 'BOOKED'
-        && request.resource.data.status == 'CANCELLED'
+      allow update: if resource.data.status == 'BOOKED'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
-        && (isSelf(tenantId) || request.time < resource.data.startsAt - duration.value(2, 'h'))
-        && dayAfter(resource.data).lastOp == apptId;
+        && (
+          // Cancelar (libera bloques en el mismo batch). Cliente hasta 2 h antes; personal cuando sea (A5).
+          (request.resource.data.status == 'CANCELLED'
+            && (isStaffFor(resource.data)
+                || (isMine() && request.time < resource.data.startsAt - duration.value(2, 'h')))
+            && dayAfter(resource.data).lastOp == apptId)
+          ||
+          // A4: completar / no-show solo el personal y después de la hora de inicio. A6: solo desde BOOKED.
+          (request.resource.data.status in ['COMPLETED', 'NO_SHOW']
+            && isStaffFor(resource.data)
+            && request.time >= resource.data.startsAt)
+        );
       allow delete: if false;
     }
 
@@ -206,6 +249,29 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time
         && code.size() == 6;
       allow update, delete: if false;
+    }
+
+    // ── staffInvites/{code} (A1) ─────────────────────────────────────────────
+    match /staffInvites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && isSelf(request.resource.data.tenantId)
+        && request.resource.data.keys().hasOnly(['tenantId', 'barberId', 'barberName', 'createdAt', 'expiresAt', 'usedBy'])
+        && request.resource.data.usedBy == null
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.expiresAt > request.time
+        // A11: 7 días + 5 min de tolerancia por el reloj del teléfono (puede ir adelantado).
+        && request.resource.data.expiresAt <= request.time + duration.value(7, 'd') + duration.value(5, 'm')
+        && code.size() == 6;
+      // Se usa una sola vez, antes de vencer, y junto con el perfil de quien la usa.
+      allow update: if signedIn()
+        && resource.data.usedBy == null
+        && request.time < resource.data.expiresAt
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy'])
+        && request.resource.data.usedBy == request.auth.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.staffInviteCode == code;
+      allow delete: if false;
     }
 
     // Todo lo que no esté declarado arriba queda cerrado.

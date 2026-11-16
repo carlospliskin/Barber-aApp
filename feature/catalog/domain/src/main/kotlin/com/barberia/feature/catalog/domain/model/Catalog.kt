@@ -63,6 +63,16 @@ data class WeeklySchedule(val days: Map<DayOfWeek, List<TimeRange>>) {
     }
 }
 
+/** A1: invitación de un solo uso para ligar un barbero del catálogo con una cuenta. */
+data class StaffInvite(
+    val code: String,
+    val tenantId: String,
+    val barberId: String,
+    val barberName: String,
+    val expiresAt: java.time.Instant,
+    val usedBy: String?,
+)
+
 data class Barber(
     val id: String,
     val name: String,
@@ -107,5 +117,8 @@ sealed interface CatalogFailure {
     data object NotFound : CatalogFailure
     data object NotOwner : CatalogFailure
     data object NoConnection : CatalogFailure
+    data object InviteInvalid : CatalogFailure
+    data object InviteExpired : CatalogFailure
+    data object AlreadyStaff : CatalogFailure
     data class Unknown(val detail: String? = null) : CatalogFailure
 }

@@ -104,6 +104,31 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
             awaitClose { registration.remove() }
         }
 
+    override fun observeDay(
+        tenantId: String,
+        date: String,
+        barberId: String?,
+    ): Flow<List<Pair<String, Map<String, Any?>>>> = callbackFlow {
+        var q = tenantRef(tenantId).collection("appointments").whereEqualTo("date", date)
+        if (barberId != null) q = q.whereEqualTo("barberId", barberId) // las reglas exigen este filtro al barbero
+        val registration = q.addSnapshotListener { snapshot, error ->
+            if (error != null) {
+                close(error.toGatewayError())
+            } else {
+                trySend(snapshot?.documents.orEmpty().map { it.id to it.data.orEmpty().fromFirestore() })
+            }
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun setStatus(tenantId: String, apptId: String, status: String) {
+        firebaseCall {
+            tenantRef(tenantId).collection("appointments").document(apptId)
+                .update(mapOf("status" to status, "updatedAt" to FieldValue.serverTimestamp()))
+                .await()
+        }
+    }
+
     override suspend fun shareCode(code: String): String? = firebaseCall {
         db.collection("shareCodes").document(code).get().await().getString("tenantId")
     }

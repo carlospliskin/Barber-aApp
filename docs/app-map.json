@@ -27,7 +27,7 @@
       "folder": "core/common",
       "layer": "Kotlin puro",
       "dependsOn": [],
-      "kotlinFiles": 1,
+      "kotlinFiles": 2,
       "unitTests": 2
     },
     {
@@ -73,7 +73,7 @@
         ":feature:auth:domain"
       ],
       "kotlinFiles": 6,
-      "unitTests": 14
+      "unitTests": 15
     },
     {
       "path": ":feature:auth:presentation",
@@ -94,8 +94,8 @@
       "dependsOn": [
         ":core:common"
       ],
-      "kotlinFiles": 4,
-      "unitTests": 24
+      "kotlinFiles": 6,
+      "unitTests": 29
     },
     {
       "path": ":feature:catalog:data",
@@ -105,8 +105,8 @@
         ":core:firebase",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 5,
-      "unitTests": 9
+      "kotlinFiles": 8,
+      "unitTests": 12
     },
     {
       "path": ":feature:catalog:presentation",
@@ -119,7 +119,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 6,
-      "unitTests": 15
+      "unitTests": 16
     },
     {
       "path": ":feature:booking:domain",
@@ -129,8 +129,8 @@
         ":core:common",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 5,
-      "unitTests": 26
+      "kotlinFiles": 6,
+      "unitTests": 32
     },
     {
       "path": ":feature:booking:data",
@@ -141,7 +141,7 @@
         ":feature:booking:domain"
       ],
       "kotlinFiles": 6,
-      "unitTests": 16
+      "unitTests": 18
     },
     {
       "path": ":feature:booking:presentation",
@@ -154,8 +154,8 @@
         ":feature:booking:domain",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 7,
-      "unitTests": 11
+      "kotlinFiles": 10,
+      "unitTests": 18
     }
   ],
   "navigation": {
@@ -186,6 +186,10 @@
         "screen": "HomeRoute"
       },
       {
+        "route": "AgendaDest",
+        "screen": "AgendaRoute"
+      },
+      {
         "route": "BookingDest",
         "screen": "BookingRoute"
       },
@@ -214,6 +218,16 @@
         "from": "HomeDest",
         "to": "BookingDest",
         "trigger": "botón en pantalla"
+      },
+      {
+        "from": "HomeDest",
+        "to": "AgendaDest",
+        "trigger": "botón en pantalla"
+      },
+      {
+        "from": "AgendaDest",
+        "to": "(atrás)",
+        "trigger": "volver"
       },
       {
         "from": "BookingDest",
@@ -304,6 +318,19 @@
         {
           "to": "HomeDest",
           "how": "la sesión resuelve **OwnerHome**"
+        }
+      ]
+    },
+    {
+      "route": "AgendaDest",
+      "steps": [
+        {
+          "to": "HomeDest",
+          "how": "la sesión resuelve **OwnerHome**"
+        },
+        {
+          "to": "AgendaDest",
+          "how": "tocar el botón que navega"
         }
       ]
     },
@@ -462,6 +489,33 @@
       ]
     },
     {
+      "route": "AgendaDest",
+      "screen": "AgendaRoute",
+      "file": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/agenda/AgendaScreen.kt",
+      "viewModel": "AgendaViewModel",
+      "viewModelFile": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/agenda/AgendaViewModel.kt",
+      "embedded": [],
+      "intents": [
+        "Cancel",
+        "Complete",
+        "DismissFailure",
+        "FilterBarber",
+        "NextDay",
+        "NoShow",
+        "PreviousDay",
+        "Today"
+      ],
+      "useCases": [
+        "CancelByStaffUseCase",
+        "GetBarbershopUseCase",
+        "MarkCompletedUseCase",
+        "MarkNoShowUseCase",
+        "ObserveAgendaUseCase",
+        "ObserveCatalogUseCase",
+        "ObserveCurrentUserUseCase"
+      ]
+    },
+    {
       "route": "BookingDest",
       "screen": "BookingRoute",
       "file": "feature/booking/presentation/src/main/kotlin/com/barberia/feature/booking/presentation/book/BookingScreen.kt",
@@ -498,6 +552,7 @@
         "DayToggled",
         "DismissDialog",
         "DismissFailure",
+        "InviteBarber",
         "OpenEditBarber",
         "OpenEditService",
         "OpenNewBarber",
@@ -514,6 +569,7 @@
       "useCases": [
         "AddBarberUseCase",
         "AddServiceUseCase",
+        "CreateBarberInviteUseCase",
         "ObserveCatalogUseCase",
         "ObserveCurrentUserUseCase",
         "RenameBarberUseCase",
@@ -557,6 +613,21 @@
       ]
     },
     {
+      "name": "CancelByStaffUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
+      "name": "CreateBarberInviteUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/InviteUseCases.kt",
+      "uses": [
+        "CatalogRepository",
+        "InviteRepository"
+      ]
+    },
+    {
       "name": "EnsureShareCodeUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
       "uses": [
@@ -572,6 +643,13 @@
       ]
     },
     {
+      "name": "GetBarbershopUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
       "name": "JoinBarbershopUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
       "uses": [
@@ -581,6 +659,27 @@
     {
       "name": "LeaveBarbershopUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/BookingUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
+      "name": "MarkCompletedUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
+      "name": "MarkNoShowUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
+    },
+    {
+      "name": "ObserveAgendaUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
       "uses": [
         "BookingRepository"
       ]
@@ -618,6 +717,13 @@
       "file": "feature/auth/domain/src/main/kotlin/com/barberia/feature/auth/domain/usecase/AuthUseCases.kt",
       "uses": [
         "SessionRepository"
+      ]
+    },
+    {
+      "name": "RedeemBarberInviteUseCase",
+      "file": "feature/catalog/domain/src/main/kotlin/com/barberia/feature/catalog/domain/usecase/InviteUseCases.kt",
+      "uses": [
+        "InviteRepository"
       ]
     },
     {
@@ -733,6 +839,13 @@
         "CatalogRepository"
       ],
       "file": "feature/catalog/data/src/main/kotlin/com/barberia/feature/catalog/data/repository/FirestoreCatalogRepository.kt"
+    },
+    {
+      "implementation": "FirestoreInviteRepository",
+      "implements": [
+        "InviteRepository"
+      ],
+      "file": "feature/catalog/data/src/main/kotlin/com/barberia/feature/catalog/data/repository/FirestoreInviteRepository.kt"
     }
   ],
   "firestore": [
@@ -794,7 +907,17 @@
         "update ✗",
         "delete ✗"
       ]
+    },
+    {
+      "path": "/staffInvites/{code}",
+      "ops": [
+        "get",
+        "list ✗",
+        "create",
+        "update",
+        "delete ✗"
+      ]
     }
   ],
-  "rulesTests": 54
+  "rulesTests": 75
 }

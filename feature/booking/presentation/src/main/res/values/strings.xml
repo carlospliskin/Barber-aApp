@@ -37,4 +37,28 @@
     <string name="booking_error_code">Código no válido. Revisa las 6 letras.</string>
     <string name="booking_error_connection">Sin conexión. Intenta de nuevo.</string>
     <string name="booking_error_unknown">Ocurrió un error. Intenta de nuevo.</string>
+
+    <string name="agenda_title">Agenda</string>
+    <string name="agenda_today">Hoy</string>
+    <string name="agenda_all">Todos</string>
+    <string name="agenda_empty">No hay citas este día.</string>
+    <plurals name="agenda_count">
+        <item quantity="one">%1$d cita</item>
+        <item quantity="other">%1$d citas</item>
+    </plurals>
+    <string name="agenda_summary">atendidas %1$d · no llegaron %2$d · cobrado %3$s de %4$s</string>
+    <string name="agenda_complete">Atendida</string>
+    <string name="agenda_no_show">No llegó</string>
+    <string name="agenda_status_completed">Atendida</string>
+    <string name="agenda_status_no_show">No llegó</string>
+    <string name="booking_error_too_early">Todavía no es la hora de la cita (no-show: 10 min de tolerancia).</string>
+
+    <string name="invite_title">¿Eres barbero?</string>
+    <string name="invite_hint">Escribe el código que te dio el dueño para ver tu agenda.</string>
+    <string name="invite_code">Código de invitación</string>
+    <string name="invite_accept">Aceptar invitación</string>
+    <string name="invite_done">¡Listo! Ya eres %1$s en la barbería. Elige el modo Barbero.</string>
+    <string name="invite_error_invalid">Invitación no válida o ya usada.</string>
+    <string name="invite_error_expired">La invitación ya venció. Pide otra al dueño.</string>
+    <string name="invite_error_staff">Tu cuenta ya pertenece al personal de una barbería.</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.barberia.feature.booking.domain.usecase
 
 import com.barberia.core.common.AppResult
+import com.barberia.core.common.ShortCodes
 import com.barberia.feature.booking.domain.availability.AvailabilityCalculator
 import com.barberia.feature.booking.domain.model.Appointment
 import com.barberia.feature.booking.domain.model.Barbershop
@@ -209,16 +210,9 @@ class EnsureShareCodeUseCase(private val bookings: BookingRepository, private va
     }
 }
 
-/** B0: códigos cortos para compartir por WhatsApp. Sin 0/O, 1/I/L para no confundirse al dictarlos. */
+/** B0: códigos para compartir la barbería (mismo formato que las invitaciones). */
 object ShareCodes {
-    const val LENGTH = 6
-    private const val ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
-
-    fun generate(random: Random = Random()): String =
-        (1..LENGTH).map { ALPHABET[random.nextInt(ALPHABET.length)] }.joinToString("")
-
-    fun normalize(raw: String): String? {
-        val clean = raw.uppercase().filter { it.isLetterOrDigit() }
-        return clean.takeIf { it.length == LENGTH && it.all { ch -> ch in ALPHABET } }
-    }
+    const val LENGTH = ShortCodes.LENGTH
+    fun generate(random: Random = Random()): String = ShortCodes.generate(random)
+    fun normalize(raw: String): String? = ShortCodes.normalize(raw)
 }

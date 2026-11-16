@@ -32,8 +32,8 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 3 | Reglas de Firestore + tests en emulador + `firebase.json` | ✅ |
 | 4 | Catálogo de servicios y barberos (dueño) | ✅ |
 | 5 | Disponibilidad y reserva sin choques (cliente) | ✅ |
-| 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ⏭️ siguiente |
-| 7 | Clientes, penalizaciones y lealtad | ⏳ |
+| 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ✅ |
+| 7 | Clientes, penalizaciones y lealtad | ⏭️ siguiente |
 | 8 | Recordatorios locales, Crashlytics, App Check, versión release | ⏳ |
 | 9 | Eliminar cuenta (requisito de Google Play) y publicación | ⏳ |
 
@@ -109,15 +109,34 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] C13. El botón flotante se anunciaba solo como "+" en TalkBack.
 - [x] C14. `CatalogEditor` recibía una lambda que Koin no puede verificar → interfaz `IdGenerator` (lo detectó `KoinGraphTest`).
 - [x] C15. La traducción de errores de Firebase estaba en `auth:data`; se movió a `core:firebase` para no duplicarla.
-- [ ] C16. Vincular un barbero del catálogo con una cuenta (para que vea su agenda): se necesita un código de invitación. Fase 6.
+- [x] C16. Vincular un barbero del catálogo con una cuenta → invitaciones de un solo uso (A1).
 - [ ] C17. Editar el catálogo sin red falla con aviso (las transacciones necesitan servidor). Aceptado para el lanzamiento.
+
+### Fase 6 (agenda e invitaciones)
+- [x] V1. Salir de la barbería con citas activas las ocultaba → no se permite.
+- [x] V2. La ventana de 30 días solo estaba en la app → las reglas limitan a 31 días.
+- [ ] V3. Saltándose la app se puede reservar fuera de horario o crear muchas citas (las reglas no recorren listas) → App Check (fase 8).
+- [x] A1. Invitación de un solo uso (6 caracteres, vence en 7 días) para ligar barbero del catálogo ↔ cuenta.
+- [x] A2. El barbero solo lee su agenda (las reglas exigen el filtro por `barberId`); el dueño ve a todos y filtra.
+- [x] A3. La agenda se lee por día (sin índice compuesto: solo igualdades).
+- [x] A4. Atendida solo después del inicio; no-show con 10 min de tolerancia (también en reglas para el personal).
+- [x] A5. El personal cancela cuando sea y libera los bloques.
+- [x] A6. Estados finales no cambian.
+- [x] A7. Resumen del día (citas, atendidas, no-shows, cobrado / esperado).
+- [x] A8. Invitación usada, vencida o persona que ya es personal → rechazada (app y reglas).
+- [x] A9. Al aceptar la invitación la sesión se refresca y aparece el modo Barbero.
+- [x] A10. El perfil no sabía qué barbero del catálogo es → `staffBarberId`.
+- [x] A11. **Reloj del teléfono adelantado** (0.4 s en el emulador) hacía que el servidor rechazara invitaciones de 7 días exactos → 5 min de tolerancia en la regla. Lo encontró la prueba de punta a punta.
+- [x] A12. Correr los tests de reglas borraba los datos del emulador que usaba la app → los tests usan el proyecto `demo-rules`.
+- [x] U6. "1 citas" → plurales. U7. Botones de atendida/no-show en citas futuras → solo cuando aplican. U8. "Modo barber" → etiqueta en español.
+- [ ] A13. El dueño en modo Barbero ve la agenda de todos (no está ligado a un barbero del catálogo). Decidir si se liga.
 
 ### Revisión de la fase 5 (antes de las pantallas y en la prueba de punta a punta)
 - [x] R1. Una cita podía declarar bloques que no eran de su hora y **bloquear el día entero** del barbero → las reglas exigen que los bloques correspondan a inicio y duración (máx. 8 h).
 - [ ] R2. El precio lo escribe el cliente (podría poner $0). Se valida entero ≥ 0; el cobro es en el local. Revisar si se cobra en la app.
 - [x] R3. `startsAt` inventado para cancelar tarde → debe caer en la fecha y hora de la cita (±14 h por zona).
 - [x] R4. "Mis citas" leía hasta 50 sin orden; las nuevas podían no aparecer → solo de hoy en adelante, ordenadas (índice compuesto).
-- [ ] R5. El dueño podría leer todo el historial de citas → la agenda de la fase 6 debe filtrar por día.
+- [x] R5. El dueño podría leer todo el historial de citas → la agenda lee por día (A3).
 - [x] R6. No había forma de leer nombre y zona horaria de la barbería.
 - [x] R7. El dueño no podía crear su código ni guardarlo en su barbería; las reglas validan que el código sea suyo.
 - [x] R8. La barbería del cliente se guarda en el teléfono (0 costo); al reinstalar se vuelve a poner el código.

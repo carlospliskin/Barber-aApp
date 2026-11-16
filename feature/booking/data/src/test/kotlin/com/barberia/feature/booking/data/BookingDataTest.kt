@@ -64,6 +64,15 @@ class BookingDataTest {
         }
         override suspend fun shareCode(code: String): String? = codes[code]
         override suspend fun tenant(tenantId: String) = tenant
+        var dayQuery: Triple<String, String, String?>? = null
+        var status: Pair<String, String>? = null
+        override fun observeDay(tenantId: String, date: String, barberId: String?): kotlinx.coroutines.flow.Flow<List<Pair<String, Map<String, Any?>>>> {
+            dayQuery = Triple(tenantId, date, barberId)
+            return live
+        }
+        override suspend fun setStatus(tenantId: String, apptId: String, status: String) {
+            this.status = apptId to status
+        }
         override suspend fun claimShareCode(tenantId: String, code: String): Boolean {
             if (code in codes) return false
             codes[code] = tenantId
@@ -119,6 +128,18 @@ class BookingDataTest {
     @Test fun `U4 las canceladas no salen en mis citas`() = runTest {
         gw.live.value = listOf("a1" to AppointmentMapper.toMap(cita.copy(status = AppointmentStatus.CANCELLED)))
         assertEquals(emptyList<String>(), repo.observeUpcoming("t", "cli", LocalDate.of(2026, 11, 16)).first().map { it.id })
+    }
+
+    @Test fun `A3 agenda del dia filtrando por barbero`() = runTest {
+        gw.live.value = listOf("a1" to AppointmentMapper.toMap(cita.copy(status = AppointmentStatus.CANCELLED)))
+        val list = repo.observeDay("t", cita.date, "b1").first()
+        assertEquals(Triple("t", "2026-11-20", "b1"), gw.dayQuery)
+        assertEquals(listOf(AppointmentStatus.CANCELLED), list.map { it.status }) // la agenda sí muestra canceladas
+    }
+
+    @Test fun `A4 cambiar estado`() = runTest {
+        assertEquals(AppResult.Success(Unit), repo.setStatus(cita, AppointmentStatus.NO_SHOW))
+        assertEquals("a1" to "NO_SHOW", gw.status)
     }
 
     @Test fun `R6 datos de la barberia, con zona por defecto si viene mal`() = runTest {

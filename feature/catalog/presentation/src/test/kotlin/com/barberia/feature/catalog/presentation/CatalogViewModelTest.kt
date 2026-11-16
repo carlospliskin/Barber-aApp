@@ -49,6 +49,7 @@ class CatalogViewModelTest {
     private var ids = 0
     private val editor = CatalogEditor { "id-${++ids}" }
     private val catalogRepo = FakeCatalogRepository()
+    private val invites = com.barberia.feature.catalog.domain.testing.FakeInviteRepository()
 
     private fun vm(role: StaffRole? = StaffRole.OWNER): CatalogViewModel {
         val session = FakeSessionRepository(SessionState.SignedIn(user(role)))
@@ -62,6 +63,9 @@ class CatalogViewModelTest {
             RenameBarberUseCase(catalogRepo, editor),
             SetBarberActiveUseCase(catalogRepo, editor),
             SetBarberScheduleUseCase(catalogRepo, editor),
+            com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase(
+                invites, catalogRepo, java.time.Clock.fixed(java.time.Instant.parse("2026-11-16T16:00:00Z"), java.time.ZoneOffset.UTC), java.util.Random(1),
+            ),
         )
     }
 
@@ -201,6 +205,17 @@ class CatalogViewModelTest {
     @Test fun `G2 si falla la escucha se muestra el motivo real`() {
         catalogRepo.observeFailure = CatalogFailure.NotOwner
         assertEquals(CatalogFailure.NotOwner, vm().state.value.failure)
+    }
+
+    @Test fun `A1 invitar a un barbero muestra el codigo para mandarle`() {
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenNewBarber)
+        vm.onIntent(CatalogIntent.BarberNameChanged("Luis"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        vm.onIntent(CatalogIntent.InviteBarber("id-1"))
+        val d = vm.state.value.dialog as CatalogDialog.Invite
+        assertEquals("Luis", d.barberName)
+        assertEquals(invites.stored.keys.single(), d.code)
     }
 
     @Test fun `hora mal escrita marca error de horario`() {

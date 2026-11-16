@@ -177,6 +177,7 @@ internal fun toUser(
         phone = profile?.phone,
         staffTenantId = profile?.staffTenantId,
         staffRole = StaffRole.entries.find { it.name == profile?.staffRole },
+        staffBarberId = profile?.staffBarberId,
     )
 }
 

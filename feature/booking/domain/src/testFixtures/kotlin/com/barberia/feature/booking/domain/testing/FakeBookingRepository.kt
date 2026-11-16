@@ -56,6 +56,20 @@ class FakeBookingRepository : BookingRepository {
         return all.map { list -> list.filter { it.clientUid == clientUid && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) } }
     }
 
+    var lastAgendaDate: LocalDate? = null
+    var lastStatus: AppointmentStatus? = null
+
+    override fun observeDay(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>> {
+        lastAgendaDate = date
+        return all.map { list -> list.filter { it.date == date && (barberId == null || it.barberId == barberId) } }
+    }
+
+    override suspend fun setStatus(appointment: Appointment, status: AppointmentStatus): BookingResult<Unit> {
+        lastStatus = status
+        all.value = all.value.map { if (it.id == appointment.id) it.copy(status = status) else it }
+        return AppResult.Success(Unit)
+    }
+
     override suspend fun resolveShareCode(code: String): BookingResult<String?> = AppResult.Success(shareCodes[code])
 
     override suspend fun barbershop(tenantId: String): BookingResult<Barbershop?> = AppResult.Success(barbershops[tenantId])

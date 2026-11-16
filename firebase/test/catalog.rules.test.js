@@ -7,7 +7,7 @@ import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc, deleteDoc } 
 let env;
 before(async () => {
   env = await initializeTestEnvironment({
-    projectId: "demo-barberia",
+    projectId: "demo-rules", /* A12: proyecto aparte; clearFirestore() no borra los datos de la app */
     firestore: { rules: readFileSync(new URL("../firestore.rules", import.meta.url), "utf8"), host: "127.0.0.1", port: 8085 },
   });
 });

@@ -40,6 +40,14 @@ sealed interface CatalogDialog {
         override val errors: Set<CatalogError> = emptySet(),
     ) : CatalogDialog
 
+    /** A1: código para mandarle al barbero. */
+    data class Invite(
+        val barberName: String,
+        val code: String,
+        val expiresAt: java.time.Instant,
+        override val errors: Set<CatalogError> = emptySet(),
+    ) : CatalogDialog
+
     data class Schedule(
         val barberId: String,
         val barberName: String,
@@ -75,6 +83,7 @@ sealed interface CatalogIntent : UiIntent {
     data class SetBarberActive(val id: String, val active: Boolean) : CatalogIntent
 
     data class OpenSchedule(val barberId: String) : CatalogIntent
+    data class InviteBarber(val barberId: String) : CatalogIntent
     data class DayToggled(val day: DayOfWeek, val enabled: Boolean) : CatalogIntent
     data class DayStartChanged(val day: DayOfWeek, val value: String) : CatalogIntent
     data class DayEndChanged(val day: DayOfWeek, val value: String) : CatalogIntent

@@ -3,6 +3,7 @@ package com.barberia.feature.catalog.presentation
 import com.barberia.feature.catalog.domain.editor.CatalogEditor
 import com.barberia.feature.catalog.domain.editor.IdGenerator
 import com.barberia.feature.catalog.domain.usecase.AddBarberUseCase
+import com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase
 import com.barberia.feature.catalog.domain.usecase.AddServiceUseCase
 import com.barberia.feature.catalog.domain.usecase.ObserveCatalogUseCase
 import com.barberia.feature.catalog.domain.usecase.RenameBarberUseCase
@@ -28,5 +29,6 @@ val catalogPresentationModule = module {
     factoryOf(::RenameBarberUseCase)
     factoryOf(::SetBarberActiveUseCase)
     factoryOf(::SetBarberScheduleUseCase)
+    factoryOf(::CreateBarberInviteUseCase)
     viewModelOf(::CatalogViewModel)
 }

@@ -18,11 +18,19 @@ import com.barberia.core.designsystem.component.BarberButton
 import com.barberia.feature.auth.domain.model.AppMode
 import com.barberia.feature.booking.presentation.client.ClientHomeRoute
 import com.barberia.feature.booking.presentation.owner.ShareCodeCard
+import androidx.compose.ui.res.stringResource
+import com.barberia.feature.auth.presentation.common.labelRes
 import org.koin.androidx.compose.koinViewModel
 
-/** Home por modo: cliente → reservas; dueño → código + catálogo; barbero → provisional (fase 6). */
+/** Home por modo: cliente → reservas; dueño → código, agenda y catálogo; barbero → agenda. */
 @Composable
-fun HomeRoute(mode: AppMode, onOpenCatalog: () -> Unit, onBook: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
+fun HomeRoute(
+    mode: AppMode,
+    onOpenCatalog: () -> Unit,
+    onBook: () -> Unit,
+    onOpenAgenda: () -> Unit,
+    viewModel: HomeViewModel = koinViewModel(),
+) {
     if (mode == AppMode.CLIENT) {
         ClientHomeRoute(onBook = onBook, onSignOut = { viewModel.onIntent(HomeIntent.SignOut) })
         return
@@ -32,7 +40,8 @@ fun HomeRoute(mode: AppMode, onOpenCatalog: () -> Unit, onBook: () -> Unit, view
         Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("Modo ${mode.name.lowercase()}", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+        // U8: etiqueta en español (antes mostraba el nombre interno: "barber").
+        Text(stringResource(mode.labelRes()), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
         Text(state.displayName, style = MaterialTheme.typography.headlineMedium)
         Text(state.email, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (!state.emailVerified) {
@@ -43,11 +52,12 @@ fun HomeRoute(mode: AppMode, onOpenCatalog: () -> Unit, onBook: () -> Unit, view
         if (mode == AppMode.OWNER) {
             ShareCodeCard()
             Spacer(Modifier.height(16.dp))
+        }
+        BarberButton(text = "Agenda", onClick = onOpenAgenda)
+        Spacer(Modifier.height(12.dp))
+        if (mode == AppMode.OWNER) {
             BarberButton(text = "Catálogo", onClick = onOpenCatalog)
             Spacer(Modifier.height(12.dp))
-        } else {
-            Text("Agenda del barbero: pendiente (fase 6).", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Spacer(Modifier.height(24.dp))
         }
         BarberButton(text = "Cerrar sesión", onClick = { viewModel.onIntent(HomeIntent.SignOut) })
     }

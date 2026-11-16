@@ -2,6 +2,14 @@ package com.barberia.feature.booking.presentation
 
 import com.barberia.feature.booking.domain.model.BookingPolicy
 import com.barberia.feature.booking.domain.usecase.BookAppointmentUseCase
+import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
+import com.barberia.feature.booking.domain.usecase.GetBarbershopUseCase
+import com.barberia.feature.booking.domain.usecase.MarkCompletedUseCase
+import com.barberia.feature.booking.domain.usecase.MarkNoShowUseCase
+import com.barberia.feature.booking.domain.usecase.ObserveAgendaUseCase
+import com.barberia.feature.booking.presentation.agenda.AgendaViewModel
+import com.barberia.feature.booking.presentation.invite.RedeemInviteViewModel
+import com.barberia.feature.catalog.domain.usecase.RedeemBarberInviteUseCase
 import com.barberia.feature.booking.domain.usecase.CancelAppointmentUseCase
 import com.barberia.feature.booking.domain.usecase.EnsureShareCodeUseCase
 import com.barberia.feature.booking.domain.usecase.GetAvailableSlotsUseCase
@@ -34,4 +42,14 @@ val bookingPresentationModule = module {
     viewModelOf(::ClientHomeViewModel)
     viewModelOf(::BookingViewModel)
     viewModelOf(::ShareCodeViewModel)
+
+    // Fase 6: agenda e invitaciones
+    factoryOf(::GetBarbershopUseCase)
+    factoryOf(::ObserveAgendaUseCase)
+    factoryOf(::MarkCompletedUseCase)
+    factoryOf(::MarkNoShowUseCase)
+    factoryOf(::CancelByStaffUseCase)
+    factoryOf(::RedeemBarberInviteUseCase)
+    viewModelOf(::AgendaViewModel)
+    viewModelOf(::RedeemInviteViewModel)
 }
