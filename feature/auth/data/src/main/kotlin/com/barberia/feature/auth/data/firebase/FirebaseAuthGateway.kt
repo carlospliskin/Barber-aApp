@@ -1,17 +1,10 @@
 package com.barberia.feature.auth.data.firebase
 
 import com.barberia.feature.auth.data.gateway.AccountInfo
+import com.barberia.core.firebase.GatewayError
+import com.barberia.core.firebase.firebaseCall
 import com.barberia.feature.auth.data.gateway.AuthGateway
-import com.barberia.feature.auth.data.gateway.GatewayError
-import com.google.firebase.FirebaseNetworkException
-import com.google.firebase.FirebaseTooManyRequestsException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
-import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
-import com.google.firebase.auth.FirebaseAuthWeakPasswordException
-import com.google.firebase.firestore.FirebaseFirestoreException
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -52,29 +45,4 @@ internal class FirebaseAuthGateway(private val auth: FirebaseAuth) : AuthGateway
     }
 
     override fun signOut() = auth.signOut()
-}
-
-/** Traduce las excepciones de Firebase a [GatewayError]. El orden importa: WeakPassword hereda de InvalidCredentials. */
-internal suspend fun <T> firebaseCall(block: suspend () -> T): T = try {
-    block()
-} catch (e: CancellationException) {
-    throw e
-} catch (e: GatewayError) {
-    throw e
-} catch (e: FirebaseAuthWeakPasswordException) {
-    throw GatewayError.WeakPassword(e)
-} catch (e: FirebaseAuthInvalidCredentialsException) {
-    throw GatewayError.InvalidCredentials(e)
-} catch (e: FirebaseAuthInvalidUserException) {
-    throw GatewayError.InvalidCredentials(e)
-} catch (e: FirebaseAuthUserCollisionException) {
-    throw GatewayError.EmailInUse(e)
-} catch (e: FirebaseNetworkException) {
-    throw GatewayError.Network(e)
-} catch (e: FirebaseTooManyRequestsException) {
-    throw GatewayError.TooManyRequests(e)
-} catch (e: FirebaseFirestoreException) {
-    throw if (e.code == FirebaseFirestoreException.Code.UNAVAILABLE) GatewayError.Network(e) else GatewayError.Other(e)
-} catch (e: Exception) {
-    throw GatewayError.Other(e)
 }

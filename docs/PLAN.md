@@ -30,8 +30,8 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 1 | Endurecer MVI y sesión (huecos 1–10 del diagnóstico) | ✅ |
 | 2 | Auth con Firebase: login, registro dueño/cliente, recuperar contraseña, modo local, roles en Firestore | ✅ |
 | 3 | Reglas de Firestore + tests en emulador + `firebase.json` | ✅ |
-| 4 | Catálogo de servicios y barberos (dueño) | ⏳ |
-| 5 | Disponibilidad y reserva sin choques (cliente) | ⏳ |
+| 4 | Catálogo de servicios y barberos (dueño) | ✅ |
+| 5 | Disponibilidad y reserva sin choques (cliente) | ⏭️ siguiente |
 | 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ⏳ |
 | 7 | Clientes, penalizaciones y lealtad | ⏳ |
 | 8 | Recordatorios locales, Crashlytics, App Check, versión release | ⏳ |
@@ -94,9 +94,23 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 ### Operación
 - [ ] C1. Marcar no-show suma al contador y penaliza al llegar al límite.
 - [ ] C2. Los puntos de lealtad se dan una sola vez por cita completada (idempotente).
-- [ ] C3. Borrar un servicio que tiene citas futuras.
-- [ ] C4. Desactivar a un barbero con citas futuras.
-- [ ] C5. Horarios del barbero: turnos que se enciman, días libres.
+- [x] C3. Borrar un servicio que tiene citas futuras. → nunca se borra, se desactiva (sigue existiendo para citas viejas).
+- [x] C4. Desactivar a un barbero con citas futuras. → se desactiva y sale de las reservas.
+- [x] C5. Horarios del barbero: turnos que se enciman, días libres. → rangos válidos en pasos de 5 min, sin encimarse, turno partido permitido.
+
+### Encontrados en la fase 4 (catálogo)
+- [x] C6. Nombres repetidos sin importar mayúsculas/espacios; tampoco al reactivar uno inactivo.
+- [x] C7. Duración de 5 a 480 min en pasos de 5; precio en centavos, de 0 a 100 mil pesos.
+- [x] C8. Máximo 50 servicios y 20 barberos (también en las reglas): el documento no crece sin control.
+- [x] C9. Dueño editando desde dos teléfonos: transacción + `version` que las reglas obligan a subir de 1 en 1.
+- [x] C10. Barbería nueva sin documento: se ve como catálogo vacío y el primer guardado lo crea.
+- [x] C11. Quien no es dueño ve el catálogo en solo lectura.
+- [x] C12. Precio escrito como texto ("150", "150,5", "$19.99") → centavos sin redondeos.
+- [x] C13. El botón flotante se anunciaba solo como "+" en TalkBack.
+- [x] C14. `CatalogEditor` recibía una lambda que Koin no puede verificar → interfaz `IdGenerator` (lo detectó `KoinGraphTest`).
+- [x] C15. La traducción de errores de Firebase estaba en `auth:data`; se movió a `core:firebase` para no duplicarla.
+- [ ] C16. Vincular un barbero del catálogo con una cuenta (para que vea su agenda): se necesita un código de invitación. Fase 6.
+- [ ] C17. Editar el catálogo sin red falla con aviso (las transacciones necesitan servidor). Aceptado para el lanzamiento.
 
 ### Limitaciones por usar solo Spark (decisiones conscientes)
 - Sin Cloud Functions no hay **push del servidor** → recordatorios con notificaciones **locales** (WorkManager) y avisos en vivo con listeners mientras la app está abierta.

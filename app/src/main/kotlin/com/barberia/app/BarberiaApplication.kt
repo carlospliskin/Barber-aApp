@@ -7,6 +7,8 @@ import com.barberia.core.firebase.FirebaseConfig
 import com.barberia.core.firebase.firebaseModule
 import com.barberia.feature.auth.data.di.authDataModule
 import com.barberia.feature.auth.presentation.di.authPresentationModule
+import com.barberia.feature.catalog.data.di.catalogDataModule
+import com.barberia.feature.catalog.presentation.catalogPresentationModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 
@@ -21,7 +23,15 @@ class BarberiaApplication : Application() {
         )
         startKoin {
             androidContext(this@BarberiaApplication)
-            modules(firebaseModule(firebase), appModule, authDomainModule, authDataModule, authPresentationModule)
+            modules(
+                firebaseModule(firebase),
+                appModule,
+                authDomainModule,
+                authDataModule,
+                authPresentationModule,
+                catalogDataModule,
+                catalogPresentationModule,
+            )
         }
     }
 }

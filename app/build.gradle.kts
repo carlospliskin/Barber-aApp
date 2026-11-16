@@ -76,6 +76,9 @@ dependencies {
     implementation(project(":feature:auth:domain"))
     implementation(project(":feature:auth:data"))
     implementation(project(":feature:auth:presentation"))
+    implementation(project(":feature:catalog:domain"))
+    implementation(project(":feature:catalog:data"))
+    implementation(project(":feature:catalog:presentation"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

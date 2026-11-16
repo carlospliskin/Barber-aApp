@@ -20,7 +20,7 @@ import com.barberia.feature.auth.domain.model.AppMode
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun HomeRoute(mode: AppMode, viewModel: HomeViewModel = koinViewModel()) {
+fun HomeRoute(mode: AppMode, onOpenCatalog: () -> Unit, viewModel: HomeViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Column(
         Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding().padding(24.dp),
@@ -34,8 +34,12 @@ fun HomeRoute(mode: AppMode, viewModel: HomeViewModel = koinViewModel()) {
             Text("Revisa tu correo para verificar la cuenta.", color = MaterialTheme.colorScheme.secondary)
         }
         Spacer(Modifier.height(8.dp))
-        Text("Pantalla provisional: pendiente de portar (fases 4-7).", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Pantalla provisional: pendiente de portar (fases 5-7).", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(32.dp))
+        if (mode == AppMode.OWNER) {
+            BarberButton(text = "Catálogo", onClick = onOpenCatalog)
+            Spacer(Modifier.height(12.dp))
+        }
         BarberButton(text = "Cerrar sesión", onClick = { viewModel.onIntent(HomeIntent.SignOut) })
     }
 }

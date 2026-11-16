@@ -1,5 +1,6 @@
 package com.barberia.feature.auth.data.firebase
 
+import com.barberia.core.firebase.firebaseCall
 import com.barberia.feature.auth.data.gateway.ProfileGateway
 import com.barberia.feature.auth.data.gateway.ProfileRecord
 import com.barberia.feature.auth.data.gateway.TenantRecord

@@ -3,7 +3,7 @@ package com.barberia.feature.auth.data
 import com.barberia.core.common.AppResult
 import com.barberia.feature.auth.data.gateway.AccountInfo
 import com.barberia.feature.auth.data.gateway.AuthGateway
-import com.barberia.feature.auth.data.gateway.GatewayError
+import com.barberia.core.firebase.GatewayError
 import com.barberia.feature.auth.data.gateway.ModeStore
 import com.barberia.feature.auth.data.gateway.ProfileGateway
 import com.barberia.feature.auth.data.gateway.ProfileRecord

@@ -2,7 +2,7 @@ package com.barberia.feature.auth.data.repository
 
 import com.barberia.core.common.AppResult
 import com.barberia.feature.auth.data.gateway.AuthGateway
-import com.barberia.feature.auth.data.gateway.GatewayError
+import com.barberia.core.firebase.GatewayError
 import com.barberia.feature.auth.data.gateway.ModeStore
 import com.barberia.feature.auth.data.gateway.ProfileGateway
 import com.barberia.feature.auth.data.gateway.ProfileRecord
@@ -186,5 +186,5 @@ internal fun GatewayError.toFailure(): AuthFailure = when (this) {
     is GatewayError.WeakPassword -> AuthFailure.WeakPassword
     is GatewayError.Network -> AuthFailure.NoConnection
     is GatewayError.TooManyRequests -> AuthFailure.TooManyRequests
-    is GatewayError.Other -> AuthFailure.Unknown(cause?.message)
+    is GatewayError.PermissionDenied, is GatewayError.Other -> AuthFailure.Unknown(cause?.message)
 }

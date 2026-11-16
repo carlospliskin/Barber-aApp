@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "cd .. && firebase emulators:exec --only firestore --project demo-barberia \"node --test firebase/test/*.test.js\"",
+    "test": "cd .. && firebase emulators:exec --only firestore --project demo-barberia \"node --test --test-concurrency=1 firebase/test/*.test.js\"",
     "emulators": "cd .. && firebase emulators:start --only auth,firestore --project demo-barberia"
   },
   "devDependencies": {

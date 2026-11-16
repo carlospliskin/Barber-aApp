@@ -6,3 +6,7 @@ dependencies {
     api(libs.firebase.firestore)
     implementation(libs.koin.android)
 }
+
+dependencies {
+    implementation(libs.coroutines.core)
+}

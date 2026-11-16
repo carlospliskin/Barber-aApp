@@ -12,6 +12,10 @@ feature/auth/domain       (JVM)      Entidades, SessionState, AuthValidator, Aut
                                      testFixtures: fakes compartidos con los tests de data y presentation
 feature/auth/data         (Android)  Gateways (interfaces chicas) + implementación Firebase, FirebaseAccountRepository
 feature/auth/presentation (Android)  SessionViewModel, Login (reducer puro), Registro, Selector de modo
+feature/catalog/domain    (JVM)      Catalog (servicios + barberos + horarios), CatalogEditor (reglas puras), casos de uso
+feature/catalog/data      (Android)  CatalogMapper tolerante, transacción con versión sobre tenants/{t}/catalog/main
+feature/catalog/presentation         CatalogViewModel (formularios como texto → conversión al guardar), pantalla del dueño
+build-logic                          Convention plugins: barberia.android.library / .android.compose / .jvm.library
 ```
 
 Dependencias permitidas (la flecha apunta a quien se conoce):

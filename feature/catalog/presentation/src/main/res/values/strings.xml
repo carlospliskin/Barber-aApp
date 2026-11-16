@@ -1,0 +1,39 @@
+<resources>
+    <string name="catalog_title">Catálogo</string>
+    <string name="catalog_back">Volver</string>
+    <string name="catalog_tab_services">Servicios</string>
+    <string name="catalog_tab_barbers">Barberos</string>
+    <string name="catalog_add_service">Agregar servicio</string>
+    <string name="catalog_add_barber">Agregar barbero</string>
+    <string name="catalog_empty_services">Todavía no hay servicios. Agrega el primero.</string>
+    <string name="catalog_empty_barbers">Todavía no hay barberos. Agrega el primero.</string>
+    <string name="catalog_read_only">Solo el dueño puede editar el catálogo.</string>
+    <string name="catalog_service">Servicio</string>
+    <string name="catalog_service_name">Nombre</string>
+    <string name="catalog_duration">Duración (minutos)</string>
+    <string name="catalog_price">Precio (MXN)</string>
+    <string name="catalog_service_line">%1$d min · %2$s</string>
+    <string name="catalog_barber">Barbero</string>
+    <string name="catalog_barber_name">Nombre del barbero</string>
+    <string name="catalog_schedule">Horario</string>
+    <string name="catalog_schedule_of">Horario de %1$s</string>
+    <string name="catalog_no_schedule">Sin horario: no se puede reservar</string>
+    <string name="catalog_days_working">%1$d días a la semana</string>
+    <string name="catalog_from">Entra</string>
+    <string name="catalog_to">Sale</string>
+    <string name="catalog_save">Guardar</string>
+    <string name="catalog_cancel">Cancelar</string>
+    <string name="catalog_inactive">Inactivo</string>
+
+    <string name="catalog_error_name">Escribe un nombre</string>
+    <string name="catalog_error_name_long">Máximo 60 caracteres</string>
+    <string name="catalog_error_duplicated">Ya existe uno activo con ese nombre</string>
+    <string name="catalog_error_duration">Entre 5 y 480 minutos, en pasos de 5</string>
+    <string name="catalog_error_price">Precio válido, por ejemplo 150 o 150.50</string>
+    <string name="catalog_error_too_many">Llegaste al máximo permitido</string>
+    <string name="catalog_error_range">Revisa las horas: formato 09:00 y la salida después de la entrada, en pasos de 5 min</string>
+    <string name="catalog_error_overlap">Los horarios se enciman</string>
+    <string name="catalog_failure_connection">Sin conexión. Los cambios del catálogo necesitan internet.</string>
+    <string name="catalog_failure_owner">No tienes permiso para editar este catálogo.</string>
+    <string name="catalog_failure_unknown">No se pudo guardar. Intenta de nuevo.</string>
+</resources>

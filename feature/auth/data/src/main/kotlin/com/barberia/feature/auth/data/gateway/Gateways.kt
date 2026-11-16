@@ -12,16 +12,6 @@ internal data class AccountInfo(
     val emailVerified: Boolean,
 )
 
-/** Errores ya traducidos desde las excepciones del SDK. */
-internal sealed class GatewayError(cause: Throwable? = null) : Exception(cause) {
-    class InvalidCredentials(cause: Throwable? = null) : GatewayError(cause)
-    class EmailInUse(cause: Throwable? = null) : GatewayError(cause)
-    class WeakPassword(cause: Throwable? = null) : GatewayError(cause)
-    class Network(cause: Throwable? = null) : GatewayError(cause)
-    class TooManyRequests(cause: Throwable? = null) : GatewayError(cause)
-    class Other(cause: Throwable? = null) : GatewayError(cause)
-}
-
 internal interface AuthGateway {
     /** uid del usuario con sesión, o null. Emite al iniciar y al cambiar. */
     val uidChanges: Flow<String?>

@@ -71,6 +71,30 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ── tenants/{ownerUid}/catalog/main ──────────────────────────────────────
+    // Servicios + barberos + horarios en UN documento: el cliente lo lee con 1 lectura.
+    // El contenido de cada servicio lo valida el dominio; aquí se limita forma, tamaño y versión.
+    match /tenants/{tenantId}/catalog/{docId} {
+      function validCatalog(data) {
+        return data.keys().hasOnly(['version', 'services', 'barbers', 'updatedAt'])
+          && data.services is list && data.services.size() <= 50
+          && data.barbers is list && data.barbers.size() <= 20
+          && data.version is int
+          && data.updatedAt == request.time;
+      }
+
+      allow get: if signedIn() && docId == 'main';
+      allow list: if false;
+      allow create: if isSelf(tenantId) && docId == 'main'
+        && validCatalog(request.resource.data)
+        && request.resource.data.version == 1;
+      // C9: solo se guarda sobre la versión que se leyó (versión + 1).
+      allow update: if isSelf(tenantId)
+        && validCatalog(request.resource.data)
+        && request.resource.data.version == resource.data.version + 1;
+      allow delete: if false;
+    }
+
     // Todo lo que no esté declarado arriba queda cerrado.
     match /{document=**} {
       allow read, write: if false;
