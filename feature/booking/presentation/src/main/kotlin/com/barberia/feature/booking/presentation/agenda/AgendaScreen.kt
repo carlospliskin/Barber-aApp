@@ -34,21 +34,23 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun AgendaRoute(onBack: () -> Unit, viewModel: AgendaViewModel = koinViewModel()) {
+fun AgendaRoute(onBack: () -> Unit, onAddWalkIn: () -> Unit, viewModel: AgendaViewModel = koinViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AgendaScreen(state, viewModel::onIntent, onBack)
+    AgendaScreen(state, viewModel::onIntent, onBack, onAddWalkIn)
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: () -> Unit) {
+fun AgendaScreen(state: AgendaState, onIntent: (AgendaIntent) -> Unit, onBack: () -> Unit, onAddWalkIn: () -> Unit = {}) {
     Column(
         Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onBack) { Text(stringResource(R.string.booking_back)) }
-            Text(stringResource(R.string.agenda_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.agenda_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            // N1: quien llama o llega al local
+            TextButton(onClick = onAddWalkIn, enabled = state.tenantId != null) { Text(stringResource(R.string.agenda_add_walkin)) }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = { onIntent(AgendaIntent.PreviousDay) }) { Text("‹") }
@@ -105,6 +107,13 @@ private fun AgendaCard(
                 style = MaterialTheme.typography.titleSmall,
             )
             Text("${a.serviceName} · ${a.barberName} · ${a.price.label}", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (a.isWalkIn) {
+                Text(
+                    listOfNotNull(stringResource(R.string.agenda_walkin_tag), a.clientPhone).joinToString(" · "),
+                    color = MaterialTheme.colorScheme.tertiary,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             when (a.status) {
                 AppointmentStatus.BOOKED -> Row {
                     // U7: solo se ofrece cuando ya se puede (antes daba error).

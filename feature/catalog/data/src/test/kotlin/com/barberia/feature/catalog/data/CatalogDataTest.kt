@@ -11,6 +11,7 @@ import com.barberia.feature.catalog.domain.model.CatalogException
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.Money
 import com.barberia.feature.catalog.domain.model.Service
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,6 +59,24 @@ class CatalogDataTest {
         val c = CatalogMapper.fromMap(raw)!!
         assertEquals(emptyList<Service>(), c.services)
         assertEquals(WeeklySchedule.EMPTY, c.barbers.single().schedule)
+    }
+
+    @Test fun `N2 dias libres ida y vuelta (dia completo y rango)`() {
+        val withOff = catalog.copy(
+            barbers = catalog.barbers.map {
+                it.copy(timeOff = listOf(TimeOff(java.time.LocalDate.of(2026, 12, 25)), TimeOff(java.time.LocalDate.of(2026, 12, 24), TimeRange.of("15:00", "20:00"))))
+            },
+        )
+        assertEquals(withOff, CatalogMapper.fromMap(CatalogMapper.toMap(withOff)))
+    }
+
+    @Test fun `N2 un dia libre corrupto se ignora`() {
+        val raw = mapOf(
+            "barbers" to listOf(
+                mapOf("id" to "b1", "name" to "Luis", "timeOff" to listOf(mapOf("date" to "no-es-fecha"), mapOf("date" to "2026-12-25"))),
+            ),
+        )
+        assertEquals(listOf(TimeOff(java.time.LocalDate.of(2026, 12, 25))), CatalogMapper.fromMap(raw)!!.barbers.single().timeOff)
     }
 
     @Test fun `sin documento no hay catalogo`() = assertEquals(null, CatalogMapper.fromMap(null))

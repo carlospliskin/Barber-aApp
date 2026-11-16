@@ -27,9 +27,12 @@ class ObserveAgendaUseCase(private val bookings: BookingRepository) {
 
 class MarkCompletedUseCase(private val bookings: BookingRepository, private val clock: Clock) {
     suspend operator fun invoke(appointment: Appointment): BookingResult<Unit> =
-        markStatus(bookings, appointment, AppointmentStatus.COMPLETED, earliest = appointment.startsAt, clock) { c ->
-            (c ?: ClientRecord.new(appointment.clientUid, appointment.clientName)).afterCompleted() // P3
-        }
+        markStatus(
+            bookings, appointment, AppointmentStatus.COMPLETED, earliest = appointment.startsAt, clock,
+            updateClient = appointment.clientUid?.let { uid ->
+                { c: ClientRecord? -> (c ?: ClientRecord.new(uid, appointment.clientName)).afterCompleted() } // P3
+            },
+        )
 }
 
 /** Resultado de marcar un no-show: si penalizó y cuántas citas futuras canceló (F7-3). */
@@ -44,19 +47,25 @@ class MarkNoShowUseCase(
         val now = clock.instant()
         var before: ClientRecord? = null
         var after: ClientRecord? = null
+        val uid = appointment.clientUid
         val marked = markStatus(
             bookings, appointment, AppointmentStatus.NO_SHOW,
             earliest = appointment.startsAt.plus(NO_SHOW_GRACE), clock,
-        ) { c ->
-            before = c
-            (c ?: ClientRecord.new(appointment.clientUid, appointment.clientName)).afterNoShow(now, loyalty).also { after = it } // P1
-        }
+            // N1: sin cuenta no hay ficha ni penalización
+            updateClient = uid?.let {
+                { c: ClientRecord? ->
+                    before = c
+                    (c ?: ClientRecord.new(uid, appointment.clientName)).afterNoShow(now, loyalty).also { after = it } // P1
+                }
+            },
+        )
         if (marked is AppResult.Failure) return marked
+        if (uid == null) return AppResult.Success(NoShowOutcome(penalized = false, cancelledFuture = 0, failedToCancel = 0))
         val justPenalized = after?.let { it.isPenalized(now) && it.penaltyUntil != before?.penaltyUntil } == true
         if (!justPenalized) return AppResult.Success(NoShowOutcome(penalized = false, cancelledFuture = 0, failedToCancel = 0))
 
         // F7-3: se cancelan sus citas futuras en esta barbería (con cualquier barbero). Se liberan los horarios.
-        val future = when (val r = bookings.activeAppointments(appointment.tenantId, appointment.clientUid)) {
+        val future = when (val r = bookings.activeAppointments(appointment.tenantId, uid)) {
             is AppResult.Success -> r.value.filter { it.id != appointment.id && it.startsAt.isAfter(now) }
             is AppResult.Failure -> return AppResult.Success(NoShowOutcome(penalized = true, cancelledFuture = 0, failedToCancel = 1))
         }
@@ -94,7 +103,7 @@ private suspend fun markStatus(
     status: AppointmentStatus,
     earliest: java.time.Instant,
     clock: Clock,
-    updateClient: (ClientRecord?) -> ClientRecord,
+    updateClient: ((ClientRecord?) -> ClientRecord)?,
 ): BookingResult<Unit> {
     if (appointment.status != AppointmentStatus.BOOKED) return AppResult.Failure(BookingFailure.AlreadyClosed) // A6
     if (clock.instant().isBefore(earliest)) return AppResult.Failure(BookingFailure.TooEarly) // A4

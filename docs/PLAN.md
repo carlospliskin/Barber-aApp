@@ -37,6 +37,7 @@ Los niveles 1–4 corren con `./gradlew test`. El 5 con `npm test` en `firebase/
 | 6 | Agenda del día, completar / cancelar / no-show (barbero y dueño) | ✅ |
 | 7 | Clientes, penalizaciones y lealtad | ✅ |
 | 8 | Recordatorios locales, Crashlytics, App Check, versión release | ✅ (App Check se activa con el proyecto real) |
+| 8.5 | Huecos de negocio: el personal agenda clientes sin app (N1) y días libres (N2) | ✅ |
 | 9 | Eliminar cuenta (requisito de Google Play) y publicación | ⏭️ siguiente |
 
 ## Modelo de datos (pensado para gastar poco)
@@ -92,6 +93,18 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] B5. Límite de citas activas por cliente (evita acaparar horarios). → máximo 2 citas activas.
 - [x] B6. Zona horaria: guardar en UTC y mostrar en la de la barbería. → zona horaria de la barbería; `startsAt` en UTC.
 - [x] B7. Cancelación: hasta cuántas horas antes y qué pasa con el horario liberado. → hasta 2 h antes; también lo exigen las reglas (el dueño puede siempre).
+
+### Huecos de negocio (N1 y N2)
+- [x] N1. El personal agenda a quien llama o llega al local → cita con `clientUid = null`, nombre y teléfono; sin ficha ni penalización. Solo el personal (un cliente no puede esquivar así su penalización).
+- [x] N1-a. Las reglas no validaban el nombre del cliente → `clientName` de 1 a 80; la cita de un cliente no lleva teléfono.
+- [x] N1-d. Quien ya está en el local no podía entrar "ahora" (30 min de anticipación) → el personal puede usar el turno que empezó hace hasta 14 min (regla: 20 min con tolerancia de reloj).
+- [x] N1-e. Atender o marcar no-show una cita sin cuenta → sin ficha (la regla P7 la exigía).
+- [x] N2. Días libres (completo o rango) por barbero y "cerrar la barbería" → en el catálogo, sin lecturas extra; disponibilidad y selector de días los respetan.
+- [x] N2-a. El documento del catálogo podía crecer sin límite → se borran los días libres pasados al guardar; máx. 30 por barbero.
+- [ ] N1-b. Recordatorio para el cliente sin app (WhatsApp desde la agenda).
+- [ ] N1-c. Unir el historial de un cliente sin app cuando se registra.
+- [ ] N2-b. Bloquear un día que ya tiene citas: avisar cuántas y ofrecer cancelarlas.
+- [ ] N2-c. "Hoy" del formulario usa la zona del teléfono (depende de N5).
 
 ### Operación
 - [x] C1. Marcar no-show suma al contador y penaliza al llegar al límite. → al 3er no-show, 14 días (P1).

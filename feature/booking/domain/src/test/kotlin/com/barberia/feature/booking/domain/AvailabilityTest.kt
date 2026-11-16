@@ -6,6 +6,7 @@ import com.barberia.feature.booking.domain.availability.AvailabilityCalculator
 import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.model.Money
 import com.barberia.feature.catalog.domain.model.Service
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import org.junit.Assert.assertEquals
@@ -74,4 +75,15 @@ class AvailabilityTest {
 
     @Test fun `bloques de 5 minutos que ocupa una cita`() =
         assertEquals(setOf(600, 605, 610), slotKeys(start = 600, duration = 15))
+
+    @Test fun `N2 un dia libre no tiene horarios`() =
+        assertEquals(emptyList<String>(), slots(barber = luis.copy(timeOff = listOf(TimeOff(monday)))))
+
+    @Test fun `N2 un dia libre de otra fecha no afecta`() =
+        assertEquals(8, slots(barber = luis.copy(timeOff = listOf(TimeOff(monday.plusDays(7))))).size)
+
+    @Test fun `N2 salir temprano quita los inicios cuyo servicio se encima con el rango bloqueado`() {
+        val early = luis.copy(timeOff = listOf(TimeOff(monday, TimeRange.of("11:00", "14:00"))))
+        assertEquals(listOf("10:00", "10:15"), slots(barber = early)) // 10:15 + 45 = 11:00 justo
+    }
 }

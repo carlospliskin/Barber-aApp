@@ -46,6 +46,7 @@ class CatalogViewModelTest {
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
 
+    private val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-11-16T16:00:00Z"), java.time.ZoneOffset.UTC)
     private var ids = 0
     private val editor = CatalogEditor { "id-${++ids}" }
     private val catalogRepo = FakeCatalogRepository()
@@ -64,8 +65,11 @@ class CatalogViewModelTest {
             SetBarberActiveUseCase(catalogRepo, editor),
             SetBarberScheduleUseCase(catalogRepo, editor),
             com.barberia.feature.catalog.domain.usecase.CreateBarberInviteUseCase(
-                invites, catalogRepo, java.time.Clock.fixed(java.time.Instant.parse("2026-11-16T16:00:00Z"), java.time.ZoneOffset.UTC), java.util.Random(1),
+                invites, catalogRepo, clock, java.util.Random(1),
             ),
+            com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase(catalogRepo, editor, clock),
+            com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase(catalogRepo, editor),
+            clock,
         )
     }
 
@@ -228,5 +232,84 @@ class CatalogViewModelTest {
         vm.onIntent(CatalogIntent.DayStartChanged(DayOfWeek.TUESDAY, "9am"))
         vm.onIntent(CatalogIntent.SaveDialog)
         assertEquals(setOf(CatalogError.SCHEDULE_RANGE_INVALID), (vm.state.value.dialog as Schedule).errors)
+    }
+
+    // ── N2: días libres ───────────────────────────────────────────────────────
+    private val today = java.time.LocalDate.of(2026, 11, 16)
+    private fun twoBarbers() {
+        catalogRepo.stored.value = Catalog(emptyList(), listOf(Barber("b1", "Luis"), Barber("b2", "Ana")), 1)
+    }
+
+    @Test fun `N2 el formulario de dia libre abre con la fecha de hoy y dia completo`() {
+        twoBarbers()
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        val d = vm.state.value.dialog as CatalogDialog.TimeOffForm
+        assertEquals("16/11/2026", d.date)
+        assertEquals("Luis", d.barberName)
+        assertTrue(d.wholeDay)
+    }
+
+    @Test fun `N2 guardar un dia completo para un barbero`() {
+        twoBarbers()
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        vm.onIntent(CatalogIntent.TimeOffDateChanged("24/12/2026"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertNull(vm.state.value.dialog)
+        val off = com.barberia.feature.catalog.domain.model.TimeOff(java.time.LocalDate.of(2026, 12, 24))
+        assertEquals(listOf(off), catalogRepo.stored.value.barbers[0].timeOff)
+        assertEquals(emptyList<Any>(), catalogRepo.stored.value.barbers[1].timeOff)
+    }
+
+    @Test fun `N2 salir temprano guarda solo el rango`() {
+        twoBarbers()
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        vm.onIntent(CatalogIntent.TimeOffWholeDayToggled(false))
+        vm.onIntent(CatalogIntent.TimeOffStartChanged("17:00"))
+        vm.onIntent(CatalogIntent.TimeOffEndChanged("20:00"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertEquals(
+            listOf(com.barberia.feature.catalog.domain.model.TimeOff(today, TimeRange.of("17:00", "20:00"))),
+            catalogRepo.stored.value.barbers[0].timeOff,
+        )
+    }
+
+    @Test fun `N2 sin barbero se cierra la barberia para todos`() {
+        twoBarbers()
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff(null))
+        assertNull((vm.state.value.dialog as CatalogDialog.TimeOffForm).barberName)
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertTrue(catalogRepo.stored.value.barbers.all { it.timeOff.size == 1 })
+    }
+
+    @Test fun `N2 fecha mal escrita o pasada muestra el error en el formulario`() {
+        twoBarbers()
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        vm.onIntent(CatalogIntent.TimeOffDateChanged("31/02/2026"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertEquals(setOf(CatalogError.DATE_INVALID), (vm.state.value.dialog as CatalogDialog.TimeOffForm).errors)
+        vm.onIntent(CatalogIntent.TimeOffDateChanged("15/11/2026"))
+        assertEquals(emptySet<CatalogError>(), (vm.state.value.dialog as CatalogDialog.TimeOffForm).errors)
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertEquals(setOf(CatalogError.TIME_OFF_PAST), (vm.state.value.dialog as CatalogDialog.TimeOffForm).errors)
+    }
+
+    @Test fun `N2 quitar un dia libre`() {
+        val off = com.barberia.feature.catalog.domain.model.TimeOff(today)
+        catalogRepo.stored.value = Catalog(emptyList(), listOf(Barber("b1", "Luis", timeOff = listOf(off))), 1)
+        val vm = vm()
+        vm.onIntent(CatalogIntent.RemoveTimeOff("b1", off))
+        assertEquals(emptyList<Any>(), catalogRepo.stored.value.barbers[0].timeOff)
+    }
+
+    @Test fun `N2 un barbero no abre el formulario de dias libres`() {
+        twoBarbers()
+        val vm = vm(StaffRole.BARBER)
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        assertNull(vm.state.value.dialog)
     }
 }

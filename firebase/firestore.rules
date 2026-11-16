@@ -174,12 +174,13 @@ service cloud.firestore {
       function validNew(data) {
         return data.keys().hasOnly(['clientUid', 'clientName', 'barberId', 'barberName', 'serviceId',
             'serviceName', 'priceCents', 'date', 'startMinute', 'endMinute', 'startsAt', 'status',
-            'slotKeys', 'dayId', 'createdAt'])
-          && data.clientUid == request.auth.uid
+            'slotKeys', 'dayId', 'createdAt', 'clientPhone'])
+          && isText(data.clientName, 1, 80)
+          && (isClientBooking(data) || isWalkIn(data))
           && data.status == 'BOOKED'
           && data.slotKeys is list && data.slotKeys.size() > 0 && data.slotKeys.size() <= 96
           && data.startMinute is int && data.endMinute is int && data.endMinute > data.startMinute
-          && data.startsAt is timestamp && data.startsAt > request.time
+          && data.startsAt is timestamp
           && data.startsAt < request.time + duration.value(31, 'd') // V2: ventana de reserva
           && data.priceCents is int && data.priceCents >= 0
           && data.date is string && data.date.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
@@ -187,8 +188,24 @@ service cloud.firestore {
           && startsAtMatches(data)
           && data.dayId == data.barberId + '_' + data.date
           && data.createdAt == request.time
-          && dayAfter(data).lastOp == apptId
+          && dayAfter(data).lastOp == apptId;
+      }
+
+      // El cliente reserva a su nombre, en el futuro y sin penalización vigente.
+      function isClientBooking(data) {
+        return data.clientUid == request.auth.uid
+          && !('clientPhone' in data)
+          && data.startsAt > request.time
           && notPenalized();
+      }
+
+      // N1: el personal agenda a un cliente sin cuenta (sin ficha: no hay penalización ni límite que esquivar).
+      // Se acepta el turno que empezó hace poco (cliente que llega al local): 15 min + 5 de reloj (A11).
+      function isWalkIn(data) {
+        return data.clientUid == null
+          && isStaffFor(data)
+          && isOptionalText(data.get('clientPhone', null), 20)
+          && data.startsAt > request.time - duration.value(20, 'm');
       }
 
       // P2: un cliente con penalización vigente no reserva (1 lectura extra por reserva).
@@ -232,9 +249,11 @@ service cloud.firestore {
           (request.resource.data.status in ['COMPLETED', 'NO_SHOW']
             && isStaffFor(resource.data)
             && request.time >= resource.data.startsAt
-            // P7: la ficha del cliente se actualiza en el mismo batch (no se esquivan contadores)
-            && getAfter(/databases/$(database)/documents/tenants/$(tenantId)/clients/$(resource.data.clientUid))
-                 .data.lastAppointmentId == apptId)
+            // P7: la ficha del cliente se actualiza en el mismo batch (no se esquivan contadores).
+            // N1: una cita sin cuenta no tiene ficha.
+            && (resource.data.clientUid == null
+                || getAfter(/databases/$(database)/documents/tenants/$(tenantId)/clients/$(resource.data.clientUid))
+                     .data.lastAppointmentId == apptId))
         );
       allow delete: if false;
     }

@@ -17,6 +17,8 @@ fun CatalogError.messageRes(): Int = when (this) {
     CatalogError.TOO_MANY_ITEMS -> R.string.catalog_error_too_many
     CatalogError.SCHEDULE_RANGE_INVALID -> R.string.catalog_error_range
     CatalogError.SCHEDULE_OVERLAP -> R.string.catalog_error_overlap
+    CatalogError.TIME_OFF_PAST -> R.string.catalog_error_time_off_past
+    CatalogError.DATE_INVALID -> R.string.catalog_error_date
 }
 
 @StringRes

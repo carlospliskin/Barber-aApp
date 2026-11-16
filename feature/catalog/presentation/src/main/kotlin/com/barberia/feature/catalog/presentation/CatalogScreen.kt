@@ -55,6 +55,7 @@ import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.CatalogError
 import com.barberia.feature.catalog.domain.model.Money
 import com.barberia.feature.catalog.domain.model.Service
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.presentation.CatalogDialog.BarberForm
 import com.barberia.feature.catalog.presentation.CatalogDialog.Schedule
 import com.barberia.feature.catalog.presentation.CatalogDialog.ServiceForm
@@ -130,6 +131,7 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
         is ServiceForm -> ServiceDialog(d, state.isSaving, onIntent)
         is BarberForm -> BarberDialog(d, state.isSaving, onIntent)
         is Schedule -> ScheduleDialog(d, state.isSaving, onIntent)
+        is CatalogDialog.TimeOffForm -> TimeOffDialog(d, state.isSaving, onIntent)
         is CatalogDialog.Invite -> AlertDialog(
             onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
             title = { Text(stringResource(R.string.catalog_invite_title, d.barberName)) },
@@ -170,16 +172,41 @@ private fun ServicesList(services: List<Service>, canEdit: Boolean, onIntent: (C
 private fun BarbersList(barbers: List<Barber>, canEdit: Boolean, onIntent: (CatalogIntent) -> Unit) {
     if (barbers.isEmpty()) return EmptyText(R.string.catalog_empty_barbers)
     LazyColumn(contentPadding = PaddingValues(bottom = 96.dp)) {
+        if (canEdit) {
+            item(key = "close-shop") {
+                TextButton(onClick = { onIntent(CatalogIntent.OpenTimeOff(null)) }, modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Text(stringResource(R.string.catalog_close_shop))
+                }
+            }
+        }
         items(barbers, key = { it.id }) { b ->
             ListItem(
                 headlineContent = { Text(b.name) },
                 supportingContent = {
-                    val days = b.schedule.days.size
-                    Text(
-                        if (days == 0) stringResource(R.string.catalog_no_schedule)
-                        else pluralStringResource(R.plurals.catalog_days_working, days, days),
-                        color = if (days == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Column {
+                        val days = b.schedule.days.size
+                        Text(
+                            if (days == 0) stringResource(R.string.catalog_no_schedule)
+                            else pluralStringResource(R.plurals.catalog_days_working, days, days),
+                            color = if (days == 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        // N2: días libres próximos
+                        b.timeOff.forEach { off ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(off.label(), Modifier.weight(1f), color = MaterialTheme.colorScheme.tertiary)
+                                if (canEdit) {
+                                    TextButton(onClick = { onIntent(CatalogIntent.RemoveTimeOff(b.id, off)) }) {
+                                        Text(stringResource(R.string.catalog_time_off_remove))
+                                    }
+                                }
+                            }
+                        }
+                        if (canEdit && b.active) {
+                            TextButton(onClick = { onIntent(CatalogIntent.OpenTimeOff(b.id)) }) {
+                                Text("+ " + stringResource(R.string.catalog_time_off))
+                            }
+                        }
+                    }
                 },
                 trailingContent = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -298,6 +325,47 @@ private fun ScheduleDialog(form: Schedule, isSaving: Boolean, onIntent: (Catalog
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun TimeOff.label(): String {
+    val date = date.toInput()
+    val r = range
+    return if (r == null) stringResource(R.string.catalog_time_off_line_day, date)
+    else stringResource(R.string.catalog_time_off_line_range, date, r.startLabel, r.endLabel)
+}
+
+@Composable
+private fun TimeOffDialog(form: CatalogDialog.TimeOffForm, isSaving: Boolean, onIntent: (CatalogIntent) -> Unit) {
+    val title = form.barberName?.let { stringResource(R.string.catalog_time_off_of, it) } ?: stringResource(R.string.catalog_close_shop)
+    FormDialog(title, isSaving, onIntent) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (form.barberId == null) Text(stringResource(R.string.catalog_close_shop_hint), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            BarberTextField(
+                form.date, { onIntent(CatalogIntent.TimeOffDateChanged(it)) }, stringResource(R.string.catalog_time_off_date),
+                error = form.errors.textFor(CatalogError.DATE_INVALID, CatalogError.TIME_OFF_PAST, CatalogError.TOO_MANY_ITEMS),
+            )
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.catalog_time_off_whole_day), Modifier.weight(1f))
+                Switch(form.wholeDay, { onIntent(CatalogIntent.TimeOffWholeDayToggled(it)) })
+            }
+            if (!form.wholeDay) {
+                form.errors.textFor(CatalogError.SCHEDULE_RANGE_INVALID)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                Row(Modifier.fillMaxWidth()) {
+                    BarberTextField(
+                        form.start, { onIntent(CatalogIntent.TimeOffStartChanged(it)) },
+                        stringResource(R.string.catalog_from), modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    BarberTextField(
+                        form.end, { onIntent(CatalogIntent.TimeOffEndChanged(it)) },
+                        stringResource(R.string.catalog_to), modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            Text(stringResource(R.string.catalog_time_off_existing), style = MaterialTheme.typography.bodySmall)
         }
     }
 }

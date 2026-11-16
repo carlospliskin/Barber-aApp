@@ -24,6 +24,12 @@ import com.barberia.feature.catalog.domain.usecase.UpdateServiceUseCase
 import com.barberia.feature.catalog.presentation.CatalogDialog.BarberForm
 import com.barberia.feature.catalog.presentation.CatalogDialog.Schedule
 import com.barberia.feature.catalog.presentation.CatalogDialog.ServiceForm
+import com.barberia.feature.catalog.presentation.CatalogDialog.TimeOffForm
+import com.barberia.feature.catalog.domain.model.TimeOff
+import com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase
+import com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase
+import java.time.Clock
+import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -44,6 +50,9 @@ class CatalogViewModel(
     private val setBarberActive: SetBarberActiveUseCase,
     private val setSchedule: SetBarberScheduleUseCase,
     private val createInvite: CreateBarberInviteUseCase,
+    private val addTimeOff: AddTimeOffUseCase,
+    private val removeTimeOff: RemoveTimeOffUseCase,
+    private val clock: Clock,
 ) : MviViewModel<CatalogState, CatalogIntent, CatalogEffect>(CatalogState()) {
 
     init {
@@ -96,6 +105,16 @@ class CatalogViewModel(
             is CatalogIntent.DayStartChanged -> editDay(intent.day) { copy(start = intent.value) }
             is CatalogIntent.DayEndChanged -> editDay(intent.day) { copy(end = intent.value) }
 
+            is CatalogIntent.OpenTimeOff -> {
+                val barber = intent.barberId?.let { id -> currentState.catalog.barbers.find { it.id == id } ?: return }
+                openIfEditable(TimeOffForm(barber?.id, barber?.name, date = LocalDate.now(clock).toInput()))
+            }
+            is CatalogIntent.TimeOffDateChanged -> editTimeOff { copy(date = intent.value) }
+            is CatalogIntent.TimeOffWholeDayToggled -> editTimeOff { copy(wholeDay = intent.wholeDay) }
+            is CatalogIntent.TimeOffStartChanged -> editTimeOff { copy(start = intent.value) }
+            is CatalogIntent.TimeOffEndChanged -> editTimeOff { copy(end = intent.value) }
+            is CatalogIntent.RemoveTimeOff -> save { t -> removeTimeOff(t, intent.barberId, intent.off) }
+
             CatalogIntent.SaveDialog -> saveDialog()
             is CatalogIntent.InviteBarber -> invite(intent.barberId)
         }
@@ -134,6 +153,21 @@ class CatalogViewModel(
                     ?: return setState { copy(dialog = d.copy(errors = setOf(CatalogError.SCHEDULE_RANGE_INVALID))) }
                 save { t -> setSchedule(t, d.barberId, schedule) }
             }
+            is TimeOffForm -> {
+                val date = parseDate(d.date)
+                    ?: return setState { copy(dialog = d.copy(errors = setOf(CatalogError.DATE_INVALID))) }
+                val range = if (d.wholeDay) {
+                    null
+                } else {
+                    val start = parseHour(d.start)
+                    val end = parseHour(d.end)
+                    if (start == null || end == null) {
+                        return setState { copy(dialog = d.copy(errors = setOf(CatalogError.SCHEDULE_RANGE_INVALID))) }
+                    }
+                    TimeRange(start, end)
+                }
+                save { t -> addTimeOff(t, d.barberId, TimeOff(date, range)) }
+            }
             is CatalogDialog.Invite, null -> setState { copy(dialog = null) }
         }
     }
@@ -167,6 +201,9 @@ class CatalogViewModel(
     private fun editBarber(change: BarberForm.() -> BarberForm) =
         setState { (dialog as? BarberForm)?.let { copy(dialog = it.change()) } ?: this }
 
+    private fun editTimeOff(change: TimeOffForm.() -> TimeOffForm) =
+        setState { (dialog as? TimeOffForm)?.let { copy(dialog = it.change().copy(errors = emptySet())) } ?: this }
+
     private fun editDay(day: DayOfWeek, change: DayDraft.() -> DayDraft) = setState {
         (dialog as? Schedule)?.let {
             copy(dialog = it.copy(days = it.days + (day to it.days.getValue(day).change()), errors = emptySet()))
@@ -187,6 +224,7 @@ class CatalogViewModel(
         is BarberForm -> copy(errors = errors)
         is Schedule -> copy(errors = errors)
         is CatalogDialog.Invite -> copy(errors = errors)
+        is TimeOffForm -> copy(errors = errors)
     }
 
     private companion object {

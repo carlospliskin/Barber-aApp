@@ -38,6 +38,17 @@ class BookingDataTest {
         assertEquals("2026-11-20", m["date"])
     }
 
+    @Test fun `N1 cita sin cuenta ida y vuelta con telefono`() {
+        val walkIn = cita.copy(clientUid = null, clientName = "Pedro", clientPhone = "5512345678")
+        val m = AppointmentMapper.toMap(walkIn)
+        assertEquals(null, m["clientUid"])
+        assertEquals("5512345678", m["clientPhone"])
+        assertEquals(walkIn, AppointmentMapper.fromMap("a1", "t", m))
+    }
+
+    @Test fun `N1 una cita de cliente no manda telefono (las reglas no lo esperan)`() =
+        assertEquals(false, "clientPhone" in AppointmentMapper.toMap(cita))
+
     @Test fun `documento corrupto se descarta`() =
         assertEquals(null, AppointmentMapper.fromMap("x", "t", mapOf("status" to "BOOKED")))
 
@@ -53,7 +64,7 @@ class BookingDataTest {
         var newClient: Map<String, Any?>? = null
         override suspend fun book(
             tenantId: String, apptId: String, appointment: Map<String, Any?>, dayId: String, keys: Set<String>,
-            clientUid: String, newClient: Map<String, Any?>,
+            clientUid: String?, newClient: Map<String, Any?>?,
         ) {
             bookError?.let { throw it }
             this.newClient = newClient
@@ -79,11 +90,11 @@ class BookingDataTest {
         var client: Map<String, Any?>? = null
         var clientWritten: Map<String, Any?>? = null
         override suspend fun setStatus(
-            tenantId: String, apptId: String, status: String, clientUid: String,
-            updateClient: (Map<String, Any?>?) -> Map<String, Any?>,
+            tenantId: String, apptId: String, status: String, clientUid: String?,
+            updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?,
         ) {
             this.status = apptId to status
-            clientWritten = updateClient(client)
+            clientWritten = updateClient?.invoke(client)
         }
         override suspend fun getClient(tenantId: String, uid: String) = client
         val appointments = mutableMapOf<String, Map<String, Any?>>()
@@ -124,6 +135,18 @@ class BookingDataTest {
             mapOf("name" to "Ana", "completed" to 0L, "noShows" to 0L, "rewardsUsed" to 0L, "penaltyUntil" to null, "lastAppointmentId" to "a1"),
             gw.newClient,
         )
+    }
+
+    @Test fun `N1 una cita sin cuenta no crea ficha`() = runTest {
+        gw.newClient = mapOf("x" to 1)
+        assertEquals(AppResult.Success(Unit), repo.book(cita.copy(clientUid = null)))
+        assertEquals(null, gw.newClient)
+    }
+
+    @Test fun `N1 atender una cita sin cuenta no escribe ficha`() = runTest {
+        assertEquals(AppResult.Success(Unit), repo.setStatus(cita.copy(clientUid = null), AppointmentStatus.COMPLETED, null))
+        assertEquals("a1" to "COMPLETED", gw.status)
+        assertEquals(null, gw.clientWritten)
     }
 
     @Test fun `B3 si el gateway detecta choque es SlotTaken`() = runTest {

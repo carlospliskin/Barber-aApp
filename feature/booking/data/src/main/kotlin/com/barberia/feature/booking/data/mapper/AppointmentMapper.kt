@@ -10,7 +10,9 @@ import java.time.LocalDate
 /** Cita ↔ mapa con exactamente los campos que exigen las reglas (`slotKeys`, `dayId`, `startsAt`). */
 internal object AppointmentMapper {
 
-    fun toMap(a: Appointment): Map<String, Any?> = mapOf(
+    fun toMap(a: Appointment): Map<String, Any?> = listOfNotNull(
+        a.clientPhone?.let { "clientPhone" to it }, // N1: solo citas sin cuenta
+    ).toMap() + mapOf(
         "clientUid" to a.clientUid,
         "clientName" to a.clientName,
         "barberId" to a.barberId,
@@ -31,7 +33,7 @@ internal object AppointmentMapper {
         Appointment(
             id = id,
             tenantId = tenantId,
-            clientUid = m["clientUid"] as String,
+            clientUid = m["clientUid"] as? String, // N1: null = sin cuenta
             clientName = m["clientName"] as? String ?: "",
             barberId = m["barberId"] as String,
             barberName = m["barberName"] as? String ?: "",
@@ -43,6 +45,7 @@ internal object AppointmentMapper {
             endMinute = (m["endMinute"] as Number).toInt(),
             status = AppointmentStatus.valueOf(m["status"] as String),
             startsAt = m["startsAt"] as Instant,
+            clientPhone = m["clientPhone"] as? String,
         )
     }.getOrNull()
 

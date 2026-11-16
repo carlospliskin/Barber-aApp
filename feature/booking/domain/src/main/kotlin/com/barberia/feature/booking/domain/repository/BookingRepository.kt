@@ -45,11 +45,12 @@ interface BookingRepository {
     /**
      * A4/P7: cambia el estado de una cita BOOKED a COMPLETED o NO_SHOW y actualiza la ficha del cliente
      * en la MISMA transacción ([updateClient] recibe la ficha actual o null si es su primera vez).
+     * N1: [updateClient] es null en citas sin cuenta (no tienen ficha).
      */
     suspend fun setStatus(
         appointment: Appointment,
         status: AppointmentStatus,
-        updateClient: (ClientRecord?) -> ClientRecord,
+        updateClient: ((ClientRecord?) -> ClientRecord)?,
     ): BookingResult<Unit>
 
     suspend fun client(tenantId: String, uid: String): BookingResult<ClientRecord?>

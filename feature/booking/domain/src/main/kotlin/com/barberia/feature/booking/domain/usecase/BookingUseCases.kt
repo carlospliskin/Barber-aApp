@@ -10,6 +10,7 @@ import com.barberia.feature.booking.domain.model.BookingFailure
 import com.barberia.feature.booking.domain.model.BookingPolicy
 import com.barberia.feature.booking.domain.model.BookingRequest
 import com.barberia.feature.booking.domain.model.BookingResult
+import com.barberia.feature.booking.domain.model.WalkInRequest
 import com.barberia.feature.booking.domain.model.slotKeys
 import com.barberia.feature.booking.domain.repository.BookingRepository
 import com.barberia.feature.booking.domain.repository.JoinedBarbershopStore
@@ -41,6 +42,7 @@ class GetAvailableSlotsUseCase(
     private val clock: Clock,
 ) {
     private val calculator = AvailabilityCalculator(policy)
+    private val staffCalculator = AvailabilityCalculator(policy.forStaff())
 
     suspend operator fun invoke(
         tenantId: String,
@@ -48,6 +50,8 @@ class GetAvailableSlotsUseCase(
         barberId: String,
         serviceId: String,
         date: LocalDate,
+        /** N1: el personal ve también el turno actual. */
+        forStaff: Boolean = false,
     ): BookingResult<List<Int>> {
         val c = when (val r = catalog.current(tenantId)) {
             is AppResult.Success -> r.value
@@ -56,7 +60,9 @@ class GetAvailableSlotsUseCase(
         val barber = c.barbers.find { it.id == barberId } ?: return AppResult.Failure(BookingFailure.BarberUnavailable)
         val service = c.services.find { it.id == serviceId } ?: return AppResult.Failure(BookingFailure.ServiceUnavailable)
         return when (val booked = bookings.dayBookings(tenantId, barberId, date)) {
-            is AppResult.Success -> AppResult.Success(calculator.slots(barber, service, date, booked.value, clock.nowIn(zone)))
+            is AppResult.Success -> AppResult.Success(
+                (if (forStaff) staffCalculator else calculator).slots(barber, service, date, booked.value, clock.nowIn(zone)),
+            )
             is AppResult.Failure -> booked
         }
     }
@@ -127,6 +133,71 @@ class BookAppointmentUseCase(
             is AppResult.Success -> AppResult.Success(appointment)
             is AppResult.Failure -> saved
         }
+    }
+}
+
+/**
+ * N1: el personal agenda a un cliente sin cuenta (por teléfono o en el local). Sin ficha, sin penalización
+ * ni límite de citas activas (no hay a quién contarlas). Sí respeta horario, días libres y bloques ocupados.
+ */
+class BookWalkInUseCase(
+    private val catalog: CatalogRepository,
+    private val bookings: BookingRepository,
+    policy: BookingPolicy,
+    private val clock: Clock,
+    private val ids: IdGenerator,
+) {
+    private val calculator = AvailabilityCalculator(policy.forStaff())
+
+    suspend operator fun invoke(req: WalkInRequest): BookingResult<Appointment> {
+        val name = req.clientName.trim().replace(Regex("\\s+"), " ")
+        if (name.isEmpty() || name.length > MAX_NAME) return AppResult.Failure(BookingFailure.InvalidClient)
+        val phone = req.clientPhone?.filterNot { it == ' ' || it == '-' }?.takeIf { it.isNotEmpty() }
+        if (phone != null && (phone.length > MAX_PHONE || !phone.removePrefix("+").all { it.isDigit() })) {
+            return AppResult.Failure(BookingFailure.InvalidClient)
+        }
+        val c = when (val r = catalog.current(req.tenantId)) {
+            is AppResult.Success -> r.value
+            is AppResult.Failure -> return r
+        }
+        val service = c.bookableServices.find { it.id == req.serviceId }
+            ?: return AppResult.Failure(BookingFailure.ServiceUnavailable)
+        val barber = c.bookableBarbers.find { it.id == req.barberId }
+            ?: return AppResult.Failure(BookingFailure.BarberUnavailable)
+        if (req.startMinute !in calculator.slots(barber, service, req.date, emptySet(), clock.nowIn(req.zone))) {
+            return AppResult.Failure(BookingFailure.SlotUnavailable)
+        }
+        val wanted = slotKeys(req.startMinute, service.durationMinutes)
+        when (val day = bookings.dayBookings(req.tenantId, barber.id, req.date)) {
+            is AppResult.Failure -> return day
+            is AppResult.Success -> if (wanted.any { it in day.value }) return AppResult.Failure(BookingFailure.SlotTaken)
+        }
+        val appointment = Appointment(
+            id = ids.next(),
+            tenantId = req.tenantId,
+            clientUid = null,
+            clientName = name,
+            barberId = barber.id,
+            barberName = barber.name,
+            serviceId = service.id,
+            serviceName = service.name,
+            price = service.price,
+            date = req.date,
+            startMinute = req.startMinute,
+            endMinute = req.startMinute + service.durationMinutes,
+            status = AppointmentStatus.BOOKED,
+            startsAt = req.date.atStartOfDay(req.zone).plusMinutes(req.startMinute.toLong()).toInstant(),
+            clientPhone = phone,
+        )
+        return when (val saved = bookings.book(appointment)) {
+            is AppResult.Success -> AppResult.Success(appointment)
+            is AppResult.Failure -> saved
+        }
+    }
+
+    private companion object {
+        const val MAX_NAME = 80
+        const val MAX_PHONE = 20
     }
 }
 

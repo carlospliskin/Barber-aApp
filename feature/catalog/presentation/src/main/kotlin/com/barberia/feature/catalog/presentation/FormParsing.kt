@@ -29,3 +29,12 @@ fun parseHour(text: String): Int? {
 fun Money.toInput(): String = "%d.%02d".format(cents / 100, cents % 100).removeSuffix(".00")
 
 fun minuteLabel(minute: Int) = TimeRange.label(minute)
+
+private val DATE_FORMAT = java.time.format.DateTimeFormatter.ofPattern("dd/MM/uuuu")
+    .withResolverStyle(java.time.format.ResolverStyle.STRICT)
+
+/** N2: "24/12/2026" → fecha (estricto: 31/02 no existe). */
+fun parseDate(text: String): java.time.LocalDate? =
+    runCatching { java.time.LocalDate.parse(text.trim(), DATE_FORMAT) }.getOrNull()
+
+fun java.time.LocalDate.toInput(): String = format(DATE_FORMAT)

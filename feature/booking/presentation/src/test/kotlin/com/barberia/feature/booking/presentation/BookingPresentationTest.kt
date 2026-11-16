@@ -202,6 +202,17 @@ class BookingPresentationTest {
         assertNull(vm.state.value.selectedDate)
     }
 
+    @Test fun `N2 un dia libre completo del barbero no se puede elegir`() {
+        catalog.stored.value = catalog.stored.value.copy(
+            barbers = listOf(luis.copy(timeOff = listOf(com.barberia.feature.catalog.domain.model.TimeOff(monday.plusDays(7))))),
+        )
+        store.saved["uid-1"] = "t1"
+        val vm = booking()
+        vm.onIntent(BookingIntent.SelectBarber("b1"))
+        assertEquals(false, vm.state.value.isSelectable(monday.plusDays(7)))
+        assertEquals(true, vm.state.value.isSelectable(monday))
+    }
+
     @Test fun `R3 R5 mis citas programa el recordatorio y cancelar lo borra`() = runTest {
         store.save("uid-1", "t1")
         val vm = clientHome()

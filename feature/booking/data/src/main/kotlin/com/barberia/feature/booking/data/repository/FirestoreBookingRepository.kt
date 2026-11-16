@@ -50,7 +50,10 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
             dayId(appointment.barberId, appointment.date),
             appointment.slots.map { it.toString() }.toSet(),
             appointment.clientUid,
-            ClientMapper.toMap(ClientRecord.new(appointment.clientUid, appointment.clientName), lastAppointmentId = appointment.id),
+            // N1: sin cuenta no hay ficha
+            appointment.clientUid?.let { uid ->
+                ClientMapper.toMap(ClientRecord.new(uid, appointment.clientName), lastAppointmentId = appointment.id)
+            },
         )
     }
 
@@ -78,11 +81,15 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
     override suspend fun setStatus(
         appointment: Appointment,
         status: AppointmentStatus,
-        updateClient: (ClientRecord?) -> ClientRecord,
+        updateClient: ((ClientRecord?) -> ClientRecord)?,
     ) = attempt(onDenied = BookingFailure.TooEarly) {
-        gateway.setStatus(appointment.tenantId, appointment.id, status.name, appointment.clientUid) { raw ->
-            ClientMapper.toMap(updateClient(ClientMapper.fromMap(appointment.clientUid, raw)), lastAppointmentId = appointment.id)
+        val uid = appointment.clientUid
+        val change: ((Map<String, Any?>?) -> Map<String, Any?>)? = if (uid == null || updateClient == null) {
+            null
+        } else {
+            { raw -> ClientMapper.toMap(updateClient(ClientMapper.fromMap(uid, raw)), lastAppointmentId = appointment.id) }
         }
+        gateway.setStatus(appointment.tenantId, appointment.id, status.name, uid, change)
     }
 
     override suspend fun client(tenantId: String, uid: String) = attempt {

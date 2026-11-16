@@ -26,6 +26,7 @@ class AvailabilityCalculator(private val policy: BookingPolicy) {
                 .takeWhile { it + duration <= range.endMinute } // B2: cabe completo en el turno
                 .filter { it >= earliest } // B1
                 .filter { start -> slotKeys(start, duration).none { it in booked } } // B3
+                .filter { start -> barber.timeOff.none { it.blocks(date, start, start + duration) } } // N2
                 .toList()
         }.sorted()
     }

@@ -20,6 +20,7 @@ import com.barberia.feature.auth.presentation.session.SessionViewModel
 import com.barberia.feature.auth.presentation.session.SplashScreen
 import com.barberia.feature.booking.presentation.agenda.AgendaRoute
 import com.barberia.feature.booking.presentation.book.BookingRoute
+import com.barberia.feature.booking.presentation.walkin.WalkInRoute
 import com.barberia.feature.booking.presentation.clients.ClientsRoute
 import com.barberia.feature.catalog.presentation.CatalogRoute
 import kotlinx.serialization.Serializable
@@ -34,6 +35,7 @@ import org.koin.androidx.compose.koinViewModel
 @Serializable data object CatalogDest
 @Serializable data object BookingDest
 @Serializable data object AgendaDest
+@Serializable data object WalkInDest
 @Serializable data object ClientsDest
 
 /**
@@ -73,7 +75,10 @@ fun BarberiaNavHost(
             )
         }
         composable<ClientsDest> { ClientsRoute(onBack = { navController.popBackStack() }) }
-        composable<AgendaDest> { AgendaRoute(onBack = { navController.popBackStack() }) }
+        composable<AgendaDest> {
+            AgendaRoute(onBack = { navController.popBackStack() }, onAddWalkIn = { navController.navigate(WalkInDest) })
+        }
+        composable<WalkInDest> { WalkInRoute(onDone = { navController.popBackStack() }, onBack = { navController.popBackStack() }) }
         composable<BookingDest> {
             BookingRoute(onDone = { navController.popBackStack() }, onBack = { navController.popBackStack() })
         }

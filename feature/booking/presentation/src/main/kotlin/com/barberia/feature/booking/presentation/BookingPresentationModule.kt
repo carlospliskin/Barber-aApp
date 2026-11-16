@@ -9,6 +9,8 @@ import com.barberia.feature.booking.domain.usecase.RedeemRewardUseCase
 import com.barberia.feature.booking.presentation.clients.ClientsViewModel
 import com.barberia.feature.booking.presentation.loyalty.LoyaltyViewModel
 import com.barberia.feature.booking.domain.usecase.BookAppointmentUseCase
+import com.barberia.feature.booking.domain.usecase.BookWalkInUseCase
+import com.barberia.feature.booking.presentation.walkin.WalkInViewModel
 import com.barberia.feature.booking.domain.usecase.CancelReminderUseCase
 import com.barberia.feature.booking.domain.usecase.SyncRemindersUseCase
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
@@ -74,4 +76,8 @@ val bookingPresentationModule = module {
     factoryOf(::SyncRemindersUseCase)
     factoryOf(::CancelReminderUseCase)
     viewModelOf(::LoyaltyViewModel)
+
+    // N1: agendar sin cuenta
+    factoryOf(::BookWalkInUseCase)
+    viewModelOf(::WalkInViewModel)
 }

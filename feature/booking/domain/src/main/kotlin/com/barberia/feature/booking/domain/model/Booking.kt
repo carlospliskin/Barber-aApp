@@ -13,7 +13,12 @@ data class BookingPolicy(
     val slotIntervalMinutes: Int = 15,
     val maxActivePerClient: Int = 2,
     val cancelHoursBefore: Long = 2,
-)
+    /** N1: el personal puede agendar en el turno que ya empezó hace hasta estos minutos (cliente que llega). */
+    val staffLateStartMinutes: Int = 14,
+) {
+    /** N1: para el personal no hay anticipación mínima; se acepta el turno actual. */
+    fun forStaff(): BookingPolicy = copy(minNoticeMinutes = -staffLateStartMinutes)
+}
 
 enum class AppointmentStatus { BOOKED, CANCELLED, COMPLETED, NO_SHOW }
 
@@ -24,7 +29,8 @@ enum class AppointmentStatus { BOOKED, CANCELLED, COMPLETED, NO_SHOW }
 data class Appointment(
     val id: String,
     val tenantId: String,
-    val clientUid: String,
+    /** N1: null = cliente sin cuenta (lo agendó el personal por teléfono o en el local). */
+    val clientUid: String?,
     val clientName: String,
     val barberId: String,
     val barberName: String,
@@ -37,8 +43,11 @@ data class Appointment(
     val status: AppointmentStatus,
     /** B10: inicio como instante (UTC). Las reglas de Firestore lo usan para el límite de cancelación. */
     val startsAt: Instant,
+    /** N1: teléfono (solo dígitos) del cliente sin cuenta, para avisarle. */
+    val clientPhone: String? = null,
 ) {
     val slots: Set<Int> get() = slotKeys(startMinute, endMinute - startMinute)
+    val isWalkIn: Boolean get() = clientUid == null
 }
 
 /** Datos públicos de la barbería que necesita el cliente (R6). */
@@ -61,6 +70,18 @@ data class BookingRequest(
     val startMinute: Int,
 )
 
+/** N1: cita que agenda el personal para un cliente sin cuenta. */
+data class WalkInRequest(
+    val tenantId: String,
+    val zone: ZoneId,
+    val clientName: String,
+    val clientPhone: String?,
+    val barberId: String,
+    val serviceId: String,
+    val date: LocalDate,
+    val startMinute: Int,
+)
+
 sealed interface BookingFailure {
     data object SlotTaken : BookingFailure
     data object SlotUnavailable : BookingFailure
@@ -76,6 +97,8 @@ sealed interface BookingFailure {
     /** P2: penalizado por no-shows hasta [until]. */
     data class Penalized(val until: Instant) : BookingFailure
     data object NoRewardAvailable : BookingFailure
+    /** N1: nombre vacío o teléfono inválido. */
+    data object InvalidClient : BookingFailure
     data object NoConnection : BookingFailure
     data class Unknown(val detail: String? = null) : BookingFailure
 }

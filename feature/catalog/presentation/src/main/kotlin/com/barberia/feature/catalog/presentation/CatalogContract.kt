@@ -6,6 +6,7 @@ import com.barberia.core.mvi.UiState
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.CatalogError
 import com.barberia.feature.catalog.domain.model.CatalogFailure
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import java.time.DayOfWeek
 
@@ -48,6 +49,17 @@ sealed interface CatalogDialog {
         override val errors: Set<CatalogError> = emptySet(),
     ) : CatalogDialog
 
+    /** N2: día libre de un barbero, o de todos si [barberId] es null (día festivo). Fecha "dd/MM/aaaa". */
+    data class TimeOffForm(
+        val barberId: String?,
+        val barberName: String?,
+        val date: String,
+        val wholeDay: Boolean = true,
+        val start: String = "14:00",
+        val end: String = "20:00",
+        override val errors: Set<CatalogError> = emptySet(),
+    ) : CatalogDialog
+
     data class Schedule(
         val barberId: String,
         val barberName: String,
@@ -87,6 +99,13 @@ sealed interface CatalogIntent : UiIntent {
     data class DayToggled(val day: DayOfWeek, val enabled: Boolean) : CatalogIntent
     data class DayStartChanged(val day: DayOfWeek, val value: String) : CatalogIntent
     data class DayEndChanged(val day: DayOfWeek, val value: String) : CatalogIntent
+
+    data class OpenTimeOff(val barberId: String?) : CatalogIntent
+    data class TimeOffDateChanged(val value: String) : CatalogIntent
+    data class TimeOffWholeDayToggled(val wholeDay: Boolean) : CatalogIntent
+    data class TimeOffStartChanged(val value: String) : CatalogIntent
+    data class TimeOffEndChanged(val value: String) : CatalogIntent
+    data class RemoveTimeOff(val barberId: String, val off: TimeOff) : CatalogIntent
 
     data object SaveDialog : CatalogIntent
     data object DismissDialog : CatalogIntent

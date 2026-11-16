@@ -4,9 +4,11 @@ import com.barberia.feature.catalog.domain.model.Barber
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.Money
 import com.barberia.feature.catalog.domain.model.Service
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import java.time.DayOfWeek
+import java.time.LocalDate
 
 /**
  * Catálogo ↔ mapa de Firestore. Tolerante: una entrada corrupta se descarta en lugar de tumbar la app
@@ -32,6 +34,16 @@ internal object CatalogMapper {
                 "active" to b.active,
                 "schedule" to b.schedule.days.entries.associate { (day, ranges) ->
                     day.name to ranges.map { mapOf("start" to it.startMinute.toLong(), "end" to it.endMinute.toLong()) }
+                },
+                // N2: fecha ISO; sin start/end = día completo
+                "timeOff" to b.timeOff.map { off ->
+                    buildMap<String, Any> {
+                        put("date", off.date.toString())
+                        off.range?.let {
+                            put("start", it.startMinute.toLong())
+                            put("end", it.endMinute.toLong())
+                        }
+                    }
                 },
             )
         },
@@ -64,7 +76,16 @@ internal object CatalogMapper {
             name = m["name"] as? String ?: return null,
             active = m["active"] as? Boolean ?: true,
             schedule = schedule(m["schedule"]),
+            timeOff = (m["timeOff"] as? List<*>).orEmpty().mapNotNull(::timeOff),
         )
+    }
+
+    private fun timeOff(any: Any?): TimeOff? {
+        val m = any as? Map<*, *> ?: return null
+        val date = (m["date"] as? String)?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return null
+        val start = (m["start"] as? Number)?.toInt()
+        val end = (m["end"] as? Number)?.toInt()
+        return TimeOff(date, if (start != null && end != null) TimeRange(start, end) else null)
     }
 
     private fun schedule(any: Any?): WeeklySchedule {

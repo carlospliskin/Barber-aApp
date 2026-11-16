@@ -45,7 +45,7 @@ class FakeBookingRepository : BookingRepository {
         appointment.slots.forEach { day[it] = appointment.id }
         all.value = all.value + appointment
         // F7-6: primera reserva crea la ficha en ceros
-        clients.getOrPut(appointment.clientUid) { ClientRecord.new(appointment.clientUid, appointment.clientName) }
+        appointment.clientUid?.let { uid -> clients.getOrPut(uid) { ClientRecord.new(uid, appointment.clientName) } } // N1: sin cuenta no hay ficha
         publishClients()
         return AppResult.Success(Unit)
     }
@@ -81,11 +81,12 @@ class FakeBookingRepository : BookingRepository {
     override suspend fun setStatus(
         appointment: Appointment,
         status: AppointmentStatus,
-        updateClient: (ClientRecord?) -> ClientRecord,
+        updateClient: ((ClientRecord?) -> ClientRecord)?,
     ): BookingResult<Unit> {
         lastStatus = status
         all.value = all.value.map { if (it.id == appointment.id) it.copy(status = status) else it }
-        clients[appointment.clientUid] = updateClient(clients[appointment.clientUid])
+        val uid = appointment.clientUid
+        if (uid != null && updateClient != null) clients[uid] = updateClient(clients[uid])
         publishClients()
         return AppResult.Success(Unit)
     }

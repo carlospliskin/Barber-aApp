@@ -49,7 +49,9 @@ data class BookingState(
     val workingDays: Set<DayOfWeek>
         get() = barbers.find { it.id == selectedBarberId }?.schedule?.days?.keys.orEmpty()
 
-    fun isSelectable(date: LocalDate) = selectedBarberId == null || date.dayOfWeek in workingDays
+    /** U2 + N2: ni días que no trabaja ni días libres completos. */
+    fun isSelectable(date: LocalDate) =
+        selectedBarberId == null || barbers.find { it.id == selectedBarberId }?.worksOn(date) == true
     val canConfirm: Boolean get() = selectedSlot != null && !isBooking
 }
 

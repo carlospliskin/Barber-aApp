@@ -15,6 +15,7 @@ internal interface BookingGateway {
     /**
      * Transacción: si algún bloque ya existe lanza [SlotTakenException]; si no, escribe cita + bloques y,
      * si el cliente todavía no tiene ficha en esta barbería, la crea con [newClient] (F7-6).
+     * N1: [clientUid] null = cita sin cuenta, sin ficha.
      */
     suspend fun book(
         tenantId: String,
@@ -22,8 +23,8 @@ internal interface BookingGateway {
         appointment: Map<String, Any?>,
         dayId: String,
         keys: Set<String>,
-        clientUid: String,
-        newClient: Map<String, Any?>,
+        clientUid: String?,
+        newClient: Map<String, Any?>?,
     )
 
     /** Batch: cita CANCELLED + quitar sus bloques del día. */
@@ -37,14 +38,14 @@ internal interface BookingGateway {
 
     /**
      * Transacción (P7/P9): lee la ficha del cliente, cambia el estado de la cita y escribe la ficha que
-     * devuelva [updateClient] (la ficha nunca se pisa con un dato viejo).
+     * devuelva [updateClient] (la ficha nunca se pisa con un dato viejo). N1: sin cuenta, solo la cita.
      */
     suspend fun setStatus(
         tenantId: String,
         apptId: String,
         status: String,
-        clientUid: String,
-        updateClient: (Map<String, Any?>?) -> Map<String, Any?>,
+        clientUid: String?,
+        updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?,
     )
 
     suspend fun getAppointment(tenantId: String, id: String): Map<String, Any?>?

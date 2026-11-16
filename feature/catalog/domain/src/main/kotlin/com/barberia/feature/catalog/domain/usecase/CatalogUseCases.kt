@@ -4,9 +4,12 @@ import com.barberia.feature.catalog.domain.editor.CatalogEditor
 import com.barberia.feature.catalog.domain.editor.CatalogResult
 import com.barberia.feature.catalog.domain.model.Catalog
 import com.barberia.feature.catalog.domain.model.ServiceDraft
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
 import com.barberia.feature.catalog.domain.repository.CatalogRepository
 import kotlinx.coroutines.flow.Flow
+import java.time.Clock
+import java.time.LocalDate
 
 // Cada caso de uso aplica una regla del editor dentro de la transacción del repositorio.
 
@@ -47,4 +50,15 @@ class SetBarberActiveUseCase(private val repo: CatalogRepository, private val ed
 class SetBarberScheduleUseCase(private val repo: CatalogRepository, private val editor: CatalogEditor) {
     suspend operator fun invoke(tenantId: String, barberId: String, schedule: WeeklySchedule): CatalogResult<Catalog> =
         repo.edit(tenantId) { editor.setSchedule(it, barberId, schedule) }
+}
+
+/** N2: la fecha de "hoy" sale del reloj (no de la pantalla) para no aceptar días pasados. */
+class AddTimeOffUseCase(private val repo: CatalogRepository, private val editor: CatalogEditor, private val clock: Clock) {
+    suspend operator fun invoke(tenantId: String, barberId: String?, off: TimeOff): CatalogResult<Catalog> =
+        repo.edit(tenantId) { editor.addTimeOff(it, barberId, off, LocalDate.now(clock)) }
+}
+
+class RemoveTimeOffUseCase(private val repo: CatalogRepository, private val editor: CatalogEditor) {
+    suspend operator fun invoke(tenantId: String, barberId: String, off: TimeOff): CatalogResult<Catalog> =
+        repo.edit(tenantId) { editor.removeTimeOff(it, barberId, off) }
 }

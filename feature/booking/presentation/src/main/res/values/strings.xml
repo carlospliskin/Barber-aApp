@@ -38,6 +38,14 @@
     <string name="booking_error_connection">Sin conexión. Intenta de nuevo.</string>
     <string name="booking_error_unknown">Ocurrió un error. Intenta de nuevo.</string>
 
+    <string name="booking_error_invalid_client">Escribe el nombre del cliente y un teléfono válido (solo números)</string>
+    <string name="walkin_title">Agendar cliente</string>
+    <string name="walkin_hint">Para quien llama o llega al local sin la app. No suma visitas ni penalizaciones.</string>
+    <string name="walkin_name">Nombre del cliente</string>
+    <string name="walkin_phone">Teléfono (opcional)</string>
+    <string name="walkin_confirm">Agendar %1$s a las %2$s</string>
+    <string name="agenda_add_walkin">+ Agendar cliente</string>
+    <string name="agenda_walkin_tag">Sin app</string>
     <string name="agenda_title">Agenda</string>
     <string name="agenda_today">Hoy</string>
     <string name="agenda_all">Todos</string>

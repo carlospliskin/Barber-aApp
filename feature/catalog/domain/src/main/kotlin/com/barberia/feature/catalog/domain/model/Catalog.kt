@@ -1,6 +1,7 @@
 package com.barberia.feature.catalog.domain.model
 
 import java.time.DayOfWeek
+import java.time.LocalDate
 
 /** Dinero en centavos (evita errores de redondeo con Double). */
 @JvmInline
@@ -73,12 +74,29 @@ data class StaffInvite(
     val usedBy: String?,
 )
 
+/**
+ * N2: excepción al horario de un barbero en una fecha: el día completo ([range] null) o solo un rango
+ * ("hoy salgo temprano"). Vive en el documento del catálogo: no cuesta lecturas extra.
+ */
+data class TimeOff(val date: LocalDate, val range: TimeRange? = null) {
+    val wholeDay: Boolean get() = range == null
+
+    /** ¿Bloquea algo de [start, end) en [day]? */
+    fun blocks(day: LocalDate, start: Int, end: Int): Boolean =
+        day == date && (range == null || (start < range.endMinute && range.startMinute < end))
+}
+
 data class Barber(
     val id: String,
     val name: String,
     val active: Boolean = true,
     val schedule: WeeklySchedule = WeeklySchedule.EMPTY,
-)
+    val timeOff: List<TimeOff> = emptyList(),
+) {
+    /** U2 + N2: tiene horario ese día de la semana y no lo tiene libre completo. */
+    fun worksOn(date: LocalDate): Boolean =
+        !schedule.days[date.dayOfWeek].isNullOrEmpty() && timeOff.none { it.wholeDay && it.date == date }
+}
 
 /**
  * Todo el catálogo de una barbería vive en UN documento: el cliente lo carga con una sola lectura.
@@ -107,6 +125,10 @@ enum class CatalogError {
     TOO_MANY_ITEMS,
     SCHEDULE_RANGE_INVALID,
     SCHEDULE_OVERLAP,
+    /** N2: no se bloquea una fecha que ya pasó. */
+    TIME_OFF_PAST,
+    /** Fecha mal escrita en el formulario. */
+    DATE_INVALID,
 }
 
 /** Lleva un [CatalogFailure] por un Flow (los flujos solo pueden fallar con excepciones). */

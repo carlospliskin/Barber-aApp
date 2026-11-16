@@ -42,16 +42,17 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         appointment: Map<String, Any?>,
         dayId: String,
         keys: Set<String>,
-        clientUid: String,
-        newClient: Map<String, Any?>,
+        clientUid: String?,
+        newClient: Map<String, Any?>?,
     ) {
         unwrapSlotTaken {
             firebaseCall {
                 val dayRef = tenantRef(tenantId).collection("days").document(dayId)
                 val apptRef = tenantRef(tenantId).collection("appointments").document(apptId)
                 db.runTransaction { tx ->
-                    val clientRef = tenantRef(tenantId).collection("clients").document(clientUid)
-                    val hasClient = tx.get(clientRef).exists() // las lecturas van antes que las escrituras
+                    // N1: una cita sin cuenta no tiene ficha (ni lectura extra)
+                    val clientRef = clientUid?.let { tenantRef(tenantId).collection("clients").document(it) }
+                    val hasClient = clientRef == null || tx.get(clientRef).exists() // lecturas antes que escrituras
                     @Suppress("UNCHECKED_CAST")
                     val booked = (tx.get(dayRef).get("booked") as? Map<String, Any?>).orEmpty()
                     if (keys.any { it in booked }) throw SlotTakenException()
@@ -64,7 +65,9 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
                             "updatedAt" to FieldValue.serverTimestamp(),
                         ),
                     )
-                    if (!hasClient) tx.set(clientRef, newClient + ("updatedAt" to FieldValue.serverTimestamp()))
+                    if (!hasClient && clientRef != null && newClient != null) {
+                        tx.set(clientRef, newClient + ("updatedAt" to FieldValue.serverTimestamp()))
+                    }
                 }.await()
             }
         }
@@ -130,17 +133,21 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         tenantId: String,
         apptId: String,
         status: String,
-        clientUid: String,
-        updateClient: (Map<String, Any?>?) -> Map<String, Any?>,
+        clientUid: String?,
+        updateClient: ((Map<String, Any?>?) -> Map<String, Any?>)?,
     ) {
         firebaseCall {
             val apptRef = tenantRef(tenantId).collection("appointments").document(apptId)
-            val clientRef = tenantRef(tenantId).collection("clients").document(clientUid)
+            val clientRef = clientUid?.let { tenantRef(tenantId).collection("clients").document(it) }
             db.runTransaction { tx ->
-                val current = tx.get(clientRef).data?.fromFirestore()
-                val next = updateClient(current).toFirestore() + ("updatedAt" to FieldValue.serverTimestamp())
+                val next = if (clientRef != null && updateClient != null) {
+                    updateClient(tx.get(clientRef).data?.fromFirestore()).toFirestore() +
+                        ("updatedAt" to FieldValue.serverTimestamp())
+                } else {
+                    null // N1: cita sin cuenta
+                }
                 tx.update(apptRef, mapOf("status" to status, "updatedAt" to FieldValue.serverTimestamp()))
-                tx.set(clientRef, next)
+                if (clientRef != null && next != null) tx.set(clientRef, next)
             }.await()
         }
     }

@@ -7,7 +7,9 @@ import com.barberia.feature.catalog.domain.model.CatalogError
 import com.barberia.feature.catalog.domain.model.CatalogFailure
 import com.barberia.feature.catalog.domain.model.Service
 import com.barberia.feature.catalog.domain.model.ServiceDraft
+import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
+import java.time.LocalDate
 
 typealias CatalogResult<T> = AppResult<CatalogFailure, T>
 
@@ -95,6 +97,27 @@ class CatalogEditor(private val ids: IdGenerator) {
         return ok(catalog.copy(barbers = catalog.barbers.replace(id) { it.copy(schedule = normalized) }))
     }
 
+    /**
+     * N2: bloquea una fecha (o un rango de ella) para un barbero, o para todos si [barberId] es null
+     * (día festivo). Borra los días libres que ya pasaron para que el documento no crezca.
+     */
+    fun addTimeOff(catalog: Catalog, barberId: String?, off: TimeOff, today: LocalDate): CatalogResult<Catalog> {
+        if (barberId != null && catalog.barbers.none { it.id == barberId }) return AppResult.Failure(CatalogFailure.NotFound)
+        if (off.range != null && !off.range.isValid) return invalid(CatalogError.SCHEDULE_RANGE_INVALID)
+        if (off.date.isBefore(today)) return invalid(CatalogError.TIME_OFF_PAST)
+        val targets = catalog.barbers.filter { barberId == null || it.id == barberId }
+        val updated = targets.associate { b ->
+            b.id to (b.timeOff.filter { !it.date.isBefore(today) } + off).distinct().sortedWith(TIME_OFF_ORDER)
+        }
+        if (updated.values.any { it.size > MAX_TIME_OFF }) return invalid(CatalogError.TOO_MANY_ITEMS)
+        return ok(catalog.copy(barbers = catalog.barbers.map { b -> updated[b.id]?.let { b.copy(timeOff = it) } ?: b }))
+    }
+
+    fun removeTimeOff(catalog: Catalog, barberId: String, off: TimeOff): CatalogResult<Catalog> {
+        if (catalog.barbers.none { it.id == barberId }) return AppResult.Failure(CatalogFailure.NotFound)
+        return ok(catalog.copy(barbers = catalog.barbers.replace(barberId) { it.copy(timeOff = it.timeOff - off) }))
+    }
+
     // ── Internos ──────────────────────────────────────────────────────────────
 
     private fun serviceErrors(draft: ServiceDraft, name: String) = buildSet {
@@ -141,5 +164,7 @@ class CatalogEditor(private val ids: IdGenerator) {
         const val MAX_DURATION = 480
         const val STEP = 5
         const val MAX_PRICE_CENTS = 100_000L * 100
+        const val MAX_TIME_OFF = 30
+        private val TIME_OFF_ORDER = compareBy<TimeOff>({ it.date }, { it.range?.startMinute ?: -1 })
     }
 }
