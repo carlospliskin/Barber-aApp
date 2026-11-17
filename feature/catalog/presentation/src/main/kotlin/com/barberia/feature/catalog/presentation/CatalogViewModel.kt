@@ -24,12 +24,12 @@ import com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase
 import com.barberia.feature.catalog.domain.usecase.SetBarberActiveUseCase
 import com.barberia.feature.catalog.domain.usecase.SetBarberScheduleUseCase
 import com.barberia.feature.catalog.domain.usecase.SetServiceActiveUseCase
+import com.barberia.feature.catalog.domain.usecase.ShopCalendar
 import com.barberia.feature.catalog.domain.usecase.UpdateServiceUseCase
 import com.barberia.feature.catalog.presentation.CatalogDialog.BarberForm
 import com.barberia.feature.catalog.presentation.CatalogDialog.Schedule
 import com.barberia.feature.catalog.presentation.CatalogDialog.ServiceForm
 import com.barberia.feature.catalog.presentation.CatalogDialog.TimeOffForm
-import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,7 +54,7 @@ class CatalogViewModel(
     private val addTimeOff: AddTimeOffUseCase,
     private val removeTimeOff: RemoveTimeOffUseCase,
     private val revokeAccess: RevokeBarberAccessUseCase,
-    private val clock: Clock
+    private val calendar: ShopCalendar
 ) : MviViewModel<CatalogState, CatalogIntent, CatalogEffect>(CatalogState()) {
 
     init {
@@ -128,7 +128,8 @@ class CatalogViewModel(
 
             is CatalogIntent.OpenTimeOff -> {
                 val barber = intent.barberId?.let { id -> currentState.catalog.barbers.find { it.id == id } ?: return }
-                openIfEditable(TimeOffForm(barber?.id, barber?.name, date = LocalDate.now(clock).toInput()))
+                val tenantId = currentState.tenantId ?: return
+                openIfEditable(TimeOffForm(barber?.id, barber?.name, date = calendar.today(tenantId).toInput()))
             }
 
             is CatalogIntent.TimeOffDateChanged -> editTimeOff { copy(date = intent.value) }

@@ -133,6 +133,12 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
         }
     }
 
+    override suspend fun hasUpcoming(tenantId: String, from: java.time.LocalDate) = attempt {
+        gateway.hasBookedFrom(tenantId, from.toString())
+    }
+
+    override suspend fun updateZone(tenantId: String, zone: ZoneId) = attempt { gateway.updateTimezone(tenantId, zone.id) }
+
     override suspend fun claimShareCode(tenantId: String, code: String) = attempt { gateway.claimShareCode(tenantId, code) }
 
     /**

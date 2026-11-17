@@ -36,6 +36,12 @@ interface BookingRepository {
     /** R6: nombre, zona horaria y código de la barbería (1 lectura). */
     suspend fun barbershop(tenantId: String): BookingResult<Barbershop?>
 
+    /** N5: ¿hay alguna cita BOOKED desde [from]? (1 lectura: límite 1). */
+    suspend fun hasUpcoming(tenantId: String, from: LocalDate): BookingResult<Boolean>
+
+    /** N5: guarda la zona horaria de la barbería. */
+    suspend fun updateZone(tenantId: String, zone: java.time.ZoneId): BookingResult<Unit>
+
     /** R7: reserva [code] para la barbería. `false` si ya lo tiene otra. */
     suspend fun claimShareCode(tenantId: String, code: String): BookingResult<Boolean>
 

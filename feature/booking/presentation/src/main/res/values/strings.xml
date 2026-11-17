@@ -98,4 +98,8 @@
     <string name="booking_error_reward_used">No se puede deshacer: ya canjeó un premio contando esa visita.</string>
     <string name="booking_cancel_closed">Ya no se puede cancelar (faltan menos de 2 horas). Si no puedes ir, avisa a la barbería.</string>
     <string name="booking_appt_started">Ya pasó la hora de esta cita.</string>
+    <string name="shop_zone_title">Zona horaria de la barbería</string>
+    <string name="shop_zone_change">Cambiar zona</string>
+    <string name="shop_zone_has_upcoming">Hay citas por venir con la zona actual. Cambia la zona cuando ya no haya citas agendadas.</string>
+    <string name="booking_error_invalid_zone">Esa zona horaria no está disponible.</string>
 </resources>

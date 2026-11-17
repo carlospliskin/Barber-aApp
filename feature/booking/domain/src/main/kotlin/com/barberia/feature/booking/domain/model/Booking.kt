@@ -66,6 +66,16 @@ data class Appointment(
     val isFromDeletedAccount: Boolean get() = clientUid == null && clientName.isBlank()
 }
 
+/** N5: zonas que el dueño puede elegir. La primera es la de alta. Las reglas de Firestore repiten esta lista. */
+object ShopZones {
+    val ALLOWED: List<ZoneId> = listOf(
+        "America/Mexico_City", "America/Monterrey", "America/Merida", "America/Cancun", "America/Chihuahua",
+        "America/Mazatlan", "America/Hermosillo", "America/Tijuana",
+        "America/Bogota", "America/Lima", "America/Guatemala", "America/Santiago", "America/Argentina/Buenos_Aires",
+        "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/Madrid"
+    ).map(ZoneId::of)
+}
+
 /** Datos públicos de la barbería que necesita el cliente (R6). */
 data class Barbershop(val id: String, val name: String, val zone: ZoneId, val shareCode: String?)
 
@@ -104,6 +114,9 @@ sealed interface BookingFailure {
     data object AlreadyClosed : BookingFailure
     data object InvalidCode : BookingFailure
     data object HasActiveAppointments : BookingFailure
+
+    /** N5: zona horaria fuera de [ShopZones.ALLOWED]. */
+    data object InvalidZone : BookingFailure
     data object TooEarly : BookingFailure
 
     /** P2: penalizado por no-shows hasta [until]. */

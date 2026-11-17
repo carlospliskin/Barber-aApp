@@ -145,7 +145,23 @@ class FakeBookingRepository : BookingRepository {
 
     override suspend fun resolveShareCode(code: String): BookingResult<String?> = AppResult.Success(shareCodes[code])
 
-    override suspend fun barbershop(tenantId: String): BookingResult<Barbershop?> = AppResult.Success(barbershops[tenantId])
+    var barbershopFailure: BookingFailure? = null
+
+    override suspend fun barbershop(tenantId: String): BookingResult<Barbershop?> =
+        barbershopFailure?.let { AppResult.Failure(it) } ?: AppResult.Success(barbershops[tenantId])
+
+    var zoneWrites = 0
+
+    override suspend fun hasUpcoming(tenantId: String, from: LocalDate): BookingResult<Boolean> = AppResult.Success(
+        all.value.any { it.tenantId == tenantId && it.status == AppointmentStatus.BOOKED && !it.date.isBefore(from) }
+    )
+
+    override suspend fun updateZone(tenantId: String, zone: java.time.ZoneId): BookingResult<Unit> {
+        failure?.let { return AppResult.Failure(it) }
+        zoneWrites++
+        barbershops[tenantId] = barbershops.getValue(tenantId).copy(zone = zone)
+        return AppResult.Success(Unit)
+    }
 
     override suspend fun claimShareCode(tenantId: String, code: String): BookingResult<Boolean> {
         claims++

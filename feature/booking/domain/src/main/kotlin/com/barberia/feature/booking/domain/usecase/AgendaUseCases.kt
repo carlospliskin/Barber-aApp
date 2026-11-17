@@ -19,6 +19,36 @@ class GetBarbershopUseCase(private val bookings: BookingRepository) {
     suspend operator fun invoke(tenantId: String) = bookings.barbershop(tenantId)
 }
 
+/**
+ * N5: el dueño cambia la zona horaria. No con citas por venir: su hora (`startsAt`) se calculó con la zona vieja
+ * y los recordatorios y el límite de cancelación quedarían corridos.
+ */
+class ChangeShopZoneUseCase(private val bookings: BookingRepository, private val clock: Clock) {
+    suspend operator fun invoke(tenantId: String, zone: java.time.ZoneId): BookingResult<Unit> {
+        if (zone !in com.barberia.feature.booking.domain.model.ShopZones.ALLOWED) {
+            return AppResult.Failure(BookingFailure.InvalidZone)
+        }
+        val shop = when (val r = bookings.barbershop(tenantId)) {
+            is AppResult.Success -> r.value ?: return AppResult.Failure(BookingFailure.NotYours)
+            is AppResult.Failure -> return r
+        }
+        if (shop.zone == zone) return AppResult.Success(Unit)
+        // Desde ayer: cubre la diferencia de horas entre zonas.
+        val from = LocalDate.now(clock.withZone(shop.zone)).minusDays(1)
+        return when (val r = bookings.hasUpcoming(tenantId, from)) {
+            is AppResult.Failure -> r
+
+            is AppResult.Success -> if (r.value) {
+                AppResult.Failure(
+                    BookingFailure.HasActiveAppointments
+                )
+            } else {
+                bookings.updateZone(tenantId, zone)
+            }
+        }
+    }
+}
+
 class ObserveAgendaUseCase(private val bookings: BookingRepository) {
     /** A2/A3: agenda de un día, ordenada por hora. */
     operator fun invoke(tenantId: String, date: LocalDate, barberId: String?): Flow<List<Appointment>> =

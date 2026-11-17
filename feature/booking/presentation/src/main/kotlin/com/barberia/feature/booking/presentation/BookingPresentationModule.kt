@@ -7,6 +7,7 @@ import com.barberia.feature.booking.domain.usecase.BookWalkInUseCase
 import com.barberia.feature.booking.domain.usecase.CancelAppointmentUseCase
 import com.barberia.feature.booking.domain.usecase.CancelByStaffUseCase
 import com.barberia.feature.booking.domain.usecase.CancelReminderUseCase
+import com.barberia.feature.booking.domain.usecase.ChangeShopZoneUseCase
 import com.barberia.feature.booking.domain.usecase.EnsureShareCodeUseCase
 import com.barberia.feature.booking.domain.usecase.ForgivePenaltyUseCase
 import com.barberia.feature.booking.domain.usecase.GetAvailableSlotsUseCase
@@ -30,6 +31,7 @@ import com.barberia.feature.booking.presentation.clients.ClientsViewModel
 import com.barberia.feature.booking.presentation.invite.RedeemInviteViewModel
 import com.barberia.feature.booking.presentation.loyalty.LoyaltyViewModel
 import com.barberia.feature.booking.presentation.owner.ShareCodeViewModel
+import com.barberia.feature.booking.presentation.owner.ShopZoneViewModel
 import com.barberia.feature.booking.presentation.walkin.WalkInViewModel
 import com.barberia.feature.catalog.domain.usecase.RedeemBarberInviteUseCase
 import java.security.SecureRandom
@@ -54,6 +56,8 @@ val bookingPresentationModule = module {
     viewModelOf(::ClientHomeViewModel)
     viewModelOf(::BookingViewModel)
     viewModelOf(::ShareCodeViewModel)
+    factoryOf(::ChangeShopZoneUseCase) // N5
+    viewModelOf(::ShopZoneViewModel)
 
     // Fase 6: agenda e invitaciones
     factoryOf(::GetBarbershopUseCase)

@@ -48,6 +48,9 @@ class CatalogViewModelTest {
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val clock = java.time.Clock.fixed(java.time.Instant.parse("2026-11-16T16:00:00Z"), java.time.ZoneOffset.UTC)
+
+    /** N2-c: "hoy" de la barbería (16 nov), no el del reloj en UTC. */
+    private val calendar = com.barberia.feature.catalog.domain.usecase.ShopCalendar { java.time.LocalDate.of(2026, 11, 16) }
     private var ids = 0
     private val editor = CatalogEditor { "id-${++ids}" }
     private val catalogRepo = FakeCatalogRepository()
@@ -71,10 +74,10 @@ class CatalogViewModelTest {
                 clock,
                 java.util.Random(1)
             ),
-            com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase(catalogRepo, editor, clock),
+            com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase(catalogRepo, editor, calendar),
             com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase(catalogRepo, editor),
             com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase(invites),
-            clock
+            calendar
         )
     }
 

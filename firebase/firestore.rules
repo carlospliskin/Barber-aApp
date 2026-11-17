@@ -114,11 +114,19 @@ service cloud.firestore {
 
     // ── tenants/{ownerUid} ───────────────────────────────────────────────────
     match /tenants/{tenantId} {
+      // N5: misma lista que ShopZones.ALLOWED (dominio). Si cambia una, cambia la otra.
+      function validZone(z) {
+        return z in ['America/Mexico_City', 'America/Monterrey', 'America/Merida', 'America/Cancun', 'America/Chihuahua',
+          'America/Mazatlan', 'America/Hermosillo', 'America/Tijuana',
+          'America/Bogota', 'America/Lima', 'America/Guatemala', 'America/Santiago', 'America/Argentina/Buenos_Aires',
+          'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'Europe/Madrid'];
+      }
+
       function validTenant(data) {
         return data.keys().hasOnly(['name', 'ownerUid', 'timezone', 'createdAt', 'shareCode'])
           && isText(data.name, 1, 80)
           && data.ownerUid == tenantId
-          && isText(data.timezone, 3, 64);
+          && validZone(data.timezone);
       }
 
       // get sí (para reservar en una barbería conocida); list no: un script podría leer todas y gastar la cuota (H5).

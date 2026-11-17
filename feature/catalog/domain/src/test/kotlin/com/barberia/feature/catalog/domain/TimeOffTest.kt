@@ -10,6 +10,7 @@ import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.testing.FakeCatalogRepository
 import com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase
 import com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase
+import com.barberia.feature.catalog.domain.usecase.ShopCalendar
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -104,16 +105,25 @@ class TimeOffTest {
 
     @Test fun `N2 los casos de uso usan la fecha del reloj y la version mas reciente`() = runTest {
         val repo = FakeCatalogRepository(twoBarbers)
-        val clock = Clock.fixed(today.atTime(12, 0).toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
+        val calendar = ShopCalendar { today }
         val off = TimeOff(today)
-        AddTimeOffUseCase(repo, editor, clock)("t1", "id-1", off).ok()
+        AddTimeOffUseCase(repo, editor, calendar)("t1", "id-1", off).ok()
         assertEquals(listOf(off), repo.stored.value.barbers[0].timeOff)
         RemoveTimeOffUseCase(repo, editor)("t1", "id-1", off).ok()
         assertEquals(emptyList<TimeOff>(), repo.stored.value.barbers[0].timeOff)
         assertEquals(
             setOf(CatalogError.TIME_OFF_PAST),
-            AddTimeOffUseCase(repo, editor, clock)("t1", "id-1", TimeOff(today.minusDays(1))).errors()
+            AddTimeOffUseCase(repo, editor, calendar)("t1", "id-1", TimeOff(today.minusDays(1))).errors()
         )
+    }
+
+    @Test fun `N2-c a las 19 h de la Ciudad de Mexico hoy sigue siendo hoy (en UTC ya es manana)`() = runTest {
+        val repo = FakeCatalogRepository(twoBarbers)
+        val clock = Clock.fixed(java.time.Instant.parse("2026-11-17T01:00:00Z"), ZoneOffset.UTC)
+        val calendar = ShopCalendar.of(clock) { java.time.ZoneId.of("America/Mexico_City") }
+        assertEquals(java.time.LocalDate.of(2026, 11, 16), calendar.today("t1"))
+        val off = TimeOff(java.time.LocalDate.of(2026, 11, 16))
+        AddTimeOffUseCase(repo, editor, calendar)("t1", "id-1", off).ok()
     }
 
     @Test fun `N2 un barbero trabaja un dia si tiene horario y no lo tiene libre completo`() {

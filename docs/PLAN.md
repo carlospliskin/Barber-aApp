@@ -105,7 +105,9 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [ ] N1-d. El aviso por WhatsApp no dice el nombre de la barbería (la agenda no lo carga) (P3).
 - [ ] N1-c. Unir el historial de un cliente sin app cuando se registra.
 - [ ] N2-b. Bloquear un día que ya tiene citas: avisar cuántas y ofrecer cancelarlas.
-- [ ] N2-c. "Hoy" del formulario usa la zona del teléfono (depende de N5).
+- [x] N2-c. "Hoy" del día libre en la zona de la barbería (antes salía en UTC).
+- [x] N5. El dueño elige la zona horaria (no con citas por venir).
+- [ ] U14. Rechazo al cancelar del personal dice "faltan menos de 2 horas" (P3).
 
 ### Operación
 - [x] C1. Marcar no-show suma al contador y penaliza al llegar al límite. → al 3er no-show, 14 días (P1).

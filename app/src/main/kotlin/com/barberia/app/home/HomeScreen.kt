@@ -24,6 +24,7 @@ import com.barberia.feature.auth.presentation.common.labelRes
 import com.barberia.feature.auth.presentation.verify.VerifyEmailCard
 import com.barberia.feature.booking.presentation.client.ClientHomeRoute
 import com.barberia.feature.booking.presentation.owner.ShareCodeCard
+import com.barberia.feature.booking.presentation.owner.ShopZoneCard
 import org.koin.androidx.compose.koinViewModel
 
 /** Home por modo: cliente → reservas; dueño → código, agenda y catálogo; barbero → agenda. */
@@ -63,6 +64,8 @@ fun HomeRoute(
             Spacer(Modifier.height(16.dp))
         } else if (mode == AppMode.OWNER) {
             ShareCodeCard()
+            Spacer(Modifier.height(12.dp))
+            ShopZoneCard()
             Spacer(Modifier.height(16.dp))
         } else if (mode == AppMode.BARBER) {
             StaffAccessCard() // A7-b/A16: solo aparece si perdió el acceso

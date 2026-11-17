@@ -195,6 +195,19 @@ internal class FirestoreBookingGateway(private val db: FirebaseFirestore) : Book
         tenantRef(tenantId).get().await().data
     }
 
+    override suspend fun hasBookedFrom(tenantId: String, fromDate: String): Boolean = firebaseCall {
+        !tenantRef(tenantId).collection("appointments")
+            .whereEqualTo("status", "BOOKED")
+            .whereGreaterThanOrEqualTo("date", fromDate)
+            .limit(1)
+            .get().await().isEmpty
+    }
+
+    override suspend fun updateTimezone(tenantId: String, timezone: String) = firebaseCall {
+        tenantRef(tenantId).update("timezone", timezone).await()
+        Unit
+    }
+
     override suspend fun claimShareCode(tenantId: String, code: String): Boolean = firebaseCall {
         val ref = db.collection("shareCodes").document(code)
         if (ref.get().await().exists()) return@firebaseCall false

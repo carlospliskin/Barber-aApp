@@ -65,6 +65,12 @@ internal interface BookingGateway {
     /** Documento `tenants/{id}` o null. */
     suspend fun tenant(tenantId: String): Map<String, Any?>?
 
+    /** N5: ¿alguna cita BOOKED con `date >= fromDate`? Límite 1 (índice compuesto status + date). */
+    suspend fun hasBookedFrom(tenantId: String, fromDate: String): Boolean
+
+    /** N5: cambia `timezone` de la barbería (las reglas validan la lista). */
+    suspend fun updateTimezone(tenantId: String, timezone: String)
+
     /** Crea `shareCodes/{code}` y lo guarda en la barbería. `false` si el código ya existe. */
     suspend fun claimShareCode(tenantId: String, code: String): Boolean
 }

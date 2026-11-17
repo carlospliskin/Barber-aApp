@@ -19,8 +19,8 @@
         ":feature:catalog:domain",
         ":feature:catalog:presentation"
       ],
-      "kotlinFiles": 7,
-      "unitTests": 3
+      "kotlinFiles": 8,
+      "unitTests": 5
     },
     {
       "path": ":core:common",
@@ -106,7 +106,7 @@
         ":core:common"
       ],
       "kotlinFiles": 6,
-      "unitTests": 44
+      "unitTests": 45
     },
     {
       "path": ":feature:catalog:data",
@@ -142,7 +142,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 14,
-      "unitTests": 81
+      "unitTests": 88
     },
     {
       "path": ":feature:booking:data",
@@ -154,7 +154,7 @@
         ":feature:booking:domain"
       ],
       "kotlinFiles": 11,
-      "unitTests": 34
+      "unitTests": 35
     },
     {
       "path": ":feature:booking:presentation",
@@ -167,8 +167,8 @@
         ":feature:booking:domain",
         ":feature:catalog:domain"
       ],
-      "kotlinFiles": 14,
-      "unitTests": 46
+      "kotlinFiles": 15,
+      "unitTests": 49
     }
   ],
   "navigation": {
@@ -567,6 +567,10 @@
           "viewModel": "ShareCodeViewModel"
         },
         {
+          "component": "ShopZoneCard",
+          "viewModel": "ShopZoneViewModel"
+        },
+        {
           "component": "StaffAccessCard",
           "viewModel": "StaffAccessViewModel"
         },
@@ -592,14 +596,17 @@
         "Leave",
         "Redeem",
         "Resend",
+        "Select",
         "SignOut"
       ],
       "useCases": [
         "CancelAppointmentUseCase",
         "CancelReminderUseCase",
+        "ChangeShopZoneUseCase",
         "CheckEmailVerifiedUseCase",
         "CheckStaffAccessUseCase",
         "EnsureShareCodeUseCase",
+        "GetBarbershopUseCase",
         "JoinBarbershopUseCase",
         "LeaveBarbershopUseCase",
         "LeaveStaffUseCase",
@@ -837,6 +844,13 @@
       "name": "CancelReminderUseCase",
       "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/ReminderUseCases.kt",
       "uses": []
+    },
+    {
+      "name": "ChangeShopZoneUseCase",
+      "file": "feature/booking/domain/src/main/kotlin/com/barberia/feature/booking/domain/usecase/AgendaUseCases.kt",
+      "uses": [
+        "BookingRepository"
+      ]
     },
     {
       "name": "CheckEmailVerifiedUseCase",
@@ -1265,5 +1279,5 @@
       ]
     }
   ],
-  "rulesTests": 147
+  "rulesTests": 152
 }

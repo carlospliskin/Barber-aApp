@@ -89,6 +89,15 @@ class BookingDataTest {
         }
         override suspend fun shareCode(code: String): String? = codes[code]
         override suspend fun tenant(tenantId: String) = tenant
+        var upcomingQuery: String? = null
+        var zoneWritten: String? = null
+        override suspend fun hasBookedFrom(tenantId: String, fromDate: String): Boolean {
+            upcomingQuery = fromDate
+            return active.any { (it.second["date"] as String) >= fromDate }
+        }
+        override suspend fun updateTimezone(tenantId: String, timezone: String) {
+            zoneWritten = timezone
+        }
         var dayQuery: Triple<String, String, String?>? = null
         var dayError: GatewayError? = null
         var status: Pair<String, String>? = null
@@ -289,6 +298,13 @@ class BookingDataTest {
         )
         gw.tenant = null
         assertEquals(AppResult.Success(null), repo.barbershop("t"))
+    }
+
+    @Test fun `N5 citas por venir desde una fecha y guardar la zona por su id`() = runTest {
+        assertEquals(AppResult.Success(false), repo.hasUpcoming("t", java.time.LocalDate.of(2026, 11, 16)))
+        assertEquals("2026-11-16", gw.upcomingQuery)
+        assertEquals(AppResult.Success(Unit), repo.updateZone("t", java.time.ZoneId.of("America/Tijuana")))
+        assertEquals("America/Tijuana", gw.zoneWritten)
     }
 
     @Test fun `R7 un codigo ocupado no se puede tomar`() = runTest {

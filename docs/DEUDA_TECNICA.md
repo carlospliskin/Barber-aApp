@@ -43,6 +43,7 @@ Encontrados revisando el código ya implementado.
 | V3 | **P0 · parcial** | M | **Abusos saltándose la app.** Las reglas no pueden recorrer listas: alguien con un script puede reservar fuera del horario del barbero o en un día libre (N2), saltarse el límite de 2 citas (B5) o crear muchas citas. | **App Check con Play Integrity** (gratis en Spark) y exigirlo en Firestore. Probar primero en modo "monitor". |
 | A14 | ✅ | S | **Verificación de email.** Se envía el correo pero no se exige. **Decisión:** ¿el dueño debe verificar antes de operar? | Si sí: bloquear catálogo y código hasta `emailVerified`, con botón "ya verifiqué" que recargue el usuario. |
 | R2 | P2 | S | **Precio escrito por el cliente.** La regla solo pide entero ≥ 0; podría guardar $0. Hoy se cobra en el local con el precio real. | Si algún día se cobra en la app: guardar los servicios como mapa por id en el catálogo para que la regla compare el precio. |
+| U14 | P3 | S | **Mensaje de cancelar para el personal.** Si las reglas rechazan una cancelación del personal, se muestra "faltan menos de 2 horas", un límite que el personal no tiene. | Distinguir el mensaje según quién cancela (`CancelByStaff` → "no se pudo cancelar"). |
 | W3 | P3 | S | **Dos invitaciones para el mismo barbero** ligan dos cuentas a él. | Al crear una invitación, avisar si ya hay una cuenta ligada a ese barbero. |
 
 ## 3. Funcionalidad que falta (negocio)
@@ -64,10 +65,10 @@ Encontrados revisando el código ya implementado.
 | N1-b | ✅ | S | **El cliente sin app no recibía recordatorio.** | "Avisar por WhatsApp" en la agenda: abre `wa.me` con el mensaje escrito (servicio, día, hora, barbero); lo envía el personal. Solo citas sin app con teléfono válido y antes de la hora. 10 dígitos = México (+52). |
 | N1-c | P3 | M | **Un cliente sin app que después se registra** no hereda sus visitas. | Unir por teléfono cuando el dueño lo decida (pantalla de clientes). |
 | N2-b | P2 | S | **Bloquear un día con citas ya reservadas** no las cancela ni avisa cuántas hay. Hoy el formulario solo lo recuerda con un texto. | Al guardar, consultar las citas de ese día (1 lectura por cita) y ofrecer cancelarlas. |
-| N2-c | P3 | S | **"Hoy" del formulario de día libre** sale de la zona del teléfono, no de la barbería (N5). | Pasar la zona de la barbería al caso de uso cuando exista N5. |
+| N2-c | ✅ | S | **"Hoy" del día libre salía en UTC** (el reloj de la app), no en la zona de la barbería: desde las 18 h de CDMX ya era "mañana" y no se podía bloquear el día en curso. | `ShopCalendar` en catálogo; `:app` lo conecta con la zona de booking (sin leerla: CDMX, nunca UTC). |
 | N3 | ✅ | M | **Recordatorios de cita** (fase 8). | Notificaciones locales con WorkManager. Push del servidor requiere Blaze (no). |
 | N4 | P2 | M | **Reagendar.** Hoy es cancelar y volver a reservar, y pierde la regla de 2 h. | Caso de uso que haga las dos cosas en una transacción. |
-| N5 | P2 | S | **Zona horaria fija** (America/Mexico_City); no hay pantalla para cambiarla. | Selector en la configuración del dueño; la regla ya permite `timezone`. |
+| N5 | ✅ | S | **Zona horaria fija.** | Tarjeta "Zona horaria" en el inicio del dueño (18 zonas; la regla valida la misma lista y un test las compara). No se cambia con citas por venir: su hora quedaría corrida (1 lectura, índice `status + date`). |
 | N6 | P3 | M | Iniciar sesión con Google. | Credential Manager + Firebase Auth (gratis). |
 | — | Fuera | — | Pagos en la app (MercadoPago) y push del servidor. | Requieren Cloud Functions → plan Blaze. Se retoman si se cambia de plan. |
 
