@@ -49,7 +49,7 @@
     <string name="catalog_close_shop_hint">Nadie podrá reservar con ningún barbero ese día (festivo, vacaciones).</string>
     <string name="catalog_time_off_date">Fecha (dd/mm/aaaa)</string>
     <string name="catalog_time_off_whole_day">Todo el día</string>
-    <string name="catalog_time_off_existing">Las citas que ya estaban reservadas no se cancelan solas: revísalas en la agenda.</string>
+    <string name="catalog_time_off_existing">Si ese día ya hay citas, te preguntaremos si cancelarlas.</string>
     <string name="catalog_time_off_line_day">Libre el %1$s</string>
     <string name="catalog_time_off_line_range">Libre el %1$s de %2$s a %3$s</string>
     <string name="catalog_time_off_remove">Quitar</string>
@@ -65,5 +65,20 @@
     <plurals name="catalog_revoke_done">
         <item quantity="one">Listo: se quitó el acceso a %1$d cuenta.</item>
         <item quantity="other">Listo: se quitó el acceso a %1$d cuentas.</item>
+    </plurals>
+    <plurals name="catalog_timeoff_conflicts_title">
+        <item quantity="one">Ese día hay %1$d cita reservada</item>
+        <item quantity="other">Ese día hay %1$d citas reservadas</item>
+    </plurals>
+    <string name="catalog_timeoff_conflicts_hint">El día libre ya quedó guardado. Si cancelas las citas se libera su horario y los clientes con la app lo ven en «Mis citas». A los clientes sin app avísales tú por teléfono.</string>
+    <plurals name="catalog_timeoff_conflicts_cancel">
+        <item quantity="one">Cancelar la cita</item>
+        <item quantity="other">Cancelar %1$d citas</item>
+    </plurals>
+    <string name="catalog_timeoff_saved">Día libre guardado</string>
+    <string name="catalog_timeoff_conflicts_keep">Dejarlas</string>
+    <plurals name="catalog_timeoff_conflicts_done">
+        <item quantity="one">Se canceló %1$d cita.</item>
+        <item quantity="other">Se cancelaron %1$d citas.</item>
     </plurals>
 </resources>

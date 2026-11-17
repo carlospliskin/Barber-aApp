@@ -10,5 +10,8 @@ import org.junit.Test
 class AccountEraserTest {
     @Test fun `sin red sigue siendo sin red`() = assertEquals(AuthFailure.NoConnection, BookingFailure.NoConnection.toAuthFailure())
 
+    @Test fun `A7-d el limite diario llega a la pantalla de eliminar cuenta`() =
+        assertEquals(AuthFailure.DailyLimit, BookingFailure.DailyLimit.toAuthFailure())
+
     @Test fun `lo demas es desconocido con detalle`() = assertEquals(AuthFailure.Unknown("x"), BookingFailure.Unknown("x").toAuthFailure())
 }

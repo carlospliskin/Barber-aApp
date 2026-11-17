@@ -18,6 +18,7 @@ import com.barberia.feature.auth.domain.usecase.SendPasswordResetUseCase
 import com.barberia.feature.auth.domain.usecase.SignInUseCase
 import com.barberia.feature.auth.domain.usecase.SignOutUseCase
 import com.barberia.feature.booking.domain.usecase.EraseUserDataUseCase
+import com.barberia.feature.catalog.domain.repository.TimeOffAppointments
 import com.barberia.feature.catalog.domain.usecase.ShopCalendar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +32,7 @@ val appModule = module {
     single<CoroutineScope>(ApplicationScope) { CoroutineScope(SupervisorJob() + Dispatchers.Default) }
     viewModelOf(::HomeViewModel)
     factory<ShopCalendar> { barbershopCalendar(get(), get()) } // N2-c
+    factory<TimeOffAppointments> { BookingTimeOffAppointments(get(), get()) } // N2-b
 }
 
 /** Casos de uso de auth: el dominio es Kotlin puro y no depende de Koin, por eso se registran aquí. */

@@ -33,6 +33,8 @@ fun AuthFailure.messageRes(): Int = when (this) {
 
     AuthFailure.TooManyRequests -> R.string.auth_error_too_many
 
+    AuthFailure.DailyLimit -> R.string.auth_error_daily_limit
+
     AuthFailure.NotSignedIn -> R.string.auth_error_not_signed_in
 
     AuthFailure.ModeNotAllowed -> R.string.auth_error_mode

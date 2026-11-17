@@ -17,6 +17,7 @@ class BookingUserDataEraser(private val erase: EraseUserDataUseCase) : UserDataE
 
 internal fun BookingFailure.toAuthFailure(): AuthFailure = when (this) {
     BookingFailure.NoConnection -> AuthFailure.NoConnection
+    BookingFailure.DailyLimit -> AuthFailure.DailyLimit
     is BookingFailure.Unknown -> AuthFailure.Unknown(detail)
     else -> AuthFailure.Unknown(toString())
 }

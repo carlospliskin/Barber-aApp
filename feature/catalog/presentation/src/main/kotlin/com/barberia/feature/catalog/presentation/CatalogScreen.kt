@@ -170,6 +170,48 @@ fun CatalogScreen(state: CatalogState, onIntent: (CatalogIntent) -> Unit, onBack
             }
         )
 
+        // N2-b: el día libre ya quedó; ¿qué pasa con las citas de ese día?
+        is CatalogDialog.TimeOffConflicts -> AlertDialog(
+            onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
+            title = {
+                Text(
+                    if (d.cancelled == null) {
+                        pluralStringResource(R.plurals.catalog_timeoff_conflicts_title, d.affected, d.affected)
+                    } else {
+                        stringResource(R.string.catalog_timeoff_saved)
+                    }
+                )
+            },
+            text = {
+                Text(
+                    when (d.cancelled) {
+                        null -> stringResource(R.string.catalog_timeoff_conflicts_hint)
+                        else -> pluralStringResource(R.plurals.catalog_timeoff_conflicts_done, d.cancelled, d.cancelled)
+                    }
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { onIntent(CatalogIntent.SaveDialog) }, enabled = !state.isSaving) {
+                    Text(
+                        if (d.cancelled == null) {
+                            pluralStringResource(R.plurals.catalog_timeoff_conflicts_cancel, d.affected, d.affected)
+                        } else {
+                            stringResource(R.string.catalog_done)
+                        }
+                    )
+                }
+            },
+            dismissButton = if (d.cancelled == null) {
+                {
+                    TextButton(onClick = {
+                        onIntent(CatalogIntent.DismissDialog)
+                    }) { Text(stringResource(R.string.catalog_timeoff_conflicts_keep)) }
+                }
+            } else {
+                null
+            }
+        )
+
         is CatalogDialog.Invite -> AlertDialog(
             onDismissRequest = { onIntent(CatalogIntent.DismissDialog) },
             title = { Text(stringResource(R.string.catalog_invite_title, d.barberName)) },

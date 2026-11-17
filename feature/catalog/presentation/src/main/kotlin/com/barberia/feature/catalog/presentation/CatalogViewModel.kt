@@ -13,6 +13,7 @@ import com.barberia.feature.catalog.domain.model.ServiceDraft
 import com.barberia.feature.catalog.domain.model.TimeOff
 import com.barberia.feature.catalog.domain.model.TimeRange
 import com.barberia.feature.catalog.domain.model.WeeklySchedule
+import com.barberia.feature.catalog.domain.repository.TimeOffAppointments
 import com.barberia.feature.catalog.domain.usecase.AddBarberUseCase
 import com.barberia.feature.catalog.domain.usecase.AddServiceUseCase
 import com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase
@@ -54,7 +55,8 @@ class CatalogViewModel(
     private val addTimeOff: AddTimeOffUseCase,
     private val removeTimeOff: RemoveTimeOffUseCase,
     private val revokeAccess: RevokeBarberAccessUseCase,
-    private val calendar: ShopCalendar
+    private val calendar: ShopCalendar,
+    private val conflicts: TimeOffAppointments
 ) : MviViewModel<CatalogState, CatalogIntent, CatalogEffect>(CatalogState()) {
 
     init {
@@ -165,6 +167,28 @@ class CatalogViewModel(
         }
     }
 
+    /** N2-b: el día libre ya se guardó; si choca con citas, se pregunta si cancelarlas. */
+    private suspend fun checkConflicts(form: TimeOffForm, off: TimeOff) {
+        val tenantId = currentState.tenantId ?: return
+        when (val r = conflicts.affected(tenantId, form.barberId, off)) {
+            is AppResult.Success -> if (r.value > 0) {
+                setState { copy(dialog = CatalogDialog.TimeOffConflicts(form.barberId, form.barberName, off, r.value)) }
+            }
+
+            is AppResult.Failure -> setState { copy(failure = r.error) }
+        }
+    }
+
+    private suspend fun cancelConflicts(d: CatalogDialog.TimeOffConflicts) {
+        val tenantId = currentState.tenantId
+        if (!currentState.canEdit || tenantId == null || currentState.isSaving) return
+        setState { copy(isSaving = true, failure = null) }
+        when (val r = conflicts.cancel(tenantId, d.barberId, d.off)) {
+            is AppResult.Success -> setState { copy(isSaving = false, dialog = d.copy(cancelled = r.value)) }
+            is AppResult.Failure -> setState { copy(isSaving = false, dialog = null, failure = r.error) }
+        }
+    }
+
     private suspend fun revoke(d: CatalogDialog.RevokeAccess) {
         val tenantId = currentState.tenantId
         if (!currentState.canEdit || tenantId == null || currentState.isSaving) return
@@ -212,8 +236,12 @@ class CatalogViewModel(
                     }
                     TimeRange(start, end)
                 }
-                save { t -> addTimeOff(t, d.barberId, TimeOff(date, range)) }
+                val off = TimeOff(date, range)
+                save { t -> addTimeOff(t, d.barberId, off) }
+                if (currentState.dialog == null && currentState.failure == null) checkConflicts(d, off)
             }
+
+            is CatalogDialog.TimeOffConflicts -> if (d.cancelled != null) setState { copy(dialog = null) } else cancelConflicts(d)
 
             is CatalogDialog.RevokeAccess -> if (d.revoked != null) setState { copy(dialog = null) } else revoke(d)
 
@@ -275,6 +303,7 @@ class CatalogViewModel(
         is Schedule -> copy(errors = errors)
         is CatalogDialog.Invite -> copy(errors = errors)
         is CatalogDialog.RevokeAccess -> copy(errors = errors)
+        is CatalogDialog.TimeOffConflicts -> copy(errors = errors)
         is TimeOffForm -> copy(errors = errors)
     }
 

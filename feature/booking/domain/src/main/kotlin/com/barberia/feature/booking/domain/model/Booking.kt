@@ -115,6 +115,9 @@ sealed interface BookingFailure {
     data object InvalidCode : BookingFailure
     data object HasActiveAppointments : BookingFailure
 
+    /** A7-d: Spark llegó a su límite del día (p. ej. 20 000 borrados). Mañana se reintenta y sigue donde quedó. */
+    data object DailyLimit : BookingFailure
+
     /** N5: zona horaria fuera de [ShopZones.ALLOWED]. */
     data object InvalidZone : BookingFailure
     data object TooEarly : BookingFailure

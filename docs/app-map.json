@@ -19,8 +19,8 @@
         ":feature:catalog:domain",
         ":feature:catalog:presentation"
       ],
-      "kotlinFiles": 8,
-      "unitTests": 5
+      "kotlinFiles": 9,
+      "unitTests": 10
     },
     {
       "path": ":core:common",
@@ -105,7 +105,7 @@
       "dependsOn": [
         ":core:common"
       ],
-      "kotlinFiles": 6,
+      "kotlinFiles": 7,
       "unitTests": 45
     },
     {
@@ -131,7 +131,7 @@
         ":feature:catalog:domain"
       ],
       "kotlinFiles": 6,
-      "unitTests": 25
+      "unitTests": 29
     },
     {
       "path": ":feature:booking:domain",
@@ -154,7 +154,7 @@
         ":feature:booking:domain"
       ],
       "kotlinFiles": 11,
-      "unitTests": 35
+      "unitTests": 36
     },
     {
       "path": ":feature:booking:presentation",

@@ -10,6 +10,9 @@ sealed interface AuthFailure {
     data object WeakPassword : AuthFailure
     data object NoConnection : AuthFailure
     data object TooManyRequests : AuthFailure
+
+    /** A7-d: el plan gratuito llegó a su límite del día; se reintenta mañana y sigue donde quedó. */
+    data object DailyLimit : AuthFailure
     data object NotSignedIn : AuthFailure
     data object ModeNotAllowed : AuthFailure
     data class Unknown(val detail: String? = null) : AuthFailure

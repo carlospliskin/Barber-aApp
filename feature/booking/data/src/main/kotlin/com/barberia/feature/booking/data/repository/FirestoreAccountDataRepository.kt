@@ -56,7 +56,16 @@ internal class FirestoreAccountDataRepository(private val gateway: AccountDataGa
     } catch (e: CancellationException) {
         throw e
     } catch (e: GatewayError) {
-        AppResult.Failure(if (e is GatewayError.Network) BookingFailure.NoConnection else BookingFailure.Unknown(e.cause?.message))
+        AppResult.Failure(
+            when (e) {
+                is GatewayError.Network -> BookingFailure.NoConnection
+
+                is GatewayError.TooManyRequests -> BookingFailure.DailyLimit
+
+                // A7-d: RESOURCE_EXHAUSTED
+                else -> BookingFailure.Unknown(e.cause?.message)
+            }
+        )
     }
 
     private companion object {

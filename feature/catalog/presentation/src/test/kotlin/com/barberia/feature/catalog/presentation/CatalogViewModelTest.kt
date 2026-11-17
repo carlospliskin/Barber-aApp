@@ -51,6 +51,7 @@ class CatalogViewModelTest {
 
     /** N2-c: "hoy" de la barbería (16 nov), no el del reloj en UTC. */
     private val calendar = com.barberia.feature.catalog.domain.usecase.ShopCalendar { java.time.LocalDate.of(2026, 11, 16) }
+    private val conflicts = com.barberia.feature.catalog.domain.testing.FakeTimeOffAppointments()
     private var ids = 0
     private val editor = CatalogEditor { "id-${++ids}" }
     private val catalogRepo = FakeCatalogRepository()
@@ -77,7 +78,8 @@ class CatalogViewModelTest {
             com.barberia.feature.catalog.domain.usecase.AddTimeOffUseCase(catalogRepo, editor, calendar),
             com.barberia.feature.catalog.domain.usecase.RemoveTimeOffUseCase(catalogRepo, editor),
             com.barberia.feature.catalog.domain.usecase.RevokeBarberAccessUseCase(invites),
-            calendar
+            calendar,
+            conflicts
         )
     }
 
@@ -296,6 +298,53 @@ class CatalogViewModelTest {
         val off = com.barberia.feature.catalog.domain.model.TimeOff(java.time.LocalDate.of(2026, 12, 24))
         assertEquals(listOf(off), catalogRepo.stored.value.barbers[0].timeOff)
         assertEquals(emptyList<Any>(), catalogRepo.stored.value.barbers[1].timeOff)
+    }
+
+    @Test fun `N2-b si el dia libre choca con citas avisa cuantas y las cancela al confirmar`() {
+        twoBarbers()
+        conflicts.affected = 2
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        vm.onIntent(CatalogIntent.TimeOffDateChanged("24/12/2026"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        val off = com.barberia.feature.catalog.domain.model.TimeOff(java.time.LocalDate.of(2026, 12, 24))
+        assertEquals(listOf(off), catalogRepo.stored.value.barbers[0].timeOff) // el día libre ya quedó guardado
+        assertEquals(CatalogDialog.TimeOffConflicts("b1", "Luis", off, affected = 2), vm.state.value.dialog)
+        vm.onIntent(CatalogIntent.SaveDialog) // "Cancelar citas"
+        assertEquals(listOf("b1" to off), conflicts.cancelled)
+        assertEquals(2, (vm.state.value.dialog as CatalogDialog.TimeOffConflicts).cancelled)
+        vm.onIntent(CatalogIntent.SaveDialog) // "Listo"
+        assertNull(vm.state.value.dialog)
+    }
+
+    @Test fun `N2-b dejarlas no cancela nada`() {
+        twoBarbers()
+        conflicts.affected = 1
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff(null))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        vm.onIntent(CatalogIntent.DismissDialog)
+        assertNull(vm.state.value.dialog)
+        assertEquals(emptyList<Any>(), conflicts.cancelled)
+    }
+
+    @Test fun `N2-b sin citas ese dia se cierra como antes`() {
+        twoBarbers()
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertNull(vm.state.value.dialog)
+    }
+
+    @Test fun `N2-b si no se pueden revisar las citas el dia libre queda y se avisa el error`() {
+        twoBarbers()
+        conflicts.failure = com.barberia.feature.catalog.domain.model.CatalogFailure.NoConnection
+        val vm = vm()
+        vm.onIntent(CatalogIntent.OpenTimeOff("b1"))
+        vm.onIntent(CatalogIntent.SaveDialog)
+        assertNull(vm.state.value.dialog)
+        assertEquals(1, catalogRepo.stored.value.barbers[0].timeOff.size)
+        assertEquals(com.barberia.feature.catalog.domain.model.CatalogFailure.NoConnection, vm.state.value.failure)
     }
 
     @Test fun `N2 salir temprano guarda solo el rango`() {

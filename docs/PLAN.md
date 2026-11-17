@@ -104,7 +104,8 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] N1-b. Recordatorio para el cliente sin app (WhatsApp desde la agenda, `wa.me`).
 - [ ] N1-d. El aviso por WhatsApp no dice el nombre de la barbería (la agenda no lo carga) (P3).
 - [ ] N1-c. Unir el historial de un cliente sin app cuando se registra.
-- [ ] N2-b. Bloquear un día que ya tiene citas: avisar cuántas y ofrecer cancelarlas.
+- [x] N2-b. Bloquear un día que ya tiene citas: avisa cuántas y ofrece cancelarlas.
+- [ ] N2-d. Avisar a los clientes sin app de las citas canceladas por un día libre (P3).
 - [x] N2-c. "Hoy" del día libre en la zona de la barbería (antes salía en UTC).
 - [x] N5. El dueño elige la zona horaria (no con citas por venir).
 - [ ] U14. Rechazo al cancelar del personal dice "faltan menos de 2 horas" (P3).
@@ -224,7 +225,7 @@ Lista viva: cada hueco se convierte en un test antes de cerrarse.
 - [x] Q1. Tests instrumentados de los gateways contra Emulator Suite (10, `scripts/android-tests.sh`).
 - [x] E6. Errores inesperados visibles en logcat en debug/QA.
 - [x] Q1-b. Los instrumentados corren en el CI (job `instrumented`).
-- [ ] A7-d. Límite diario de borrados de Spark en barberías muy grandes (P2).
+- [x] A7-d. Límite diario de Spark: mensaje claro y se reintenta al día siguiente.
 - [ ] PLAY-1. Enlace web para pedir el borrado (lo exige Play además del botón en la app). Páginas en `web/`; falta publicarlas.
 - [x] L2-a. `release` se firma con `keystore.properties` (ver RELEASE.md); falta la llave real.
 

@@ -36,6 +36,7 @@
     <string name="auth_error_weak_password">La contraseña es muy débil</string>
     <string name="auth_error_no_connection">Sin conexión. Verifica tu internet</string>
     <string name="auth_error_too_many">Demasiados intentos. Espera un momento</string>
+    <string name="auth_error_daily_limit">Hoy ya se borró todo lo que permite el plan gratuito. Lo borrado no vuelve: intenta mañana y seguirá donde quedó.</string>
     <string name="auth_error_not_signed_in">Tu sesión terminó. Vuelve a entrar</string>
     <string name="auth_error_mode">No tienes acceso a ese modo</string>
     <string name="auth_error_unknown">Ocurrió un error inesperado</string>

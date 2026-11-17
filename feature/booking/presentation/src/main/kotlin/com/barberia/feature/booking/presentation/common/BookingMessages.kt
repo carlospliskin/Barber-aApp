@@ -27,6 +27,7 @@ fun BookingFailure.messageRes(): Int = when (this) {
     BookingFailure.RewardAlreadyUsed -> R.string.booking_error_reward_used
     BookingFailure.InvalidClient -> R.string.booking_error_invalid_client
     BookingFailure.InvalidZone -> R.string.booking_error_invalid_zone
+    BookingFailure.DailyLimit -> R.string.booking_error_daily_limit
     else -> R.string.booking_error_unknown
 }
 

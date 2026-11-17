@@ -166,6 +166,7 @@ internal class FirestoreBookingRepository(private val gateway: BookingGateway) :
 internal fun Throwable.toBookingFailure(): BookingFailure = when (this) {
     is GatewayError.PermissionDenied -> BookingFailure.NoAccess
     is GatewayError.Network -> BookingFailure.NoConnection
+    is GatewayError.TooManyRequests -> BookingFailure.DailyLimit
     is GatewayError -> BookingFailure.Unknown(cause?.message)
     else -> BookingFailure.Unknown(message)
 }

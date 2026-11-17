@@ -117,6 +117,11 @@ class AccountDataTest {
         assertEquals("tenants/t1", gw.batches.last().last()) // la barbería al final: si se corta, se reintenta
     }
 
+    @Test fun `A7-d el limite diario de Spark se distingue (se reintenta mañana y sigue donde quedó)`() = runTest {
+        gw.error = GatewayError.TooManyRequests()
+        assertEquals(AppResult.Failure(BookingFailure.DailyLimit), repo.myAppointments("cli", 10))
+    }
+
     @Test fun `sin red lo dice`() = runTest {
         gw.error = GatewayError.Network()
         assertEquals(AppResult.Failure(BookingFailure.NoConnection), repo.myAppointments("cli", 10))

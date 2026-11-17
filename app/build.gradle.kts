@@ -127,6 +127,7 @@ dependencies {
     testImplementation(libs.junit4)
     testImplementation(libs.coroutines.test)
     testImplementation(testFixtures(project(":feature:booking:domain")))
+    testImplementation(project(":core:common"))
     testImplementation(libs.koin.test)
     testImplementation(libs.koin.test.junit4)
 }

@@ -68,6 +68,19 @@ sealed interface CatalogDialog {
         override val errors: Set<CatalogError> = emptySet()
     ) : CatalogDialog
 
+    /**
+     * N2-b: el día libre ya se guardó y choca con [affected] citas. [cancelled] null = preguntando;
+     * con número = ya se cancelaron.
+     */
+    data class TimeOffConflicts(
+        val barberId: String?,
+        val barberName: String?,
+        val off: com.barberia.feature.catalog.domain.model.TimeOff,
+        val affected: Int,
+        val cancelled: Int? = null,
+        override val errors: Set<CatalogError> = emptySet()
+    ) : CatalogDialog
+
     data class Schedule(
         val barberId: String,
         val barberName: String,
