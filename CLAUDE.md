@@ -31,7 +31,9 @@ App Android nativa (Kotlin + Compose) para barberías, con Firebase en plan **Sp
 (cd firebase && npm test)               # reglas de Firestore en el emulador
 (cd firebase && npm run emulators)      # Auth 9199 · Firestore 8085 · UI 4005
 python3 scripts/app_map.py              # regenerar el mapa (el CI falla si está desactualizado)
-scripts/android-tests.sh                # tests instrumentados (SDK real + reglas) en emulator-5570; requiere emuladores
+scripts/test-emulator.sh start          # emulador de pruebas ligero y OCULTO para Android Studio (adb privado 5038)
+scripts/android-tests.sh                # tests instrumentados (SDK real + reglas) en ese emulador; requiere Firebase
+scripts/test-emulator.sh stop
 ```
 
 ## Al cambiar algo
@@ -43,5 +45,6 @@ scripts/android-tests.sh                # tests instrumentados (SDK real + regla
 ## Entorno local (Mac de Carlos)
 - Puertos 9099 y 8080 los usa otro proyecto: no cambiar los de `firebase.json`.
 - Los emuladores Android `Rinde_*` son de otro proyecto. Para probar esta app usa uno propio
-  (p. ej. `Medium_Phone_API_36.0` en el puerto 5570), ligero: `-no-window -cores 2 -memory 2048 -no-boot-anim`.
+  (`Medium_Phone_API_36.0`) y enciéndelo SIEMPRE con `scripts/test-emulator.sh`: sin ventana, ligero y registrado en un
+  adb privado (5038, serial `emulator-5700`) para que no aparezca en Android Studio. Con ese adb: `adb -P 5038 -s emulator-5700 …`.
   No uses `connectedAndroidTest` (instala en todos los dispositivos): usa `scripts/android-tests.sh`.

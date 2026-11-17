@@ -96,4 +96,4 @@ jobs:
           arch: x86_64
           disable-animations: true
           emulator-options: -no-window -no-snapshot -no-audio -no-boot-anim -gpu swiftshader_indirect
-          script: firebase/node_modules/.bin/firebase emulators:exec --only auth,firestore --project demo-barberia "ANDROID_SERIAL=emulator-5554 scripts/android-tests.sh"
+          script: firebase/node_modules/.bin/firebase emulators:exec --only auth,firestore --project demo-barberia "ANDROID_SERIAL=emulator-5554 ADB_SERVER_PORT=5037 scripts/android-tests.sh"

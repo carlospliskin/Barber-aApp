@@ -35,7 +35,9 @@ las reglas reales. Viven en `src/androidTest` de `feature/*/data` y usan `core:f
 
 ```bash
 (cd firebase && npm run emulators)   # en otra terminal
-scripts/android-tests.sh             # instala y corre en emulator-5570 (ANDROID_SERIAL para otro)
+scripts/test-emulator.sh start       # emulador oculto para Android Studio (adb privado 5038)
+scripts/android-tests.sh             # instala y corre en emulator-5700 (ANDROID_SERIAL / ADB_SERVER_PORT para otro)
+scripts/test-emulator.sh stop
 ```
 
 En el CI los corre el job `instrumented` (emulador API 34 + `firebase emulators:exec`, unos 5 min).
