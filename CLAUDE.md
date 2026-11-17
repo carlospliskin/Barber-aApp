@@ -6,7 +6,7 @@ App Android nativa (Kotlin + Compose) para barberías, con Firebase en plan **Sp
 1. **[docs/APP_MAP.md](docs/APP_MAP.md)** — mapa generado del código: módulos, navegación, pantallas,
    ViewModels, intents, casos de uso, repositorios, datos de Firestore, recorridos de prueba y
    "dónde le muevo". Versión máquina: [docs/app-map.json](docs/app-map.json).
-2. [docs/PLAN.md](docs/PLAN.md) — fases, huecos (abiertos y cerrados) y versiones.
+2. [docs/PLAN.md](docs/PLAN.md) — fases, huecos (abiertos y cerrados) y versiones. Resumen de lo que falta: [docs/PENDIENTES.md](docs/PENDIENTES.md).
    Pendientes priorizados (P0–P3): [docs/DEUDA_TECNICA.md](docs/DEUDA_TECNICA.md).
 3. [ARCHITECTURE.md](ARCHITECTURE.md) — reglas de capas, MVI y SOLID.
 4. [docs/FIREBASE.md](docs/FIREBASE.md) — emuladores, puertos, reglas y build QA.
